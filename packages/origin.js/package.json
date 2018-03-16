@@ -23,6 +23,7 @@
   "dependencies": {
     "bs58": "^4.0.1",
     "dotenv": "^2.0.0",
+    "ethereumjs-util": "^5.1.5",
     "ipfs-api": "^14.3.7",
     "map-cache": "^0.2.2",
     "truffle-contract": "^1.1.8",
