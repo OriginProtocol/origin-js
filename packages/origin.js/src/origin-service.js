@@ -1,7 +1,11 @@
+import contractService from './contract-service'
+import ipfsService from './ipfs-service'
 import userSchema from './schemas/user.json'
 
 var Ajv = require('ajv')
 var ajv = new Ajv()
+
+var ethereumjsUtil = require('ethereumjs-util')
 
 class OriginService {
   constructor({ contractService, ipfsService }) {
@@ -77,6 +81,34 @@ class OriginService {
         })
       }
     })
+  }
+
+  generateSignedMessage(message) {
+    let hashedMessage = window.web3.sha3(message)
+    return new Promise((resolve, reject) => {
+      window.web3.eth.getAccounts((error, accounts) => {
+        if (error) {
+          reject(error)
+        }
+        window.web3.eth.sign(accounts[0], hashedMessage, (error, signedMessage) => {
+          if (error) {
+            reject(error)
+          }
+          resolve(signedMessage)
+        })
+      })
+    })
+  }
+
+  verifySignedMessage(message, address, signature) {
+    // web3 will release signature verification in v1.0. For now we have to do it this way.
+    let r = ethereumjsUtil.toBuffer('0x' + signature.slice(2, 66))
+    let s = ethereumjsUtil.toBuffer('0x' + signature.slice(66, 130))
+    let v = window.web3.toDecimal('0x' + signature.slice(130, 132))
+    let hashedMessage = ethereumjsUtil.toBuffer(window.web3.sha3(message))
+    let pub = ethereumjsUtil.ecrecover(hashedMessage, v, r, s)
+    let addressFromSignature = '0x' + ethereumjsUtil.pubToAddress(pub).toString('hex')
+    return addressFromSignature === address
   }
 }
 
