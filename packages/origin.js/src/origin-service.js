@@ -83,6 +83,21 @@ class OriginService {
     })
   }
 
+  getUser(address) {
+    return new Promise((resolve, reject) => {
+      contractService.getUser(address)
+      .then((userIpfsHash) => {
+        ipfsService.getUser(userIpfsHash)
+        .then((userJson) => {
+          resolve(userJson)
+        })
+      })
+      .catch((error) => {
+        reject(`Error getting user with address ${address}: ${error}`)
+      })
+    })
+  }
+
   generateSignedMessage(message) {
     let hashedMessage = window.web3.sha3(message)
     return new Promise((resolve, reject) => {
