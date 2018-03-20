@@ -28,7 +28,7 @@ class TwitterIdentityService {
           let mostRecentTwitterProof = twitterProofs[twitterProofs.length - 1]
           let tweetId = mostRecentTwitterProof.proofLink.split('status/')[1]
           username = mostRecentTwitterProof.username
-          return axios.get(`${serverUrl}/twitter/statuses/show/${tweetId}`)
+          return axios.get(`${serverUrl}/api/twitter/statuses/show/${tweetId}`)
         } else {
           resolve(null)
         }
@@ -55,7 +55,7 @@ class TwitterIdentityService {
       originService.generateSignedMessage(messageToSign)
       .then((signedMessage) => {
         let status = `Verifying myself on originprotocol.com: ${signedMessage}`
-        return axios.post(`${serverUrl}/twitter/statuses/update`, { accessTokenKey, accessTokenSecret, status })
+        return axios.post(`${serverUrl}/api/twitter/statuses/update`, { accessTokenKey, accessTokenSecret, status })
       })
       .then(function (response) {
         let tweet = response.data
