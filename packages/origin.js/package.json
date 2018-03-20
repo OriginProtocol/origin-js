@@ -21,6 +21,7 @@
   "author": "Stan James <stan@originprotocol.com>",
   "license": "MIT",
   "dependencies": {
+    "axios": "^0.18.0",
     "bs58": "^4.0.1",
     "dotenv": "^2.0.0",
     "ethereumjs-util": "^5.1.5",
