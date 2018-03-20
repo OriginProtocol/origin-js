@@ -6,17 +6,20 @@ import ContractService from './contract-service'
 import IpfsService from './ipfs-service'
 import OriginService from './origin-service'
 import UserRegistryService from './user-registry-service'
+import TwitterIdentityService from './twitter-identity-service'
 
 const contractService = new ContractService()
 const ipfsService = new IpfsService()
 const originService = new OriginService({ contractService, ipfsService })
 const userRegistryService = new UserRegistryService()
+const twitterIdentityService = new TwitterIdentityService()
 
 var origin = {
     contractService: contractService,
     ipfsService: ipfsService,
     originService: originService,
-    userRegistryService: userRegistryService
+    userRegistryService: userRegistryService,
+    twitterIdentityService: twitterIdentityService
 }
 
 var resources = {
