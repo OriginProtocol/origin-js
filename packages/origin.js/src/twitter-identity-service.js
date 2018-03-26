@@ -14,6 +14,13 @@ class TwitterIdentityService {
     TwitterIdentityService.instance = this
   }
 
+  getMessageToTweet() {
+    return originService.generateSignedMessage(messageToSign)
+    .then((signedMessage) => {
+      return `Verifying myself on originprotocol.com: ${signedMessage}`
+    })
+  }
+
   // TODO: set server url upon origin.js instantiation as a config option, rather than passing into this method
   getValidatedUsername(userAddress, serverUrl) {
     return new Promise((resolve, reject) => {
