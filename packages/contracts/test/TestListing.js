@@ -1,4 +1,5 @@
 const contractDefinition = artifacts.require('./Listing.sol')
+const purchaseDefinition = artifacts.require('./Purchase.sol')
 
 // Used to assert error cases
 const isEVMError = function(err) {
@@ -11,17 +12,17 @@ const price = 33
 const unitsAvailable = 42
 
 contract('Listing', accounts => {
-  var owner = accounts[0]
-  var notOwner = accounts[1]
+  var seller = accounts[0]
+  var buyer = accounts[1]
   var instance
 
   beforeEach(async function() {
     instance = await contractDefinition.new(
-      owner,
+      seller,
       ipfsHash,
       price,
       unitsAvailable,
-      {from: owner}
+      {from: seller}
     )
   })
 
@@ -37,23 +38,23 @@ contract('Listing', accounts => {
 
   it('should be able to buy a listing', async function() {
     const unitsToBuy = 1 // TODO: Handle multiple units
-    instance.buyListing(
+    const buyTransaction = await instance.buyListing(
       unitsToBuy,
-      { from: accounts[1], value: 6 }
+      { from: buyer, value: 6 }
     )
+    const listingPurchasedEvent = buyTransaction.logs.find((e)=>e.event=="ListingPurchased")
+    const purchaseContract = purchaseDefinition.at(listingPurchasedEvent.args._purchaseContract)
 
-    // TODO: How to catch events emitted during test?
-    // https://ethereum.stackexchange.com/questions/15353/how-to-listen-for-contract-events-in-javascript-tests
-    // https://github.com/ethereum/web3.js/issues/1023#issuecomment-350791050
-    // We should test that `Purchase` contract was created and has value
-    // sent to it.
-
-    // console.log(purchaseContract)
     let newUnitsAvailable = await instance.unitsAvailable()
     assert.equal(
       newUnitsAvailable,
       (unitsAvailable - unitsToBuy),
       'units available has decreased'
+    )
+
+    assert.equal(
+      buyer,
+      await purchaseContract.buyer()
     )
   })
 
