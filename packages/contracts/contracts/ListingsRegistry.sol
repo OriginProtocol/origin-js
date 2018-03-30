@@ -1,12 +1,15 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
 /// @title Listing
 /// @dev Used to keep marketplace of listings for buyers and sellers
 /// @author Matt Liu <matt@originprotocol.com>, Josh Fraser <josh@originprotocol.com>, Stan James <stan@originprotocol.com>
 
+import "./OriginRegistry.sol";
 import "./Listing.sol";
+import "./Purchase.sol";
+import "./ReputationRegistry.sol";
 
-contract ListingsRegistry {
+contract ListingsRegistry is OriginRegistryBase {
 
   /*
    * Events
@@ -17,9 +20,6 @@ contract ListingsRegistry {
   /*
    * Storage
    */
-
-  // Contract owner
-  address public owner_address;
 
   // Array of all listings
   Listing[] public listings;
@@ -53,6 +53,7 @@ contract ListingsRegistry {
     // Sample Listings - May be removed for public deployment
     testingAddSampleListings();
   }
+
 
   function testingAddSampleListings()
     public
@@ -150,9 +151,19 @@ contract ListingsRegistry {
     returns (uint)
   {
     listings.push(new Listing(msg.sender, _ipfsHash, _price, _unitsAvailable));
-    NewListing(listings.length-1);
+    emit NewListing(listings.length-1);
     return listings.length;
   }
 
-
+  function purchasedReputation(address seller, address buyer)
+    public
+  {
+    require (Purchase(msg.sender).listingContract().listingRegistry() == address(this));
+    ReputationRegistry rep = ReputationRegistry(getContractAddress("ReputationRegistry"));
+    if (isValidContract(rep))
+      {
+        rep.upRep(seller, 1);
+        rep.upRep(buyer, 1);
+      }
+  }
 }

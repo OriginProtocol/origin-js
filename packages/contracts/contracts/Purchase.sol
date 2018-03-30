@@ -3,6 +3,7 @@ pragma solidity ^0.4.11;
 /// @title Purchase
 /// @dev An purchase Origin Listing representing a purchase/booking
 import "./Listing.sol";
+import "./ListingsRegistry.sol";
 
 contract Purchase {
 
@@ -21,7 +22,7 @@ contract Purchase {
 
   Stages public stage = Stages.AWAITING_PAYMENT;
 
-  Listing listingContract; // listing that is being purchased
+  Listing public listingContract; // listing that is being purchased
   address public buyer; // User who is buying. Seller is derived from listing
   uint created;
 
@@ -73,6 +74,9 @@ contract Purchase {
       // Mark item as no longer available for sale in Listing
       // TODO: presumably we call function on Listing(), proving that we have
       // the funds to cover purchase.
+
+      // TODO: move this to: sellerGetPayout later
+      ListingsRegistry(listingContract.listingRegistry()).purchasedReputation(listingContract.owner(), buyer);
     }
     // Possible that nothing happens, and contract just accumulates sent value
   }
@@ -94,8 +98,8 @@ contract Purchase {
   {
     // Send contract funds to seller (ie owner of Listing)
     listingContract.owner().transfer(this.balance);
-
-      stage = Stages.COMPLETE;
+    //ListingsRegistry(listingContract.listingsRegistry).upReputation(listingContract.owner(), this.buyer);
+    stage = Stages.COMPLETE;
   }
 
 

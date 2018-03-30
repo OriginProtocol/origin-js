@@ -1,5 +1,6 @@
 import ListingsRegistryContract from '../../contracts/build/contracts/ListingsRegistry.json'
 import UserRegistryContract from '../../contracts/build/contracts/UserRegistry.json'
+import ListingContract from '../../contracts/build/contracts/Listing.json'
 import bs58 from 'bs58'
 import contract from 'truffle-contract'
 import promisify from 'util.promisify'
@@ -8,6 +9,7 @@ class ContractService {
   constructor() {
     this.listingsRegistryContract = contract(ListingsRegistryContract)
     this.userRegistryContract = contract(UserRegistryContract)
+    this.ListingContract = contract(ListingContract)
   }
 
   // Return bytes32 hex string from base58 encoded ipfs hash,
@@ -113,18 +115,20 @@ class ContractService {
 
     const { currentProvider, eth } = window.web3;
     this.listingsRegistryContract.setProvider(currentProvider)
+    this.ListingContract.setProvider(currentProvider)
 
     const accounts = await promisify(eth.getAccounts.bind(eth))()
     const instance = await this.listingsRegistryContract.deployed()
 
+    const listing_result = await instance.getListing.call(listingIndex);
+    const listing = await this.ListingContract.at(listing_result[0]);
+
     const weiToGive = window.web3.toWei(ethToGive, 'ether')
     // Buy it for real
-    const transactionReceipt = await instance.buyListing(
-      listingIndex,
+    return listing.buyListing(
       unitsToBuy,
       {from: accounts[0], value:weiToGive, gas: 4476768} // TODO (SRJ): is gas needed?
     )
-    return transactionReceipt
   }
 
   async setUser(ipfsUser) {

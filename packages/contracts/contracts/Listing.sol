@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
 /// @title Listing
 /// @dev An indiviual Origin Listing representing an offer for booking/purchase
@@ -61,7 +61,7 @@ contract Listing {
     // TODO STAN: How to call function *AND* transfer value??
     purchaseContract.pay.value(msg.value)();
 
-    ListingPurchased(purchaseContract);
+    emit ListingPurchased(purchaseContract);
   }
 
 }

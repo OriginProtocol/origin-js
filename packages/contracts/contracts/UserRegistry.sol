@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
 /// @title UserRegistry
 /// @dev Used to keep registry of user identifies
@@ -48,7 +48,7 @@ contract UserRegistry {
         public
     {
         users[msg.sender] = userStruct(_ipfsHash, true);
-        NewUser(msg.sender);
+        emit NewUser(msg.sender);
     }
 
     /// @dev create_another(): Create a new user and associates attenstion or proof with user
