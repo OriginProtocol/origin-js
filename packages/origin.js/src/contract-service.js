@@ -130,6 +130,24 @@ class ContractService {
     return transactionReceipt
   }
 
+  async setUser(ipfsUser) {
+    this.userRegistryContract.setProvider(window.web3.currentProvider)
+    let accounts = window.web3.eth.accounts
+    let userRegistry = await this.userRegistryContract.deployed()
+    let result = await userRegistry.set(
+      this.getBytes32FromIpfsHash(ipfsUser),
+      {from: accounts[0]}
+    )
+    return result
+  }
+
+  async getUser(userAddress) {
+    this.userRegistryContract.setProvider(window.web3.currentProvider)
+    let userRegistry = await this.userRegistryContract.deployed()
+    let ipfsHash = await userRegistry.users(userAddress)
+    return this.getIpfsHashFromBytes32(ipfsHash)
+  }
+
   async waitTransactionFinished(transactionReceipt, pollIntervalMilliseconds=1000) {
     console.log("Waiting for transaction")
     console.log(transactionReceipt)
