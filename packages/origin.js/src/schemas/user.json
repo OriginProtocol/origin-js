@@ -6,9 +6,18 @@
   "properties": {
     "claims": {
       "type": "object",
-      "required": ["name"],
+      "required": [],
       "properties": {
-        "name": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "avatar": {
           "type": "string"
         },
         "customFields": {
