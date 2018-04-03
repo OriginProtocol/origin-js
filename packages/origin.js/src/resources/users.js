@@ -3,7 +3,7 @@ import userSchema from '../schemas/user.json'
 var Ajv = require('ajv')
 var ajv = new Ajv()
 
-async function create(data) {
+async function set(data) {
   let validate = ajv.compile(userSchema)
   if (!validate(data)) {
     throw new Error('invalid user data')
@@ -24,6 +24,6 @@ async function get(address) {
 }
 
 module.exports = {
-  create,
+  set,
   get
 }
