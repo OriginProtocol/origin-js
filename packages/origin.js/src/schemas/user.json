@@ -3,12 +3,23 @@
   "title": "User",
   "type": "object",
   "required": ["claims"],
+  "additionalProperties": false,
   "properties": {
     "claims": {
       "type": "object",
-      "required": ["name"],
+      "required": [],
+      "additionalProperties": false,
       "properties": {
-        "name": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "avatar": {
           "type": "string"
         },
         "customFields": {
@@ -16,6 +27,7 @@
           "items": {
             "type": "object",
             "required": ["field", "value"],
+            "additionalProperties": false,
             "properties": {
               "field": {
                 "type": "string"
@@ -33,6 +45,7 @@
       "items": {
         "type": "object",
         "required": ["service", "field", "value", "signature"],
+        "additionalProperties": false,
         "properties": {
           "service": {
             "type": "string"
@@ -54,6 +67,7 @@
       "items": {
         "type": "object",
         "required": ["service", "username", "proofString", "proofLink"],
+        "additionalProperties": false,
         "properties": {
           "service": {
             "type": "string"
