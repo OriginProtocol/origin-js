@@ -22,10 +22,9 @@ Proposed
 
     # Handle blockchain events:
 
-    @origin.on("listing_changed")
-    def listing_changed(event):
+    @origin.on(['ListingPurchased(address)'])
+    def listing_purchased(event):
         print(str(event))
-    
-    @origin.on("purchase_changed")
-    def purchase_changed(event):
-        print(str(event))
+
+
+    origin.start_following()    
