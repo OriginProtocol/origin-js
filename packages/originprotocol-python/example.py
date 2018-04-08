@@ -14,6 +14,12 @@ def print_listing(event):
         print(listing)
     except:
         print("Could not load listing")
+
+@origin.on(['PurchaseChange(uint8)'])
+def print_purchase_change(event):
+    global origin
+    print("A purchase was changed")
+    print(event)
     
 
 print("Watching for Origin Events!")
