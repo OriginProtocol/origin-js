@@ -7,6 +7,16 @@ import "./Listing.sol";
 
 contract Purchase {
 
+  /*
+  * Events
+  */
+
+  event PurchaseChange(Stages stage);
+
+  /*
+  * Enum
+  */
+
   enum Stages {
     AWAITING_PAYMENT, // Buyer hasn't paid full amount yet
     BUYER_PENDING, // Waiting for buyer to confirm receipt
@@ -59,6 +69,7 @@ contract Purchase {
     buyer = _buyer;
     listingContract = Listing(_listingContractAddress);
     created = now;
+    PurchaseChange(internalStage);
   }
 
   function data()
@@ -80,6 +91,7 @@ contract Purchase {
       // Buyer (or their proxy) has paid enough to cover purchase
       internalStage = Stages.BUYER_PENDING;
       buyerTimout = now + 21 days;
+      PurchaseChange(internalStage);
     }
     // Possible that nothing happens, and contract just accumulates sent value
   }
@@ -103,6 +115,7 @@ contract Purchase {
   atStage(Stages.BUYER_PENDING)
   {
       internalStage = Stages.SELLER_PENDING;
+      PurchaseChange(internalStage);
   }
 
   function sellerGetPayout()
@@ -111,6 +124,7 @@ contract Purchase {
   atStage(Stages.SELLER_PENDING)
   {
     internalStage = Stages.COMPLETE;
+    PurchaseChange(internalStage);
 
     // Send contract funds to seller (ie owner of Listing)
     // Transfering money always needs to be the last thing we do, do avoid
@@ -134,6 +148,7 @@ contract Purchase {
     );
 
     internalStage = Stages.IN_DISPUTE;
+    PurchaseChange(internalStage);
 
     // TODO: Create a dispute contract?
     // Right now there's no way to exit this state.
