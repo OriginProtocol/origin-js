@@ -7,6 +7,8 @@ const webpackConfig = require('./webpack.config.js')
 const args = process.argv.slice(2)
 const shouldWatch = (args.length && args[0] === 'serve')
 
+const PORT = 8545
+
 const startGanache = () => {
   return new Promise((resolve, reject) => {
     var server = Ganache.server({
@@ -17,11 +19,11 @@ const startGanache = () => {
       blocktime: 0,
       mnemonic: 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
     })
-    server.listen(9545, err => {
+    server.listen(PORT, err => {
       if (err) {
         return reject(err)
       }
-      console.log('Ganache listening.')
+      console.log(`Ganache listening on port ${PORT}`)
       resolve()
     })
   })
@@ -29,11 +31,11 @@ const startGanache = () => {
 
 const buildContracts = () => {
   return new Promise((resolve, reject) => {
-    const truffleMigrate = spawn('../node_modules/.bin/truffle', ['compile'], { cwd: './contracts' })
-    truffleMigrate.stdout.pipe(process.stdout)
-    truffleMigrate.stderr.pipe(process.stderr)
+    const truffleCompile = spawn('../node_modules/.bin/truffle', ['compile'], { cwd: './contracts' })
+    truffleCompile.stdout.pipe(process.stdout)
+    truffleCompile.stderr.pipe(process.stderr)
 
-    truffleMigrate.on('exit', code => {
+    truffleCompile.on('exit', code => {
       if (code !== 0) {
         return reject()
       }
