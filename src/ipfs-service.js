@@ -64,38 +64,11 @@ class IpfsService {
       return this.mapCache.get(ipfsHashStr)
     }
 
-    const catFile = promisify(this.ipfs.files.cat.bind(this.ipfs.files))
+    const response = await fetch(this.gatewayUrlForHash(ipfsHashStr))
+    var ipfsData = await response.json()
+    this.mapCache.set(ipfsHashStr, ipfsData)
 
-    // Get from IPFS network
-    let stream
-    try {
-      stream = await catFile(ipfsHashStr)
-    } catch (error) {
-      console.error(error)
-      throw new Error("Got ipfs cat err:" + error)
-    }
-
-    const response = await new Promise((resolve, reject) => {
-      let res = ""
-      stream.on("data", chunk => {
-        res += chunk.toString()
-      })
-      stream.on("error", err => {
-        reject("Got ipfs cat stream err:" + err)
-      })
-      stream.on("end", () => {
-        let parsedResponse
-        try {
-          parsedResponse = JSON.parse(res)
-        } catch (error) {
-          reject(`Failed to parse response JSON: ${error}`)
-          return
-        }
-        this.mapCache.set(ipfsHashStr, parsedResponse)
-        resolve(parsedResponse)
-      })
-    })
-    return response
+    return ipfsData
   }
 
   gatewayUrlForHash(ipfsHashStr) {
