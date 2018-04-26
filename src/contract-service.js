@@ -8,7 +8,7 @@ import promisify from "util.promisify"
 
 class ContractService {
   constructor({ web3 } = {}) {
-    this.web3 = web3 || window.web3
+    this.web3 = web3
 
     const contracts = {
       listingsRegistryContract: ListingsRegistryContract,
