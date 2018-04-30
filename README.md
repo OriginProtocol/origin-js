@@ -107,7 +107,7 @@ And buyers to:
  ```
  import Origin from '@originprotocol/origin'
 
- let configOptions = {}
+ let configOptions = { web3: window.web3 }
 
  let { contractService, ipfsService, originService } = new Origin(configOptions)
  ```
@@ -124,6 +124,7 @@ And buyers to:
  ```
 
  Valid options:
+ - `web3` (required)
  - `ipfsDomain`
  - `ipfsApiPort`
  - `ipfsGatewayPort`

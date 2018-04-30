@@ -11,9 +11,16 @@ class Origin {
     ipfsDomain,
     ipfsApiPort,
     ipfsGatewayPort,
-    ipfsGatewayProtocol
+    ipfsGatewayProtocol,
+    web3
   } = {}) {
-    this.contractService = new ContractService()
+    if (!web3) {
+      throw new Error(
+        "web3 is required for origin. Please pass in web3 as a config option."
+      )
+    }
+
+    this.contractService = new ContractService({ web3 })
     this.ipfsService = new IpfsService({
       ipfsDomain,
       ipfsApiPort,
