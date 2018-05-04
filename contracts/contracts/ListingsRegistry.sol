@@ -5,6 +5,8 @@ pragma solidity 0.4.21;
 /// @author Matt Liu <matt@originprotocol.com>, Josh Fraser <josh@originprotocol.com>, Stan James <stan@originprotocol.com>
 
 import "./Listing.sol";
+import '../../node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol';
+
 
 contract ListingsRegistry {
 
@@ -24,6 +26,8 @@ contract ListingsRegistry {
   // Array of all listings
   Listing[] public listings;
 
+  // Our token
+  ERC20 originToken;
 
   /*
    * Modifiers
@@ -44,11 +48,13 @@ contract ListingsRegistry {
    * Public functions
    */
 
-  function ListingsRegistry()
+  function ListingsRegistry(address _originTokenAddress)
     public
   {
     // Defines origin admin address - may be removed for public deployment
     owner = msg.sender;
+
+    originToken = ERC20(_originTokenAddress);
   }
 
   /// @dev listingsLength(): Return number of listings

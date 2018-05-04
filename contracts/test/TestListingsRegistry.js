@@ -1,4 +1,5 @@
-const contractDefinition = artifacts.require("./ListingsRegistry.sol")
+const listingsRegistryContractDefinition = artifacts.require("./ListingsRegistry.sol")
+const originTokenlistingsRegistryContractDefinition = artifacts.require("./OriginToken.sol")
 
 const initialListingsLength = 0
 const ipfsHash =
@@ -13,24 +14,24 @@ const isEVMError = function(err) {
 contract("ListingsRegistry", accounts => {
   var owner = accounts[0]
   var notOwner = accounts[1]
-  var instance
+  var listingsRegistry
 
   beforeEach(async function() {
-    instance = await contractDefinition.new({ from: owner })
+    listingsRegistry = await listingsRegistryContractDefinition.new(0x00, { from: owner })
   })
 
   it("should have owner as owner of contract", async function() {
-    let contractOwner = await instance.owner()
+    let contractOwner = await listingsRegistry.owner()
     assert.equal(contractOwner, owner)
   })
 
   it("should be able to create a listing", async function() {
     const initPrice = 2
     const initUnitsAvailable = 5
-    await instance.create(ipfsHash, initPrice, initUnitsAvailable, {
+    await listingsRegistry.create(ipfsHash, initPrice, initUnitsAvailable, {
       from: accounts[0]
     })
-    let listingCount = await instance.listingsLength()
+    let listingCount = await listingsRegistry.listingsLength()
     assert.equal(
       listingCount,
       initialListingsLength + 1,
@@ -42,7 +43,7 @@ contract("ListingsRegistry", accounts => {
       hash,
       price,
       unitsAvailable
-    ] = await instance.getListing(initialListingsLength)
+    ] = await listingsRegistry.getListing(initialListingsLength)
     assert.equal(lister, accounts[0], "lister is correct")
     assert.equal(hash, ipfsHash, "ipfsHash is correct")
     assert.equal(price, initPrice, "price is correct")
