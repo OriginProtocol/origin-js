@@ -23,7 +23,7 @@ if (process.env.MAINNET_MNEMONIC) {
     provider: function() {
       return new HDWalletProvider(
         process.env.MAINNET_MNEMONIC,
-        `https://mainnet.infura.io/${process.env.INFURA_ACCESS_TOKEN}`)
+        `https://mainnet.infura.io/${process.env.INFURA_ACCESS_TOKEN}`, 0, 4)
     },
     network_id: 1
   }
@@ -33,7 +33,7 @@ if (process.env.RINKEBY_MNEMONIC) {
     provider: function() {
       return new HDWalletProvider(
         process.env.RINKEBY_MNEMONIC,
-        `https://rinkeby.infura.io/${process.env.INFURA_ACCESS_TOKEN}`)
+        `https://rinkeby.infura.io/${process.env.INFURA_ACCESS_TOKEN}`, 0, 4)
     },
     network_id: 4
   }
@@ -43,7 +43,7 @@ if (process.env.ROPSTEN_MNEMONIC) {
     provider: function() {
       return new HDWalletProvider(
         process.env.ROPSTEN_MNEMONIC,
-        `https://ropsten.infura.io/${process.env.INFURA_ACCESS_TOKEN}`)
+        `https://ropsten.infura.io/${process.env.INFURA_ACCESS_TOKEN}`, 0, 4)
     },
     gas: 3712388,
     network_id: 3
