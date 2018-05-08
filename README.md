@@ -1,8 +1,10 @@
 ![origin_github_banner](https://user-images.githubusercontent.com/673455/37314301-f8db9a90-2618-11e8-8fee-b44f38febf38.png)
 
-![origin_npm_version](https://img.shields.io/npm/v/origin.svg) ![origin_license](https://img.shields.io/npm/l/origin.svg)
+![origin_npm_version](https://img.shields.io/npm/v/origin.svg?style=flat-square&colorA=111d28&colorB=1a82ff) 
+![origin_license](https://img.shields.io/badge/license-MIT-6e3bea.svg?style=flat-square&colorA=111d28)
+![origin_travis_banner](https://img.shields.io/travis/OriginProtocol/origin-js/master.svg?style=flat-square&colorA=111d28)
 
-# Origin Platform
+# Origin Protocol
 
 Origin Protocol is a library of javascript code and Ethereum smart contracts which allow anyone to create decentralized marketplaces, including for fractional usage.
 
@@ -77,22 +79,28 @@ And buyers to:
 
  ### Local
 
-1. Clone
-```
-git clone https://github.com/OriginProtocol/platform origin-platform && cd origin-platform
-```
+1. `git clone` your fork. Note that the latest commits will be on the `develop`
+   branch. So switch to that branch if you want to submit a PR or check out
+   recently merged code.
 
-2. Install:dev (shortcut for `npm install && npm link`). Linking makes this available as a local npm package for local dapp development.
- ```
- npm run install:dev
- ```
+1. Install:dev (shortcut for `npm install && npm link`). Linking makes this available as a local npm package for local dapp development.
+    ```
+    npm run install:dev
+    ```
 
-3. Start the localblockchain and create the build. Code changes will trigger a live rebuild.
- ```
- npm start
- ```
+1. Start the localblockchain and create the build. Code changes will trigger a live rebuild.
+    ```
+    npm start
+    ```
+    
+    In order to conduct test transactions, you can create a new wallet using the following seed phrase (Mnemonic):
+    
+    _**Be careful to back up the seed phrases and private keys for any existing wallets before creating a new one.**_
+    ```
+    candy maple cake sugar pudding cream honey rich smooth crumble sweet treat
+    ```
 
- 4. To develop against a working dapp and UI, see [the instructions in our demo dapp](https://github.com/OriginProtocol/demo-dapp#developing-with-a-local-chain).
+1. To develop against a working dapp and UI, see [the instructions in our demo dapp](https://github.com/OriginProtocol/demo-dapp#developing-with-a-local-chain).
 
  ## Import
 
@@ -120,6 +128,7 @@ git clone https://github.com/OriginProtocol/platform origin-platform && cd origi
  - `ipfsApiPort`
  - `ipfsGatewayPort`
  - `ipfsGatewayProtocol`
+ - `attestationServerUrl`
 
  ## IPFS
 

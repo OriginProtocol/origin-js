@@ -1,10 +1,13 @@
 import ContractService from "./contract-service"
 import IpfsService from "./ipfs-service"
-import UserRegistryService from "./user-registry-service"
+import { Attestations } from "./resources/attestations"
+import Users from "./resources/users"
+import fetch from "cross-fetch"
 
 var resources = {
   listings: require("./resources/listings"),
-  purchases: require("./resources/purchases")
+  purchases: require("./resources/purchases"),
+  users: require("./resources/users")
 }
 
 class Origin {
@@ -12,7 +15,8 @@ class Origin {
     ipfsDomain,
     ipfsApiPort,
     ipfsGatewayPort,
-    ipfsGatewayProtocol
+    ipfsGatewayProtocol,
+    attestationServerUrl
   } = {}) {
     this.contractService = new ContractService()
     this.ipfsService = new IpfsService({
@@ -21,10 +25,11 @@ class Origin {
       ipfsGatewayPort,
       ipfsGatewayProtocol
     })
-
-    // TODO: This service is deprecated. Remove once the demo dapp no longer
-    // depends on it.
-    this.userRegistryService = new UserRegistryService()
+    this.attestations = new Attestations({
+      serverUrl: attestationServerUrl,
+      contractService: this.contractService,
+      fetch
+    })
 
     // Instantiate each resource and give it access to contracts and IPFS
     for (let resourceName in resources) {

@@ -1,4 +1,4 @@
-pragma solidity 0.4.21;
+pragma solidity 0.4.23;
 
 /// @title Listing
 /// @dev Used to keep marketplace of listings for buyers and sellers
@@ -46,7 +46,7 @@ contract ListingsRegistry {
    * Public functions
    */
 
-  function ListingsRegistry(address _originTokenAddress)
+  constructor(address _originTokenAddress)
     public
   {
     // Defines origin admin address - may be removed for public deployment
@@ -64,7 +64,7 @@ contract ListingsRegistry {
       return listings.length;
   }
 
-  /// @dev getListing(): Return listing info for given listing
+  /// @dev getListing(): Return listing info for a given listing
   /// @param _index the index of the listing we want info about
   function getListing(uint _index)
     public
