@@ -37,7 +37,7 @@ const REVIEW_PERIOD = 5 // Time for reviews (only when transaction did not go th
 const COMPLETE = 6 // It's all over
 
 const ROLE_BUYER = 0
-const ROLE_SELLER = 0
+const ROLE_SELLER = 1
 
 const BUYER_TIMEOUT_SECONDS = 21 * 24 * 60 * 60
 
@@ -107,7 +107,7 @@ contract("Purchase", accounts => {
     await instance.pay({ from: buyer, value: valueToPay })
     await instance.sellerConfirmShipped({ from: seller })
     // We immediately confirm receipt (in real world could be a while)
-    await instance.buyerConfirmReceipt({ from: buyer })
+    await instance.buyerConfirmReceipt(5, "", { from: buyer })
     let newStage = await instance.stage()
     assert.equal(
       newStage.toNumber(),
@@ -146,7 +146,7 @@ contract("Purchase", accounts => {
       .times(GAS_PRICE)
 
     // Buyer confirms
-    await instance.buyerConfirmReceipt({ from: buyer })
+    await instance.buyerConfirmReceipt(5, "IPFS", { from: buyer })
 
     // Seller collects
     const sellerBalanceBefore = await web3.eth.getBalance(seller)
@@ -237,7 +237,7 @@ contract("Purchase", accounts => {
     })
 
     it("should allow buyer to confirm reciept", async () => {
-      await purchase.buyerConfirmReceipt({ from: buyer })
+      await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
       assert.equal((await purchase.stage()).toNumber(), SELLER_PENDING)
     })
 
@@ -276,7 +276,7 @@ contract("Purchase", accounts => {
 
     describe("Seller review of Buyer", async () => {
       beforeEach(async () => {
-        await purchase.buyerConfirmReceipt({ from: buyer })
+        await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
       })
 
       const itShouldAllowRating = async rating => {
@@ -311,6 +311,61 @@ contract("Purchase", accounts => {
               reviewIpfsHash,
               {
                 from: seller
+              }
+            )
+            assert.ok(false, "allowed an invalid rating")
+          } catch (err) {
+            assert.ok(isEVMError(err), "an EVM error should be thrown")
+          }
+        })
+      }
+
+      itShouldAllowRating(1)
+      itShouldAllowRating(2)
+      itShouldAllowRating(3)
+      itShouldAllowRating(4)
+      itShouldAllowRating(5)
+
+      itShouldNotAllowRating(-1)
+      itShouldNotAllowRating(0)
+      itShouldNotAllowRating(6)
+      itShouldNotAllowRating(255)
+      itShouldNotAllowRating(3000)
+    })
+
+    describe("Buyer review of Seller", async () => {
+      const itShouldAllowRating = async rating => {
+        it("Should allow rating " + rating, async () => {
+          const transaction = await purchase.buyerConfirmReceipt(
+            rating,
+            reviewIpfsHash,
+            {
+              from: buyer
+            }
+          )
+          const reviewLog = transaction.logs.find(
+            e => e.event == "PurchaseReview"
+          )
+          assert.equal(reviewLog.args.reviewer, buyer, "reviewer")
+          assert.equal(reviewLog.args.reviewee, seller, "reviewee")
+          assert.equal(
+            reviewLog.args.revieweeRole.toNumber(),
+            ROLE_SELLER,
+            "revieweeRole"
+          )
+          assert.equal(reviewLog.args.rating, rating, "rating")
+          assert.equal(reviewLog.args.ipfsHash, reviewIpfsBytes, "ipfsHash")
+        })
+      }
+
+      const itShouldNotAllowRating = async rating => {
+        it("Should not allow rating " + rating, async () => {
+          try {
+            const transaction = await purchase.buyerConfirmReceipt(
+              rating,
+              reviewIpfsHash,
+              {
+                from: buyer
               }
             )
             assert.ok(false, "allowed an invalid rating")
