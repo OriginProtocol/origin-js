@@ -71,7 +71,7 @@ contract ListingsRegistry {
     constant
     returns (Listing, address, bytes32, uint, uint)
   {
-    // Test in truffle deelop:
+    // Test in truffle develop:
     // ListingsRegistry.deployed().then(function(instance){ return instance.getListing.call(0) })
 
     // TODO (Stan): Determine if less gas to do one array lookup into var, and
@@ -100,6 +100,8 @@ contract ListingsRegistry {
     public
     returns (uint)
   {
+    require(originToken.balanceOf(msg.sender) > 0, "Origin Token required.");
+
     listings.push(new Listing(msg.sender, _ipfsHash, _price, _unitsAvailable));
     emit NewListing(listings.length-1);
     return listings.length;

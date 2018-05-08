@@ -1,3 +1,4 @@
+var OriginToken = artifacts.require("./OriginToken.sol")
 var ListingsRegistry = artifacts.require("./ListingsRegistry.sol");
 var Listing = artifacts.require("./Listing.sol");
 var Purchase = artifacts.require("./Purchase.sol");
@@ -23,6 +24,7 @@ async function deploy_sample_contracts(network) {
   const a_buyer_account = accounts[2]
   const another_buyer_account = accounts[3]
 
+  const originToken = await OriginToken.deployed()
   const listingsRegistry = await ListingsRegistry.deployed()
 
   const getListingContract = async transaction => {
@@ -43,6 +45,13 @@ async function deploy_sample_contracts(network) {
   console.log(`a_seller_account:      ${a_seller_account}`)
   console.log(`a_buyer_account:       ${a_buyer_account}`)
   console.log(`another_buyer_account: ${another_buyer_account}`)
+
+  // Fund sample users
+  await originToken.transfer(a_seller_account, 100, { from: default_account })
+  await originToken.transfer(a_buyer_account, 100, { from: default_account })
+  await originToken.transfer(another_buyer_account, 100, { from: default_account })
+/*
+  // Create sample listings
 
   await listingsRegistry.create(
     "0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9",
@@ -95,4 +104,5 @@ async function deploy_sample_contracts(network) {
     await purchase.buyerConfirmReceipt({ from: another_buyer_account })
     await purchase.sellerCollectPayout({ from: default_account })
   }
+  */
 }

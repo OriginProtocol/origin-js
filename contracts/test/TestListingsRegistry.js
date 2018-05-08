@@ -17,7 +17,17 @@ contract("ListingsRegistry", accounts => {
   var listingsRegistry
 
   beforeEach(async function() {
-    listingsRegistry = await listingsRegistryContractDefinition.new(0x00, { from: owner })
+
+    // ERC20 stuff
+    originToken = await originTokenlistingsRegistryContractDefinition.new({ from: owner })
+    console.log(`originToken contract address: ${originToken.address}`)
+    // send token to other user
+    await originToken.transfer(notOwner, 1000, { from: owner })
+
+    let newBalance = await originToken.balanceOf(notOwner)
+    console.log(`newBalance: ${newBalance}`)
+
+    listingsRegistry = await listingsRegistryContractDefinition.new(originToken.address, { from: owner })
   })
 
   it("should have owner as owner of contract", async function() {
