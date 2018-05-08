@@ -12,6 +12,7 @@ contract Purchase {
   */
 
   event PurchaseChange(Stages stage);
+  event PurchaseReview(address reviewer, address reviewee, Roles revieweeRole, uint8 rating, bytes32 ipfsHash);
 
   /*
   * Enum
@@ -25,6 +26,11 @@ contract Purchase {
     IN_DISPUTE, // We are in a dispute
     REVIEW_PERIOD, // Time for reviews (only when transaction did not go through)
     COMPLETE // It's all over
+  }
+
+  enum Roles {
+    BUYER,
+    SELLER
   }
 
   /*
@@ -128,18 +134,28 @@ contract Purchase {
       emit PurchaseChange(internalStage);
   }
 
-  function sellerCollectPayout()
+  function sellerCollectPayout(uint8 _rating, bytes32 _ipfsHash)
   public
   isSeller
   atStage(Stages.SELLER_PENDING)
   {
-    internalStage = Stages.COMPLETE;
-    emit PurchaseChange(internalStage);
+    // Checks
+    require(_rating >= 1);
+    require(_rating <= 5);
 
+    // State changes
+    internalStage = Stages.COMPLETE;
+    address seller = listingContract.owner();
+
+    // Events
+    emit PurchaseChange(internalStage);
+    emit PurchaseReview(seller, buyer, Roles.BUYER, _rating, _ipfsHash);
+
+    // Transfers
     // Send contract funds to seller (ie owner of Listing)
     // Transfering money always needs to be the last thing we do, do avoid
     // rentrancy bugs. (Though here the seller would just be getting their own money)
-    listingContract.owner().transfer(address(this).balance);
+    seller.transfer(address(this).balance);
   }
 
   function openDispute()

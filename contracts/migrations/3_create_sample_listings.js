@@ -93,6 +93,6 @@ async function deploy_sample_contracts(network) {
     purchase = await buyListing(ticketsListing, 1, another_buyer_account)
     await purchase.sellerConfirmShipped({ from: default_account })
     await purchase.buyerConfirmReceipt({ from: another_buyer_account })
-    await purchase.sellerCollectPayout({ from: default_account })
+    await purchase.sellerCollectPayout(4,"",{ from: default_account })
   }
 }
