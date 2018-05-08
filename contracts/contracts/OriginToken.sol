@@ -1,6 +1,6 @@
 pragma solidity ^0.4.21;
 
-import '../../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
+import '../../node_modules/openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 
 contract OriginToken is StandardToken {
   string public name = 'OriginToken';
@@ -8,7 +8,7 @@ contract OriginToken is StandardToken {
   uint8 public decimals = 2;
   uint public INITIAL_SUPPLY = 12000;
 
-  function OriginToken() public {
+  constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
