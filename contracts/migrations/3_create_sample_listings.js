@@ -50,7 +50,7 @@ async function deploy_sample_contracts(network) {
   await originToken.transfer(a_seller_account, 100, { from: default_account })
   await originToken.transfer(a_buyer_account, 100, { from: default_account })
   await originToken.transfer(another_buyer_account, 100, { from: default_account })
-/*
+
   // Create sample listings
 
   await listingsRegistry.create(
@@ -104,5 +104,5 @@ async function deploy_sample_contracts(network) {
     await purchase.buyerConfirmReceipt({ from: another_buyer_account })
     await purchase.sellerCollectPayout({ from: default_account })
   }
-  */
+
 }
