@@ -27,7 +27,15 @@ contract("ListingsRegistry", accounts => {
     let newBalance = await originToken.balanceOf(notOwner)
     console.log(`newBalance: ${newBalance}`)
 
-    listingsRegistry = await ListingsRegistry.deployed()
+    // TODO: This is an odd hybrid approach. We use the OriginToken contract
+    // deployed as part of 2_deploy_contracts migration, but here we create a NEW
+    // ListingsRegistry contract. I couldn't get "should be able to create a listing"
+    // working with the migrated contract.
+    listingsRegistry = await ListingsRegistry.new(
+      originToken.address,
+      { from: owner }
+    )
+
   })
 
   it("should have owner as owner of contract", async function() {
@@ -35,20 +43,18 @@ contract("ListingsRegistry", accounts => {
     assert.equal(contractOwner, owner)
   })
 
-/*
   it("should be able to create a listing", async function() {
     const initPrice = 2
     const initUnitsAvailable = 5
     let initialListingsLength = await listingsRegistry.listingsLength()
-    console.log(`initialListingsLength: ${initialListingsLength+0}`)
+
     await listingsRegistry.create(ipfsHash, initPrice, initUnitsAvailable, {
       from: accounts[0]
     })
     let listingCount = await listingsRegistry.listingsLength()
-    console.log(`listingCount: ${listingCount+0}`)
     assert.equal(
-      listingCount + 0,
-      initialListingsLength + 1,
+      listingCount.toNumber(),
+      initialListingsLength.toNumber() + 1,
       "listings count has incremented"
     )
     let [
@@ -67,6 +73,5 @@ contract("ListingsRegistry", accounts => {
       "unitsAvailable is correct"
     )
   })
-  */
-
 })
+
