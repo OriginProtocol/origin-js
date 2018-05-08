@@ -14,12 +14,13 @@ contract("ListingsRegistry", accounts => {
   var owner = accounts[0]
   var notOwner = accounts[1]
   var listingsRegistry
+  var originToken
 
   beforeEach(async function() {
 
     // ERC20 stuff
     // originToken = await originTokenlistingsRegistryContractDefinition.new({ from: owner })
-    const originToken = await OriginToken.deployed()
+    originToken = await OriginToken.deployed()
     console.log(`originToken contract address: ${originToken.address}`)
     // send token to other user
     await originToken.transfer(notOwner, 1000, { from: owner })
@@ -48,8 +49,15 @@ contract("ListingsRegistry", accounts => {
     const initUnitsAvailable = 5
     let initialListingsLength = await listingsRegistry.listingsLength()
 
+    // approve OriginToken transfer
+    await originToken.approve(
+      accounts[0],
+      1,
+      { from: accounts[1] }
+    )
+
     await listingsRegistry.create(ipfsHash, initPrice, initUnitsAvailable, {
-      from: accounts[0]
+      from: accounts[1]
     })
     let listingCount = await listingsRegistry.listingsLength()
     assert.equal(
@@ -64,7 +72,7 @@ contract("ListingsRegistry", accounts => {
       price,
       unitsAvailable
     ] = await listingsRegistry.getListing(initialListingsLength)
-    assert.equal(lister, accounts[0], "lister is correct")
+    assert.equal(lister, accounts[1], "lister is correct")
     assert.equal(hash, ipfsHash, "ipfsHash is correct")
     assert.equal(price, initPrice, "price is correct")
     assert.equal(

@@ -100,7 +100,10 @@ contract ListingsRegistry {
     public
     returns (uint)
   {
+    // Require origin token
     require(originToken.balanceOf(msg.sender) > 0, "Origin Token required.");
+    // Dump first economic activity: "pay" 1 Origin Token to contract owner
+    originToken.transferFrom(msg.sender, owner, 1);
 
     listings.push(new Listing(msg.sender, _ipfsHash, _price, _unitsAvailable));
     emit NewListing(listings.length-1);
