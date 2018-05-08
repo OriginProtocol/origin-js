@@ -2,11 +2,9 @@ pragma solidity 0.4.21;
 
 /// @title Listing
 /// @dev Used to keep marketplace of listings for buyers and sellers
-/// @author Matt Liu <matt@originprotocol.com>, Josh Fraser <josh@originprotocol.com>, Stan James <stan@originprotocol.com>
 
 import "./Listing.sol";
 import '../../node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol';
-
 
 contract ListingsRegistry {
 
