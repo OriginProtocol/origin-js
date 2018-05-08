@@ -242,13 +242,6 @@ contract("Purchase", accounts => {
 
   describe("Buyer timeout", async () => {
     beforeEach(async () => {
-      listing = await Listing.new(
-        seller,
-        ipfsHash,
-        totalPrice,
-        unitsAvailable,
-        { from: seller }
-      )
       const buyTransaction = await listing.buyListing(1, {
         from: buyer,
         value: totalPrice // Pay all so that we are in buyer pending
