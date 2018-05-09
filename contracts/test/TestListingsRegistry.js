@@ -51,8 +51,8 @@ contract("ListingsRegistry", accounts => {
 
     // approve OriginToken transfer
     await originToken.approve(
-      accounts[0],
-      1,
+      listingsRegistry.address,
+      10,
       { from: accounts[1] }
     )
 
