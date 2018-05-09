@@ -66,6 +66,21 @@ async function deploy_sample_contracts(network) {
   await originToken.approve(listingsRegistry.address, originTokenToApprove,
     { from: another_buyer_account })
 
+
+  // Note: In web3 1.0 `getData` was changed to `encodeABI`
+  // When truffle updates this will need to change
+  web3.eth.sendTransaction({
+    from: default_account,
+    to: listingsRegistry.address,
+    gas: gasToPay,
+    data: listingsRegistry.contract.create.getData(
+      "0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9",
+      web3.toWei(3, "ether"),
+      1
+    )
+  })
+
+/*
   // Create sample listings
   await listingsRegistry.create(
     "0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9",
@@ -118,5 +133,5 @@ async function deploy_sample_contracts(network) {
     await purchase.buyerConfirmReceipt({ from: another_buyer_account })
     await purchase.sellerCollectPayout({ from: default_account })
   }
-
+*/
 }
