@@ -4,7 +4,7 @@ pragma solidity 0.4.23;
 /// @dev Used to keep marketplace of listings for buyers and sellers
 
 import "./Listing.sol";
-import '../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
+import '../../node_modules/openzeppelin-solidity/contracts/token/ERC827/ERC827.sol';
 
 contract ListingsRegistry {
 
@@ -25,7 +25,7 @@ contract ListingsRegistry {
   Listing[] public listings;
 
   // Our token
-  ERC20 originToken;
+  ERC827 originToken;
 
   /*
    * Modifiers
@@ -52,7 +52,7 @@ contract ListingsRegistry {
     // Defines origin admin address - may be removed for public deployment
     owner = msg.sender;
 
-    originToken = ERC20(_originTokenAddress);
+    originToken = ERC827(_originTokenAddress);
   }
 
   /// @dev listingsLength(): Return number of listings
