@@ -100,12 +100,17 @@ contract ListingsRegistry {
     public
     returns (uint)
   {
-    // Require origin token
-    require(originToken.balanceOf(msg.sender) > 0, "Origin Token required.");
-    // Dump first economic activity: "pay" 1 Origin Token to contract owner
-    originToken.transferFrom(msg.sender, owner, 1);
+    // TODO: We should avoid using `tx.origin` per
+    // https://ethereum.stackexchange.com/a/1892/20332
+    // ...But how else to determine who really made the listing?
+    // Maybe use the ERC725 identity?
 
-    listings.push(new Listing(msg.sender, _ipfsHash, _price, _unitsAvailable));
+    // Require origin token
+    require(originToken.balanceOf(tx.origin) > 0, "Origin Token required.");
+    // Dump first economic activity: "pay" 1 Origin Token to contract owner
+    originToken.transferFrom(tx.origin, owner, 1);
+
+    listings.push(new Listing(tx.origin, _ipfsHash, _price, _unitsAvailable));
     emit NewListing(listings.length-1);
     return listings.length;
   }

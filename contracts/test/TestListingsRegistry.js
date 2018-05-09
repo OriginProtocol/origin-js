@@ -21,12 +21,11 @@ contract("ListingsRegistry", accounts => {
     // ERC20 stuff
     // originToken = await originTokenlistingsRegistryContractDefinition.new({ from: owner })
     originToken = await OriginToken.deployed()
-    console.log(`originToken contract address: ${originToken.address}`)
     // send token to other user
     await originToken.transfer(notOwner, 1000, { from: owner })
 
     let newBalance = await originToken.balanceOf(notOwner)
-    console.log(`newBalance: ${newBalance}`)
+    console.log(`Origin Token: newBalance: ${newBalance}`)
 
     // TODO: This is an odd hybrid approach. We use the OriginToken contract
     // deployed as part of 2_deploy_contracts migration, but here we create a NEW
