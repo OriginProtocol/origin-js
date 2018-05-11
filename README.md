@@ -3,7 +3,7 @@
 ![origin_npm_version](https://img.shields.io/npm/v/origin.svg?style=flat-square&colorA=111d28&colorB=1a82ff)
 ![origin_license](https://img.shields.io/badge/license-MIT-6e3bea.svg?style=flat-square&colorA=111d28)
 ![origin_travis_banner](https://img.shields.io/travis/OriginProtocol/origin-js/master.svg?style=flat-square&colorA=111d28)
-![discord](https://img.shields.io/discord/404673842007506945.svg)
+![discord](https://img.shields.io/discord/404673842007506945.svg?style=flat-square)
 
 
 # Origin Protocol Overview
@@ -98,11 +98,11 @@ This is still an alpha version which will evolve significantly before the main n
 The library is available as an NPM package you can add to your project using NPM or Yarn.
 
 ```
-npm i -S @originprotocol/origin
-
+npm i -S origin
+```
 or
-
-yarn add @originprotocol/origin
+```
+yarn add origin
 ```
 
 A browser-compatible standalone JavaScript file `origin.js` is available in the "Releases" tab, and will soon be hosted on originprotocol.com.
@@ -110,7 +110,7 @@ A browser-compatible standalone JavaScript file `origin.js` is available in the 
 ### Importing and Configuration Options
 
 ```
-import Origin from '@originprotocol/origin'
+import Origin from 'origin'
 
 const configOptions = {
   option: 'value'
