@@ -16,14 +16,13 @@ Origin Protocol is a set of Ethereum smart contracts and a JavaScript library th
 
 Please refer to our [product brief](https://www.originprotocol.com/product-brief) and [technical whitepaper](https://www.originprotocol.com/whitepaper) for more detail.
 
+This library is an abstraction layer for developers who want to build DApps on Origin Protocol, and is also used to build the [Origin Demo DApp](https://github.com/OriginProtocol/demo-dapp).
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Contents
 
-- [Get Involved](#get-involved)
-  - [What We're Building](#what-were-building)
-  - [Follow Our Progress](#follow-our-progress)
+- [Get Involved & Follow Our Progress](#get-involved--follow-our-progress)
   - [Contributing](#contributing)
 - [Origin.js](#originjs)
 - [Using Origin.js in Your Project](#using-originjs-in-your-project)
@@ -43,27 +42,7 @@ Please refer to our [product brief](https://www.originprotocol.com/product-brief
 - [Origin Protocol](#origin-protocol)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-## Get Involved
-
-### What We're Building
-
-This library is an abstraction layer for developers who want to build DApps on Origin Protocol, and is also used to build the [Origin Demo DApp](https://github.com/OriginProtocol/demo-dapp).
-
-The library will make it easy for sellers to do things like:
-
- - Create listings.
- - Update listings.
- - Delete listings.
- - Validate listings.
-
-And buyers to:
-
- - Browse listings.
- - Create bookings.
- - Update bookings.
- - Cancel bookings.
-
-### Follow Our Progress
+## Get Involved & Follow Our Progress
 
 **This repo is under active development. We welcome your participation!**
 
@@ -85,7 +64,6 @@ Read the [contributing guidelines](CONTRIBUTING.md) for details.
 
 ## Origin.js
 
-Welcome to the origin.js documentation!   
 Origin.js is a JavaScript library for interacting with the Origin protocol.
 
 Using the library you can create new listings from your applications, purchase them, or update them from your own off-chain applications.
@@ -129,7 +107,17 @@ Valid configOptions are:
 
 ### Origin.js API
 
-_...this is a work in progress!_
+The API documentation will explain how developers can use the origin.js library to create and manage decentralized marketplaces that are built on top of IPFS and the Ethereum network.
+
+Origin.js aims to create an easy and flexible abstraction layer that:
+
+- Generates and deploys secure Ethereum smart contracts to the blockchain.
+- Creates and posts user and listing metadata to distributed IPFS nodes
+- Queries against open-source indexing servers to render content in decentralized applications (DApps)
+
+Origin.js enables developers to create DApps that onboard new users to the Origin platform, add new listings to the listings registry, create booking contracts, close out bookings (transfer funds, write reviews, etc.), and more.
+
+Visit [docs.originprotocol.com](http://docs.originprotocol.com/)
 
 ## Building for Local Development
 
