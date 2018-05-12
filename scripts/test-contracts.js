@@ -28,7 +28,7 @@ const runTests = async () => {
 const start = async () => {
   console.log(chalk`\n{bold.hex('#26d198') ⬢  Starting Local Blockchain }\n`);
   await startGanache()
-  console.log(chalk`\n{bold.hex('#1a82ff') ⬢  Starting IPFS }\n`);
+  console.log(chalk`\n{bold.hex('#1a82ff') ⬢  Starting Local IPFS }\n`);
   await startIpfs()
 
   runTests()

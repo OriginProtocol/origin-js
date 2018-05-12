@@ -13,7 +13,7 @@ const start = async () => {
     await startGanache()
     console.log(chalk`\n{bold.hex('#6e3bea') ⬢  Deploying Smart Contracts }\n`);
     await deployContracts()
-    console.log(chalk`\n{bold.hex('#26d198') ⬢  Starting IPFS }\n`);
+    console.log(chalk`\n{bold.hex('#26d198') ⬢  Starting Local IPFS }\n`);
     await startIpfs()
   }
   catch(error) {
