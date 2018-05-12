@@ -125,7 +125,8 @@ Visit [docs.originprotocol.com](http://docs.originprotocol.com/)
 
 You need some global environment configurations
 
-- install [Node.js](https://github.com/nodejs/node) v9.11. We recommend using [nvm and avn to manage the node versions](https://gaboesquivel.com/blog/2015/automatic-node.js-version-switching/).
+- Install [Node.js](https://github.com/nodejs/node) v9.11.
+It is recommended to use a node version manager such as [avn](https://github.com/creationix/nvm) or [tj/n](https://github.com/tj/n).
 
 ### Clone and Run the Project
 
