@@ -1,8 +1,9 @@
 // For now, we are just wrapping the methods that are already in
 // contractService and ipfsService.
-import ResourceBase from "../ResourceBase"
 
-class Listings extends ResourceBase{
+import ResourceBase from "./_resource-base"
+
+class Listings extends ResourceBase {
   constructor({ contractService, ipfsService }) {
     super({ contractService, ipfsService })
     this.contractDefinition = this.contractService.listingContract

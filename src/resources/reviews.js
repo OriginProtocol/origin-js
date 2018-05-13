@@ -1,4 +1,4 @@
-import ResourceBase from "../ResourceBase"
+import ResourceBase from "./_resource-base"
 
 class Reviews extends ResourceBase{
   constructor({ contractService, ipfsService }) {
