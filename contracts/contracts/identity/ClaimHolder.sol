@@ -55,19 +55,22 @@ contract ClaimHolder is KeyHolder, ERC735 {
         uint256[] _claimType,
         address[] _issuer,
         bytes _signature,
-        bytes _data
+        bytes _data,
+        uint256[] _offsets
     )
         public
     {
+        uint offset = 0;
         for (uint8 i = 0; i < _claimType.length; i++) {
             addClaim(
               _claimType[i],
               1,
               _issuer[i],
               getBytes(_signature, (i * 65), 65),
-              getBytes(_data, (i * 32), 32),
+              getBytes(_data, offset, _offsets[i]),
               ""
             );
+            offset += _offsets[i];
         }
     }
 
