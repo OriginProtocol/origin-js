@@ -4,18 +4,23 @@
 ![origin_license](https://img.shields.io/badge/license-MIT-6e3bea.svg?style=flat-square&colorA=111d28)
 ![origin_travis_banner](https://img.shields.io/travis/OriginProtocol/origin-js/master.svg?style=flat-square&colorA=111d28)
 
-# Origin Protocol
+# origin-js
 
-Origin Protocol is a library of javascript code and Ethereum smart contracts which allow anyone to create decentralized marketplaces, including for fractional usage.
+origin-js is a library of javascript code and Ethereum smart contracts which allow anyone to create decentralized marketplaces, including for fractional usage. It is an open source projectd created by [Origin Protocol](https://www.originprotocol.com/). 
 
-Please refer to our [product brief](https://www.originprotocol.com/product-brief) and [technical whitepaper](https://www.originprotocol.com/whitepaper) for more detail.
+To learn more about Origin Protocol, please read our [product brief](https://www.originprotocol.com/product-brief) and [whitepaper](https://www.originprotocol.com/whitepaper) for a high-level description of what we're building and why it matters. Our official website is [https://www.originprotocol.com](https://www.originprotocol.com).
 
- - [README for Javascript code](#originjs-documentation)
+⚠️ This is an alpha version which is not suitable for production environments.
 
-Documentation for origin.js is located here: http://docs.originprotocol.com/
+## Documentation
+[origin-js documentation](http://docs.originprotocol.com/)
 
-### Warning
-This is still an alpha version which will evolve significantly before the main net release.
+## Demo
+
+origin-js is showcased in our Demo DApp currently running on the Rinkeby testnet. 
+- [Overview and step-by-step instructions](https://medium.com/originprotocol/origin-demo-dapp-is-now-live-on-testnet-835ae201c58)
+- [Live Demo](http://demo.originprotocol.com)
+- [Github Repo](https://github.com/OriginProtocol/demo-dapp)
 
 ## Using origin-js in your project
 
