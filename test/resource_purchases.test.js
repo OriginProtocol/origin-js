@@ -121,6 +121,7 @@ describe("Purchase Resource", function() {
         purchaseAddress: purchase.address
       })
       expect(purchaseReviews[1].rating).to.equal(4)
+      expect(purchaseReviews[1].revieweeAddress).to.equal(purchase.buyerAddress)
       expect(purchaseReviews[1].revieweeRole).to.equal("BUYER")
     })
 

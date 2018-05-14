@@ -32,8 +32,9 @@ class Reviews extends ResourceBase{
           const hasHash = values.ipfsHash != "0x0000000000000000000000000000000000000000000000000000000000000000"
           const ipfsHash = (hasHash ? self.contractService.getIpfsHashFromBytes32(values.ipfsHash) : undefined)
           return {
-            reviewer: values.reviewer,
-            reviewee: values.reviewee,
+            purchaseAddress: address,
+            reviewerAddress: values.reviewer,
+            revieweeAddress: values.reviewee,
             revieweeRole: ["BUYER", "SELLER"][values.revieweeRole],
             rating: parseInt(values.rating),
             ipfsHash: ipfsHash,
