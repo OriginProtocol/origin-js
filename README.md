@@ -36,7 +36,10 @@ yarn add origin
 
 ### Plain javascript
 
-A browser-compatible plain javascript file `origin.js` is available in the [Releases section](https://github.com/OriginProtocol/origin-js/releases). A hosted version is at https://code.originprotocol.com/origin-js/origin-v0.5.10.js. 
+A browser-compatible plain javascript file `origin.js` is available in the [Releases section](https://github.com/OriginProtocol/origin-js/releases). A hosted version can be directly included in your html as:
+```html
+<script src="https://code.originprotocol.com/origin-js/origin-v0.5.10.js"></script>
+```
 
 `npm build` will generate this file and save it to `dist/origin.js`.
 
