@@ -2,6 +2,7 @@ pragma solidity ^0.4.23;
 
 import './ERC735.sol';
 import './KeyHolder.sol';
+import "./ClaimHolderLibrary.sol";
 
 contract ClaimHolder is KeyHolder, ERC735 {
 
@@ -66,8 +67,8 @@ contract ClaimHolder is KeyHolder, ERC735 {
               _claimType[i],
               1,
               _issuer[i],
-              getBytes(_signature, (i * 65), 65),
-              getBytes(_data, offset, _offsets[i]),
+              ClaimHolderLibrary.getBytes(_signature, (i * 65), 65),
+              ClaimHolderLibrary.getBytes(_data, offset, _offsets[i]),
               ""
             );
             offset += _offsets[i];
@@ -125,19 +126,5 @@ contract ClaimHolder is KeyHolder, ERC735 {
         returns(bytes32[] claimIds)
     {
         return claimsByType[_claimType];
-    }
-
-    function getBytes(bytes _str, uint256 _offset, uint256 _length)
-        internal
-        pure
-        returns (bytes)
-    {
-        bytes memory sig = new bytes(_length);
-        uint256 j = 0;
-        for (uint256 k = _offset; k< _offset + _length; k++) {
-          sig[j] = _str[k];
-          j++;
-        }
-        return sig;
     }
 }

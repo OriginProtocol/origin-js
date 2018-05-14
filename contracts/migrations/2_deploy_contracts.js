@@ -1,8 +1,10 @@
-var ListingsRegistry = artifacts.require("./ListingsRegistry.sol");
-var Listing = artifacts.require("./Listing.sol");
-var UserRegistry = artifacts.require("./UserRegistry.sol");
-var PurchaseLibrary = artifacts.require("./PurchaseLibrary.sol");
-var OriginIdentity = artifacts.require("./OriginIdentity.sol");
+var ClaimHolder = artifacts.require("./ClaimHolder.sol")
+var ClaimHolderLibrary = artifacts.require("./ClaimHolderLibrary.sol")
+var ListingsRegistry = artifacts.require("./ListingsRegistry.sol")
+var Listing = artifacts.require("./Listing.sol")
+var UserRegistry = artifacts.require("./UserRegistry.sol")
+var PurchaseLibrary = artifacts.require("./PurchaseLibrary.sol")
+var OriginIdentity = artifacts.require("./OriginIdentity.sol")
 
 module.exports = function(deployer, network) {
   return deployer.then(() => {
@@ -11,10 +13,13 @@ module.exports = function(deployer, network) {
 }
 
 async function deployContracts(deployer) {
-  await deployer.deploy(PurchaseLibrary);
+  await deployer.deploy(PurchaseLibrary)
   await deployer.link(PurchaseLibrary, ListingsRegistry)
   await deployer.link(PurchaseLibrary, Listing)
-  await deployer.deploy(ListingsRegistry);
-  await deployer.deploy(UserRegistry);
-  await deployer.deploy(OriginIdentity);
+  await deployer.deploy(ListingsRegistry)
+  await deployer.deploy(ClaimHolderLibrary)
+  await deployer.link(ClaimHolderLibrary, ClaimHolder)
+  await deployer.link(ClaimHolderLibrary, OriginIdentity)
+  await deployer.deploy(UserRegistry)
+  await deployer.deploy(OriginIdentity)
 }
