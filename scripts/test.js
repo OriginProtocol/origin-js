@@ -8,6 +8,8 @@ const testFormat = require('./helpers/test-format')
 
 const start = async () => {
   try {
+    console.log(chalk`\n{bold.hex('#6e3bea') ⬢  Testing Formatting }\n`);
+    await testFormat()
     console.log(chalk`\n{bold.hex('#26d198') ⬢  Starting Local Blockchain }\n`);
     await startGanache()
     console.log(chalk`\n{bold.hex('#1a82ff') ⬢  Testing Smart Contracts }\n`);
@@ -18,8 +20,6 @@ const start = async () => {
     await startIpfs()
     console.log(chalk`\n{bold.hex('#1a82ff') ⬢  Testing Javascript }\n`);
     await testJavascript()
-    console.log(chalk`\n{bold.hex('#6e3bea') ⬢  Testing Formatting }\n`);
-    await testFormat()
     console.log(chalk`\n{bold ✅  Tests passed. :) }\n`);
     process.exit()
   }
