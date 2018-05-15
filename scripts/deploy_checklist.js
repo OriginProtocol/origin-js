@@ -34,22 +34,27 @@ async function getBalances(accounts){
   return balances
 }
 
-getBalances(allAccounts).then(function(accounts){
-  accounts.forEach(function(account){
+const run = async () => {
+  var accounts = await getBalances(allAccounts);
+  for(var i = 0 ; i < accounts.length; i++){
+    var account = accounts[i]
     if( account.eth < limit){
       if( account.provider == ropsten){
         console.log(`Low Ropsten wallet loading via api: ${account.address}`)
-        got(`http://faucet.ropsten.be:3001/donate/${account.address}`,{json: true}).then(response => {
+        try{
+          var response = await got(`http://faucet.ropsten.be:3001/donate/${account.address}`,{json: true})
           console.log(response.body.message || "Success");
-        }).catch(error => {
+        } catch(error) {
           console.log(error)
-        })
+        }
       } else {
-        console.log(`Low Rinkby wallet: ${account.address}`)
-        console.log(`Go to https://faucet.rinkeby.io/`)
+          console.log(`Low Rinkby wallet: ${account.address}`)
+          console.log(`Go to https://faucet.rinkeby.io/`)
       }
     } else {
       console.log(`Good ${account.provider} wallet: ${account.address}\n`)
     }
-  })
-})
+  }
+}
+
+run()
