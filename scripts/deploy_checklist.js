@@ -1,35 +1,42 @@
 var Web3 = require('web3')
-const got = require('got');
+var HDWalletProvider = require("truffle-hdwallet-provider");
 
-let limit = 3 // need at least 3 etht to get through deploy errors
+const got = require('got')
+
+let mnemonic = process.env.MNEMONIC
+
+let ethLimit = 3 // need at least 3 etht to get through deploy errors
+let addressCount = 4
 let rinkby = 'https://rinkeby.infura.io/'
 let ropsten = 'https://ropsten.infura.io/'
 
-
-let rinkbyAccounts = process.env.RINKBY_ACCOUNTS.split(',')
-let ropstenAccounts = process.env.ROPSTEN_ACCOUNTS.split(',')
-
 let allAccounts = []
 
-rinkbyAccounts.forEach(function(address){
-  allAccounts.push({provider: rinkby, address: address})
-})
+var provider = new HDWalletProvider(mnemonic, rinkby,0,addressCount);
+var web3 = new Web3()
+web3.setProvider(provider)
+allAccounts.push({provider: rinkby, web3: web3 })
 
-ropstenAccounts.forEach(function(address){
-  allAccounts.push({provider: ropsten, address: address})
-})
+var provider = new HDWalletProvider(mnemonic, ropsten,0,addressCount);
+var web3 = new Web3()
+web3.setProvider(provider)
+allAccounts.push({provider: ropsten, web3: web3 })
 
-async function getBalances(accounts){
+async function getBalances(providers){
   var balances = []
 
-  for (let index = 0; index < accounts.length; index++) {
-    var account = accounts[index]
+  for (var index = 0; index < providers.length; index++) {
+    var provider = providers[index]
 
-    var web3 = new Web3(account.provider)
-
-    var result = await web3.eth.getBalance(account.address)
-    var balance = web3.utils.fromWei(result)
-    balances.push({provider: account.provider, address: account.address, eth: balance})
+    var web3 = provider.web3
+    var accounts = await web3.eth.getAccounts()
+    
+    for( var i = 0 ; i < accounts.length; i ++){
+      var account = accounts[i]
+      var result = await web3.eth.getBalance(account)
+      var balance = web3.utils.fromWei(result)
+      balances.push({provider: provider.provider, address: account, eth: balance})
+    }
   }
   return balances
 }
@@ -38,9 +45,9 @@ const run = async () => {
   var accounts = await getBalances(allAccounts);
   for(var i = 0 ; i < accounts.length; i++){
     var account = accounts[i]
-    if( account.eth < limit){
+    if( account.eth < ethLimit){
       if( account.provider == ropsten){
-        console.log(`Low Ropsten wallet loading via api: ${account.address}`)
+        console.log(`\nLow Ropsten wallet loading via api: ${account.address}`)
         try{
           var response = await got(`http://faucet.ropsten.be:3001/donate/${account.address}`,{json: true})
           console.log(response.body.message || "Success");
@@ -48,13 +55,14 @@ const run = async () => {
           console.log(error)
         }
       } else {
-          console.log(`Low Rinkby wallet: ${account.address}`)
-          console.log(`Go to https://faucet.rinkeby.io/`)
+          console.log(`\nLow Rinkby wallet: ${account.address}`)
+          console.log(`Go to https://faucet.rinkeby.io/ for ${account.address}`)
       }
     } else {
-      console.log(`Good ${account.provider} wallet: ${account.address}\n`)
+      console.log(`\nGood ${account.provider} wallet: ${account.address}`)
     }
   }
+  return
 }
 
-run()
+run().then(function(){ process.exit() } )
