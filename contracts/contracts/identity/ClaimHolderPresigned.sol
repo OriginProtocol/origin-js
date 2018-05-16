@@ -21,6 +21,13 @@ contract ClaimHolderPresigned is ClaimHolderRegistered {
         ClaimHolderRegistered(_userRegistryAddress)
         public
     {
-        addClaims(_claimType, _issuer, _signature, _data, _offsets);
+        ClaimHolderLibrary.addMultiple(
+            claims,
+            _claimType,
+            _issuer,
+            _signature,
+            _data,
+            _offsets
+        );
     }
 }

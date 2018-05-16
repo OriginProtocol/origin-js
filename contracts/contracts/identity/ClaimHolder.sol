@@ -35,16 +35,6 @@ contract ClaimHolder is KeyHolder, ERC735 {
             _uri
         );
 
-        emit ClaimAdded(
-            claimId,
-            _claimType,
-            _scheme,
-            _issuer,
-            _signature,
-            _data,
-            _uri
-        );
-
         return claimId;
     }
 
@@ -57,18 +47,14 @@ contract ClaimHolder is KeyHolder, ERC735 {
     )
         public
     {
-        uint offset = 0;
-        for (uint8 i = 0; i < _claimType.length; i++) {
-            addClaim(
-              _claimType[i],
-              1,
-              _issuer[i],
-              ClaimHolderLibrary.getBytes(_signature, (i * 65), 65),
-              ClaimHolderLibrary.getBytes(_data, offset, _offsets[i]),
-              ""
-            );
-            offset += _offsets[i];
-        }
+        ClaimHolderLibrary.addMultiple(
+            claims,
+            _claimType,
+            _issuer,
+            _signature,
+            _data,
+            _offsets
+        );
     }
 
     function removeClaim(bytes32 _claimId) public returns (bool success) {
@@ -76,17 +62,8 @@ contract ClaimHolder is KeyHolder, ERC735 {
           require(keyHasPurpose(keccak256(msg.sender), 1), "Sender does not have management key");
         }
 
-        emit ClaimRemoved(
-            _claimId,
-            claims.byId[_claimId].claimType,
-            claims.byId[_claimId].scheme,
-            claims.byId[_claimId].issuer,
-            claims.byId[_claimId].signature,
-            claims.byId[_claimId].data,
-            claims.byId[_claimId].uri
-        );
+        ClaimHolderLibrary.remove(claims, _claimId);
 
-        delete claims.byId[_claimId];
         return true;
     }
 

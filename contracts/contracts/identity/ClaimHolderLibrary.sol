@@ -1,6 +1,9 @@
 pragma solidity ^0.4.23;
 
 library ClaimHolderLibrary {
+  event ClaimAdded(bytes32 indexed claimId, uint256 indexed claimType, uint256 scheme, address indexed issuer, bytes signature, bytes data, string uri);
+  event ClaimRemoved(bytes32 indexed claimId, uint256 indexed claimType, uint256 scheme, address indexed issuer, bytes signature, bytes data, string uri);
+
   struct Claim {
       uint256 claimType;
       uint256 scheme;
@@ -40,7 +43,63 @@ library ClaimHolderLibrary {
       _claims.byId[claimId].data = _data;
       _claims.byId[claimId].uri = _uri;
 
+      emit ClaimAdded(
+          claimId,
+          _claimType,
+          _scheme,
+          _issuer,
+          _signature,
+          _data,
+          _uri
+      );
+
       return claimId;
+  }
+
+  function addMultiple(
+      Claims storage _claims,
+      uint256[] _claimType,
+      address[] _issuer,
+      bytes _signature,
+      bytes _data,
+      uint256[] _offsets
+  )
+      public
+  {
+      uint offset = 0;
+      for (uint8 i = 0; i < _claimType.length; i++) {
+          add(
+            _claims,
+            _claimType[i],
+            1,
+            _issuer[i],
+            getBytes(_signature, (i * 65), 65),
+            getBytes(_data, offset, _offsets[i]),
+            ""
+          );
+          offset += _offsets[i];
+      }
+  }
+
+  function remove(
+      Claims storage _claims,
+      bytes32 _claimId
+  )
+      public
+      returns (bool success)
+  {
+      emit ClaimRemoved(
+          _claimId,
+          _claims.byId[_claimId].claimType,
+          _claims.byId[_claimId].scheme,
+          _claims.byId[_claimId].issuer,
+          _claims.byId[_claimId].signature,
+          _claims.byId[_claimId].data,
+          _claims.byId[_claimId].uri
+      );
+
+      delete _claims.byId[_claimId];
+      return true;
   }
 
   function get(Claims storage _claims, bytes32 _claimId)
