@@ -20,7 +20,7 @@ library ClaimHolderLibrary {
       mapping (uint256 => bytes32[]) byType;
   }
 
-  function add(
+  function addClaim(
       KeyHolderLibrary.KeyHolderData storage _keyHolderData,
       Claims storage _claims,
       uint256 _claimType,
@@ -63,7 +63,7 @@ library ClaimHolderLibrary {
       return claimId;
   }
 
-  function addMultiple(
+  function addClaims(
       KeyHolderLibrary.KeyHolderData storage _keyHolderData,
       Claims storage _claims,
       uint256[] _claimType,
@@ -76,7 +76,7 @@ library ClaimHolderLibrary {
   {
       uint offset = 0;
       for (uint8 i = 0; i < _claimType.length; i++) {
-          add(
+          addClaim(
             _keyHolderData,
             _claims,
             _claimType[i],
@@ -90,7 +90,7 @@ library ClaimHolderLibrary {
       }
   }
 
-  function remove(
+  function removeClaim(
       KeyHolderLibrary.KeyHolderData storage _keyHolderData,
       Claims storage _claims,
       bytes32 _claimId
@@ -116,7 +116,7 @@ library ClaimHolderLibrary {
       return true;
   }
 
-  function get(Claims storage _claims, bytes32 _claimId)
+  function getClaim(Claims storage _claims, bytes32 _claimId)
       public
       constant
       returns(

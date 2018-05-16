@@ -21,7 +21,7 @@ contract ClaimHolderPresigned is ClaimHolderRegistered {
         ClaimHolderRegistered(_userRegistryAddress)
         public
     {
-        ClaimHolderLibrary.addMultiple(
+        ClaimHolderLibrary.addClaims(
             keyHolderData,
             claims,
             _claimType,

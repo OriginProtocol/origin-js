@@ -19,7 +19,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
         public
         returns (bytes32 claimRequestId)
     {
-        return ClaimHolderLibrary.add(
+        return ClaimHolderLibrary.addClaim(
             keyHolderData,
             claims,
             _claimType,
@@ -40,7 +40,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
     )
         public
     {
-        ClaimHolderLibrary.addMultiple(
+        ClaimHolderLibrary.addClaims(
             keyHolderData,
             claims,
             _claimType,
@@ -52,7 +52,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
     }
 
     function removeClaim(bytes32 _claimId) public returns (bool success) {
-        return ClaimHolderLibrary.remove(keyHolderData, claims, _claimId);
+        return ClaimHolderLibrary.removeClaim(keyHolderData, claims, _claimId);
     }
 
     function getClaim(bytes32 _claimId)
@@ -67,7 +67,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
             string uri
         )
     {
-        return ClaimHolderLibrary.get(claims, _claimId);
+        return ClaimHolderLibrary.getClaim(claims, _claimId);
     }
 
     function getClaimIdsByType(uint256 _claimType)
