@@ -100,7 +100,7 @@ contract Purchase {
     }
     else {
       // Price is in token
-      if (listingContract.priceTokenContract.balance(address(this)) >= listingContract.price()) {
+      if (listingContract.priceTokenContract.balanceOf(address(this)) >= listingContract.price()) {
         // Buyer (or their proxy) has paid enough to cover purchase
         internalStage = Stages.SHIPPING_PENDING;
         emit PurchaseChange(internalStage);
@@ -160,7 +160,7 @@ contract Purchase {
       // Price is in Token
       listingContract.priceTokenContract.transfer(
         listingContract.owner(),
-        listingContract.priceTokenContract.balance()
+        listingContract.priceTokenContract.balanceOf(address(this))
       )
     }
   }
