@@ -19,13 +19,8 @@ contract ClaimHolder is KeyHolder, ERC735 {
         public
         returns (bytes32 claimRequestId)
     {
-        KeyHolder issuer = KeyHolder(issuer);
-
-        if (msg.sender != address(this)) {
-          require(keyHasPurpose(keccak256(msg.sender), 3), "Sender does not have management key");
-        }
-
-        bytes32 claimId = ClaimHolderLibrary.add(
+        return ClaimHolderLibrary.add(
+            keyHolderData,
             claims,
             _claimType,
             _scheme,
@@ -34,8 +29,6 @@ contract ClaimHolder is KeyHolder, ERC735 {
             _data,
             _uri
         );
-
-        return claimId;
     }
 
     function addClaims(
@@ -48,6 +41,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
         public
     {
         ClaimHolderLibrary.addMultiple(
+            keyHolderData,
             claims,
             _claimType,
             _issuer,
@@ -58,13 +52,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
     }
 
     function removeClaim(bytes32 _claimId) public returns (bool success) {
-        if (msg.sender != address(this)) {
-          require(keyHasPurpose(keccak256(msg.sender), 1), "Sender does not have management key");
-        }
-
-        ClaimHolderLibrary.remove(claims, _claimId);
-
-        return true;
+        return ClaimHolderLibrary.remove(keyHolderData, claims, _claimId);
     }
 
     function getClaim(bytes32 _claimId)

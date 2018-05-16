@@ -20,25 +20,25 @@ async function deployContracts(deployer) {
   await deployer.deploy(PurchaseLibrary)
   await deployer.link(PurchaseLibrary, ListingsRegistry)
   await deployer.link(PurchaseLibrary, Listing)
+  await deployer.deploy(UserRegistry)
   await deployer.deploy(ListingsRegistry)
   await deployer.deploy(KeyHolderLibrary)
 
-  await deployer.link(KeyHolderLibrary, ClaimHolder)
-  await deployer.deploy(ClaimHolderLibrary)
-
   await deployer.link(KeyHolderLibrary, KeyHolder)
 
-  await deployer.link(ClaimHolderLibrary, ClaimHolder)
+  await deployer.link(KeyHolderLibrary, ClaimHolderLibrary)
+  await deployer.deploy(ClaimHolderLibrary)
 
-  await deployer.link(ClaimHolderLibrary, ClaimHolderPresigned)
-  await deployer.link(KeyHolderLibrary, ClaimHolderPresigned)
+  await deployer.link(ClaimHolderLibrary, ClaimHolder)
+  await deployer.link(KeyHolderLibrary, ClaimHolder)
 
   await deployer.link(ClaimHolderLibrary, ClaimHolderRegistered)
   await deployer.link(KeyHolderLibrary, ClaimHolderRegistered)
 
+  await deployer.link(ClaimHolderLibrary, ClaimHolderPresigned)
+  await deployer.link(KeyHolderLibrary, ClaimHolderPresigned)
+
   await deployer.link(ClaimHolderLibrary, OriginIdentity)
   await deployer.link(KeyHolderLibrary, OriginIdentity)
-
-  await deployer.deploy(UserRegistry)
   await deployer.deploy(OriginIdentity)
 }

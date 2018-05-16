@@ -22,6 +22,7 @@ contract ClaimHolderPresigned is ClaimHolderRegistered {
         public
     {
         ClaimHolderLibrary.addMultiple(
+            keyHolderData,
             claims,
             _claimType,
             _issuer,

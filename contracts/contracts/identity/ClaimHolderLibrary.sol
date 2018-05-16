@@ -1,5 +1,7 @@
 pragma solidity ^0.4.23;
 
+import './KeyHolderLibrary.sol';
+
 library ClaimHolderLibrary {
   event ClaimAdded(bytes32 indexed claimId, uint256 indexed claimType, uint256 scheme, address indexed issuer, bytes signature, bytes data, string uri);
   event ClaimRemoved(bytes32 indexed claimId, uint256 indexed claimType, uint256 scheme, address indexed issuer, bytes signature, bytes data, string uri);
@@ -19,6 +21,7 @@ library ClaimHolderLibrary {
   }
 
   function add(
+      KeyHolderLibrary.KeyHolderData storage _keyHolderData,
       Claims storage _claims,
       uint256 _claimType,
       uint256 _scheme,
@@ -30,6 +33,10 @@ library ClaimHolderLibrary {
       public
       returns (bytes32 claimRequestId)
   {
+      if (msg.sender != address(this)) {
+        require(KeyHolderLibrary.keyHasPurpose(_keyHolderData, keccak256(msg.sender), 3), "Sender does not have management key");
+      }
+
       bytes32 claimId = keccak256(_issuer, _claimType);
 
       if (_claims.byId[claimId].issuer != _issuer) {
@@ -57,6 +64,7 @@ library ClaimHolderLibrary {
   }
 
   function addMultiple(
+      KeyHolderLibrary.KeyHolderData storage _keyHolderData,
       Claims storage _claims,
       uint256[] _claimType,
       address[] _issuer,
@@ -69,6 +77,7 @@ library ClaimHolderLibrary {
       uint offset = 0;
       for (uint8 i = 0; i < _claimType.length; i++) {
           add(
+            _keyHolderData,
             _claims,
             _claimType[i],
             1,
@@ -82,12 +91,17 @@ library ClaimHolderLibrary {
   }
 
   function remove(
+      KeyHolderLibrary.KeyHolderData storage _keyHolderData,
       Claims storage _claims,
       bytes32 _claimId
   )
       public
       returns (bool success)
   {
+      if (msg.sender != address(this)) {
+        require(KeyHolderLibrary.keyHasPurpose(_keyHolderData, keccak256(msg.sender), 1), "Sender does not have management key");
+      }
+
       emit ClaimRemoved(
           _claimId,
           _claims.byId[_claimId].claimType,
