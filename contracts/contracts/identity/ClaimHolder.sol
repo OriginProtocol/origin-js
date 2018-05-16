@@ -76,10 +76,6 @@ contract ClaimHolder is KeyHolder, ERC735 {
           require(keyHasPurpose(keccak256(msg.sender), 1), "Sender does not have management key");
         }
 
-        /* uint index; */
-        /* (index, ) = claimsByType[claims[_claimId].claimType].indexOf(_claimId);
-        claimsByType[claims[_claimId].claimType].removeByIndex(index); */
-
         emit ClaimRemoved(
             _claimId,
             claims.byId[_claimId].claimType,
