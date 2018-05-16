@@ -6,9 +6,7 @@ import "./ClaimHolderLibrary.sol";
 
 contract ClaimHolder is KeyHolder, ERC735 {
 
-    bytes32 claimId;
-    mapping (bytes32 => Claim) claims;
-    mapping (uint256 => bytes32[]) claimsByType;
+    ClaimHolderLibrary.Claims claims;
 
     function addClaim(
         uint256 _claimType,
@@ -21,23 +19,21 @@ contract ClaimHolder is KeyHolder, ERC735 {
         public
         returns (bytes32 claimRequestId)
     {
-        claimId = keccak256(_issuer, _claimType);
         KeyHolder issuer = KeyHolder(issuer);
 
         if (msg.sender != address(this)) {
           require(keyHasPurpose(keccak256(msg.sender), 3), "Sender does not have management key");
         }
 
-        if (claims[claimId].issuer != _issuer) {
-            claimsByType[_claimType].push(claimId);
-        }
-
-        claims[claimId].claimType = _claimType;
-        claims[claimId].scheme = _scheme;
-        claims[claimId].issuer = _issuer;
-        claims[claimId].signature = _signature;
-        claims[claimId].data = _data;
-        claims[claimId].uri = _uri;
+        bytes32 claimId = ClaimHolderLibrary.add(
+            claims,
+            _claimType,
+            _scheme,
+            _issuer,
+            _signature,
+            _data,
+            _uri
+        );
 
         emit ClaimAdded(
             claimId,
@@ -86,15 +82,15 @@ contract ClaimHolder is KeyHolder, ERC735 {
 
         emit ClaimRemoved(
             _claimId,
-            claims[_claimId].claimType,
-            claims[_claimId].scheme,
-            claims[_claimId].issuer,
-            claims[_claimId].signature,
-            claims[_claimId].data,
-            claims[_claimId].uri
+            claims.byId[_claimId].claimType,
+            claims.byId[_claimId].scheme,
+            claims.byId[_claimId].issuer,
+            claims.byId[_claimId].signature,
+            claims.byId[_claimId].data,
+            claims.byId[_claimId].uri
         );
 
-        delete claims[_claimId];
+        delete claims.byId[_claimId];
         return true;
     }
 
@@ -110,14 +106,7 @@ contract ClaimHolder is KeyHolder, ERC735 {
             string uri
         )
     {
-        return (
-            claims[_claimId].claimType,
-            claims[_claimId].scheme,
-            claims[_claimId].issuer,
-            claims[_claimId].signature,
-            claims[_claimId].data,
-            claims[_claimId].uri
-        );
+        return ClaimHolderLibrary.get(claims, _claimId);
     }
 
     function getClaimIdsByType(uint256 _claimType)
@@ -125,6 +114,6 @@ contract ClaimHolder is KeyHolder, ERC735 {
         constant
         returns(bytes32[] claimIds)
     {
-        return claimsByType[_claimType];
+        return claims.byType[_claimType];
     }
 }
