@@ -5,6 +5,7 @@ pragma solidity 0.4.23;
 
 import "./Purchase.sol";
 import "./PurchaseLibrary.sol";
+import '../../node_modules/openzeppelin-solidity/contracts/token/ERC827/ERC827Token.sol';
 
 
 contract Listing {
@@ -31,13 +32,14 @@ contract Listing {
     uint public created;
     uint public expiration;
     Purchase[] public purchases;
-
+    ERC827 public priceTokenContract; // Token to pay. If 0x00, means payment is ETH
 
     constructor (
       address _owner,
       bytes32 _ipfsHash,
       uint _price,
-      uint _unitsAvailable
+      uint _unitsAvailable,
+      address _priceTokenContract
     )
     public
     {
@@ -48,6 +50,7 @@ contract Listing {
       unitsAvailable = _unitsAvailable;
       created = now;
       expiration = created + 60 days;
+      priceTokenContract = ERC827(_priceTokenContract);
     }
 
   /*
@@ -66,9 +69,9 @@ contract Listing {
   function data()
     public
     view
-    returns (address _owner, bytes32 _ipfsHash, uint _price, uint _unitsAvailable, uint _created, uint _expiration)
+    returns (address _owner, bytes32 _ipfsHash, uint _price, uint _unitsAvailable, uint _created, uint _expiration, address priceTokenContract)
   {
-    return (owner, ipfsHash, price, unitsAvailable, created, expiration);
+    return (owner, ipfsHash, price, unitsAvailable, created, expiration, address(priceTokenContract));
   }
 
   /// @dev buyListing(): Buy a listing
@@ -91,8 +94,15 @@ contract Listing {
 
     purchases.push(purchaseContract);
 
-    // TODO STAN: How to call function *AND* transfer value??
-    purchaseContract.pay.value(msg.value)();
+    if (priceTokenContract = 0x00) {
+      // Price is in ETH
+      purchaseContract.pay.value(msg.value)();
+    }
+    else {
+      // Price is in ERC827
+      priceToken.transferFrom(tx.origin, purchaseContract, price);
+      purchaseContract.payERC827()
+    }
 
     emit ListingPurchased(purchaseContract);
     emit ListingChange();

@@ -92,17 +92,20 @@ class ContractService {
     })
   }
 
-  async submitListing(ipfsListing, ethPrice, units) {
+  async submitListing(ipfsListing, price, units, priceTokenContract) {
     try {
       const net = await this.web3.eth.net.getId()
       const account = await this.currentAccount()
       const instance = await this.deployed(ListingsRegistryContract)
-
-      const weiToGive = this.web3.utils.toWei(String(ethPrice), "ether")
+      if (!priceTokenContract) {
+        // If no token contract given, price is in wai (ETH)
+        priceTokenContract = "0x00000000000000000000000000000000000000000000000000000000000000000"
+        let valueToGive = this.web3.utils.toWei(String(price), "ether")
+      }
       // Note we cannot get the listingId returned by our contract.
       // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
       return instance.methods
-        .create(this.getBytes32FromIpfsHash(ipfsListing), weiToGive, units)
+        .create(this.getBytes32FromIpfsHash(ipfsListing), valueToGive, units, priceTokenContract)
         .send({ from: account, gas: 4476768 })
     } catch (error) {
       console.error("Error submitting to the Ethereum blockchain: " + error)

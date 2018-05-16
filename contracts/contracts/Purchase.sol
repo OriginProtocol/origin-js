@@ -3,6 +3,7 @@ pragma solidity 0.4.23;
 /// @title Purchase
 /// @dev An purchase Origin Listing representing a purchase/booking
 import "./Listing.sol";
+import '../../node_modules/openzeppelin-solidity/contracts/token/ERC827/ERC827Token.sol';
 
 
 contract Purchase {
@@ -88,12 +89,24 @@ contract Purchase {
   payable
   atStage(Stages.AWAITING_PAYMENT)
   {
-    if (address(this).balance >= listingContract.price()) {
-      // Buyer (or their proxy) has paid enough to cover purchase
-      internalStage = Stages.SHIPPING_PENDING;
-      emit PurchaseChange(internalStage);
+    if (listingContract.priceTokenContract == 0x00) {
+      // Price is in ETH (wei)
+      if (address(this).balance >= listingContract.price()) {
+        // Buyer (or their proxy) has paid enough to cover purchase
+        internalStage = Stages.SHIPPING_PENDING;
+        emit PurchaseChange(internalStage);
+      }
+      // Possible that nothing happens, and contract just accumulates sent value
     }
-    // Possible that nothing happens, and contract just accumulates sent value
+    else {
+      // Price is in token
+      if (listingContract.priceTokenContract.balance(address(this)) >= listingContract.price()) {
+        // Buyer (or their proxy) has paid enough to cover purchase
+        internalStage = Stages.SHIPPING_PENDING;
+        emit PurchaseChange(internalStage);
+        // Possible that nothing happens, and contract just accumulates sent value
+      }
+    }
   }
 
   function stage()
@@ -139,7 +152,17 @@ contract Purchase {
     // Send contract funds to seller (ie owner of Listing)
     // Transfering money always needs to be the last thing we do, do avoid
     // rentrancy bugs. (Though here the seller would just be getting their own money)
-    listingContract.owner().transfer(address(this).balance);
+    if (listingContract.priceTokenContract == 0x00) {
+      // Price is in ETH (wei)
+      listingContract.owner().transfer(address(this).balance);
+    }
+    else {
+      // Price is in Token
+      listingContract.priceTokenContract.transfer(
+        listingContract.owner(),
+        listingContract.priceTokenContract.balance()
+      )
+    }
   }
 
   function openDispute()
