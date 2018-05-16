@@ -1,6 +1,7 @@
 import ClaimHolderRegisteredContract from "./../../contracts/build/contracts/ClaimHolderRegistered.json"
 import ClaimHolderPresignedContract from "./../../contracts/build/contracts/ClaimHolderPresigned.json"
 import ClaimHolderLibrary from "./../../contracts/build/contracts/ClaimHolderLibrary.json"
+import KeyHolderLibrary from "./../../contracts/build/contracts/KeyHolderLibrary.json"
 import ListingsRegistryContract from "./../../contracts/build/contracts/ListingsRegistry.json"
 import ListingContract from "./../../contracts/build/contracts/Listing.json"
 import PurchaseContract from "./../../contracts/build/contracts/Purchase.json"
@@ -30,6 +31,7 @@ class ContractService {
     }
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
+    this.libraries.KeyHolderLibrary = KeyHolderLibrary
     for (let name in contracts) {
       this[name] = contracts[name]
       try {
