@@ -89,7 +89,7 @@ contract Purchase {
   payable
   atStage(Stages.AWAITING_PAYMENT)
   {
-    if (listingContract.priceTokenContract == 0x00) {
+    if (listingContract.priceTokenContract() == 0x0000000000000000000000000000000000000000) {
       // Price is in ETH (wei)
       if (address(this).balance >= listingContract.price()) {
         // Buyer (or their proxy) has paid enough to cover purchase
@@ -100,7 +100,7 @@ contract Purchase {
     }
     else {
       // Price is in token
-      if (listingContract.priceTokenContract.balanceOf(address(this)) >= listingContract.price()) {
+      if (listingContract.priceTokenContract().balanceOf(address(this)) >= listingContract.price()) {
         // Buyer (or their proxy) has paid enough to cover purchase
         internalStage = Stages.SHIPPING_PENDING;
         emit PurchaseChange(internalStage);
@@ -152,16 +152,16 @@ contract Purchase {
     // Send contract funds to seller (ie owner of Listing)
     // Transfering money always needs to be the last thing we do, do avoid
     // rentrancy bugs. (Though here the seller would just be getting their own money)
-    if (listingContract.priceTokenContract == 0x00) {
+    if (listingContract.priceTokenContract() == 0x0000000000000000000000000000000000000000) {
       // Price is in ETH (wei)
       listingContract.owner().transfer(address(this).balance);
     }
     else {
       // Price is in Token
-      listingContract.priceTokenContract.transfer(
+      listingContract.priceTokenContract().transfer(
         listingContract.owner(),
-        listingContract.priceTokenContract.balanceOf(address(this))
-      )
+        listingContract.priceTokenContract().balanceOf(address(this))
+      );
     }
   }
 

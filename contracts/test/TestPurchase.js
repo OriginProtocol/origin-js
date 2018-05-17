@@ -24,6 +24,7 @@ const timetravel = async function(seconds) {
 
 const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
+const zeroAddress = "0x0000000000000000000000000000000000000000"
 const price = web3.toBigNumber(web3.toWei("0.5", "ether"))
 const unitsAvailable = 42
 
@@ -51,6 +52,7 @@ contract("Purchase", accounts => {
       ipfsHash,
       price,
       unitsAvailable,
+      zeroAddress,
       { from: seller }
     )
 
@@ -199,6 +201,7 @@ contract("Purchase", accounts => {
         ipfsHash,
         totalPrice,
         unitsAvailable,
+        zeroAddress,
         { from: seller }
       )
     })

@@ -95,7 +95,8 @@ contract ListingsRegistry {
   function create(
     bytes32 _ipfsHash,
     uint _price,
-    uint _unitsAvailable
+    uint _unitsAvailable,
+    address _priceTokenContract
   )
     public
     returns (uint)
@@ -110,7 +111,7 @@ contract ListingsRegistry {
     // Dump first economic activity: "pay" 1 Origin Token to contract owner
     originToken.transferFrom(tx.origin, owner, 1);
 
-    listings.push(new Listing(tx.origin, _ipfsHash, _price, _unitsAvailable));
+    listings.push(new Listing(tx.origin, _ipfsHash, _price, _unitsAvailable, _priceTokenContract));
     emit NewListing(listings.length-1);
     return listings.length;
   }

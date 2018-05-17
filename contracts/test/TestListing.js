@@ -24,6 +24,7 @@ const timetravel = async function(seconds) {
 
 const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
+const zeroAddress = "0x0000000000000000000000000000000000000000"
 const price = 33
 const unitsAvailable = 42
 const LISTING_EXPIRATION_SECONDS = 60 * 24 * 60 * 60
@@ -35,7 +36,7 @@ contract("Listing", accounts => {
   var listing
 
   beforeEach(async function() {
-    listing = await Listing.new(seller, ipfsHash, price, unitsAvailable, {
+    listing = await Listing.new(seller, ipfsHash, price, unitsAvailable, zeroAddress, {
       from: seller
     })
   })

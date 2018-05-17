@@ -4,6 +4,8 @@ const OriginToken = artifacts.require("./OriginToken.sol")
 const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
 
+const zeroAddress = "0x0000000000000000000000000000000000000000"
+
 // Used to assert error cases
 const isEVMError = function(err) {
   let str = err.toString()
@@ -55,7 +57,7 @@ contract("ListingsRegistry", accounts => {
       { from: accounts[1] }
     )
 
-    await listingsRegistry.create(ipfsHash, initPrice, initUnitsAvailable, {
+    await listingsRegistry.create(ipfsHash, initPrice, initUnitsAvailable, zeroAddress, {
       from: accounts[1]
     })
     let listingCount = await listingsRegistry.listingsLength()
@@ -81,4 +83,3 @@ contract("ListingsRegistry", accounts => {
     )
   })
 })
-

@@ -69,7 +69,7 @@ contract Listing {
   function data()
     public
     view
-    returns (address _owner, bytes32 _ipfsHash, uint _price, uint _unitsAvailable, uint _created, uint _expiration, address priceTokenContract)
+    returns (address _owner, bytes32 _ipfsHash, uint _price, uint _unitsAvailable, uint _created, uint _expiration, address _priceTokenContract)
   {
     return (owner, ipfsHash, price, unitsAvailable, created, expiration, address(priceTokenContract));
   }
@@ -94,14 +94,14 @@ contract Listing {
 
     purchases.push(purchaseContract);
 
-    if (priceTokenContract = 0x00) {
+    if (address(priceTokenContract) == 0x00) {
       // Price is in ETH
       purchaseContract.pay.value(msg.value)();
     }
     else {
       // Price is in ERC827
-      priceToken.transferFrom(tx.origin, purchaseContract, price);
-      purchaseContract.payERC827()
+      priceTokenContract.transferFrom(tx.origin, purchaseContract, price);
+      /* purchaseContract.payERC827(); */
     }
 
     emit ListingPurchased(purchaseContract);
