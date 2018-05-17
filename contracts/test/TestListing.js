@@ -36,9 +36,16 @@ contract("Listing", accounts => {
   var listing
 
   beforeEach(async function() {
-    listing = await Listing.new(seller, ipfsHash, price, unitsAvailable, zeroAddress, {
-      from: seller
-    })
+    listing = await Listing.new(
+      seller,
+      ipfsHash,
+      price,
+      unitsAvailable,
+      zeroAddress,
+      {
+        from: seller
+      }
+    )
   })
 
   it("should have correct price", async function() {

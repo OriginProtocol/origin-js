@@ -19,7 +19,6 @@ contract("ListingsRegistry", accounts => {
   var originToken
 
   beforeEach(async function() {
-
     // ERC20 stuff
     // originToken = await originTokenlistingsRegistryContractDefinition.new({ from: owner })
     originToken = await OriginToken.deployed()
@@ -33,11 +32,9 @@ contract("ListingsRegistry", accounts => {
     // deployed as part of 2_deploy_contracts migration, but here we create a NEW
     // ListingsRegistry contract. I couldn't get "should be able to create a listing"
     // working with the migrated contract.
-    listingsRegistry = await ListingsRegistry.new(
-      originToken.address,
-      { from: owner }
-    )
-
+    listingsRegistry = await ListingsRegistry.new(originToken.address, {
+      from: owner
+    })
   })
 
   it("should have owner as owner of contract", async function() {
@@ -51,16 +48,21 @@ contract("ListingsRegistry", accounts => {
     let initialListingsLength = await listingsRegistry.listingsLength()
 
     // approve OriginToken transfer
-    await originToken.approve(
-      listingsRegistry.address,
-      10,
-      { from: accounts[1] }
-    )
-
-    await listingsRegistry.create(ipfsHash, initPrice, initUnitsAvailable, zeroAddress, {
+    await originToken.approve(listingsRegistry.address, 10, {
       from: accounts[1]
     })
+
+    await listingsRegistry.create(
+      ipfsHash,
+      initPrice,
+      initUnitsAvailable,
+      zeroAddress,
+      {
+        from: accounts[1]
+      }
+    )
     let listingCount = await listingsRegistry.listingsLength()
+    console.log("length", listingCount.toNumber(), Number(listingCount))
     assert.equal(
       listingCount.toNumber(),
       initialListingsLength.toNumber() + 1,
@@ -74,6 +76,41 @@ contract("ListingsRegistry", accounts => {
       unitsAvailable
     ] = await listingsRegistry.getListing(initialListingsLength)
     assert.equal(lister, accounts[1], "lister is correct")
+    assert.equal(hash, ipfsHash, "ipfsHash is correct")
+    assert.equal(price, initPrice, "price is correct")
+    assert.equal(
+      unitsAvailable,
+      initUnitsAvailable,
+      "unitsAvailable is correct"
+    )
+  })
+
+  it("should be able to create a listing on behalf of other", async function() {
+    const initPrice = 2
+    const initUnitsAvailable = 5
+    const initialListingsLength = await listingsRegistry.listingsLength()
+    await listingsRegistry.createOnBehalf(
+      ipfsHash,
+      initPrice,
+      initUnitsAvailable,
+      accounts[1],
+      { from: accounts[0] }
+    )
+    let listingCount = await listingsRegistry.listingsLength()
+    console.log("length", listingCount.toNumber(), Number(listingCount))
+    assert.equal(
+      listingCount.toNumber(),
+      initialListingsLength + 1,
+      "listings count has incremented"
+    )
+    let [
+      listingAddress,
+      lister,
+      hash,
+      price,
+      unitsAvailable
+    ] = await listingsRegistry.getListing(initialListingsLength)
+    assert.equal(lister, accounts[1], "lister is correct as other account")
     assert.equal(hash, ipfsHash, "ipfsHash is correct")
     assert.equal(price, initPrice, "price is correct")
     assert.equal(
