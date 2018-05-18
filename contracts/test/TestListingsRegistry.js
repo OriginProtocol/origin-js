@@ -1,5 +1,4 @@
 const ListingsRegistry = artifacts.require("./ListingsRegistry.sol")
-const OriginToken = artifacts.require("./OriginToken.sol")
 
 const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
@@ -16,25 +15,9 @@ contract("ListingsRegistry", accounts => {
   var owner = accounts[0]
   var notOwner = accounts[1]
   var listingsRegistry
-  var originToken
 
   beforeEach(async function() {
-    // ERC20 stuff
-    // originToken = await originTokenlistingsRegistryContractDefinition.new({ from: owner })
-    originToken = await OriginToken.deployed()
-    // send token to other user
-    await originToken.transfer(notOwner, 1000, { from: owner })
-
-    let newBalance = await originToken.balanceOf(notOwner)
-    console.log(`Origin Token: newBalance: ${newBalance}`)
-
-    // TODO: This is an odd hybrid approach. We use the OriginToken contract
-    // deployed as part of 2_deploy_contracts migration, but here we create a NEW
-    // ListingsRegistry contract. I couldn't get "should be able to create a listing"
-    // working with the migrated contract.
-    listingsRegistry = await ListingsRegistry.new(originToken.address, {
-      from: owner
-    })
+    listingsRegistry = await ListingsRegistry.deployed()
   })
 
   it("should have owner as owner of contract", async function() {
@@ -46,11 +29,6 @@ contract("ListingsRegistry", accounts => {
     const initPrice = 2
     const initUnitsAvailable = 5
     let initialListingsLength = await listingsRegistry.listingsLength()
-
-    // approve OriginToken transfer
-    await originToken.approve(listingsRegistry.address, 10, {
-      from: accounts[1]
-    })
 
     await listingsRegistry.create(
       ipfsHash,

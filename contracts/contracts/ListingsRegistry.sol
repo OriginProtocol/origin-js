@@ -25,7 +25,7 @@ contract ListingsRegistry {
   Listing[] public listings;
 
   // Our token
-  ERC827 originToken;
+  ERC827 token;
 
   /*
    * Modifiers
@@ -46,13 +46,13 @@ contract ListingsRegistry {
    * Public functions
    */
 
-  constructor(address _originTokenAddress)
+  constructor(address _tokenAddress)
     public
   {
     // Defines origin admin address - may be removed for public deployment
     owner = msg.sender;
 
-    originToken = ERC827(_originTokenAddress);
+    token = ERC827(_tokenAddress);
   }
 
   /// @dev listingsLength(): Return number of listings
@@ -105,11 +105,6 @@ contract ListingsRegistry {
     // https://ethereum.stackexchange.com/a/1892/20332
     // ...But how else to determine who really made the listing?
     // Maybe use the ERC725 identity?
-
-    // Require origin token
-    require(originToken.balanceOf(tx.origin) > 0, "Origin Token required.");
-    // Dump first economic activity: "pay" 1 Origin Token to contract owner
-    originToken.transferFrom(tx.origin, owner, 1);
 
     listings.push(new Listing(tx.origin, _ipfsHash, _price, _unitsAvailable, _priceTokenContract));
     emit NewListing(listings.length-1);
