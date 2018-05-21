@@ -45,13 +45,15 @@ const BUYER_TIMEOUT_SECONDS = 21 * 24 * 60 * 60
 contract("Purchase", accounts => {
   var buyer = accounts[0]
   var seller = accounts[1]
-  var instance
-  var listingInstance
+  var listing
+  var purchase
+  var totalPrice = 48
+  var initialPayment = 6
 
   describe("With price in eth", () => {
     beforeEach(async function() {
       // Listing that we will be buying
-      listingInstance = await Listing.new(
+      listing = await Listing.new(
         seller,
         ipfsHash,
         price,
@@ -60,20 +62,20 @@ contract("Purchase", accounts => {
         { from: seller }
       )
 
-      instance = await Purchase.new(listingInstance.address, buyer, {
+      purchase = await Purchase.new(listing.address, buyer, {
         from: buyer
       })
     })
 
     it("should start in stage 0", async function() {
-      let newStage = await instance.stage()
+      let newStage = await purchase.stage()
       assert.equal(newStage, AWAITING_PAYMENT, "stage is AWAITING_PAYMENT")
     })
 
     it("should fail when not enough paid", async function() {
       const valueToPay = price.minus(10)
-      await instance.pay({ from: buyer, value: valueToPay })
-      let newStage = await instance.stage()
+      await purchase.pay({ from: buyer, value: valueToPay })
+      let newStage = await purchase.stage()
       assert.notEqual(
         newStage.toNumber(),
         BUYER_PENDING,
@@ -83,8 +85,8 @@ contract("Purchase", accounts => {
 
     it("should progress when buyer pays full amount", async function() {
       const valueToPay = price
-      await instance.pay({ from: buyer, value: valueToPay })
-      let newStage = await instance.stage()
+      await purchase.pay({ from: buyer, value: valueToPay })
+      let newStage = await purchase.stage()
       assert.equal(
         newStage.toNumber(),
         SHIPPING_PENDING,
@@ -94,10 +96,10 @@ contract("Purchase", accounts => {
 
     it("should progress when buyer pays full amount over multiple payments", async function() {
       const valueToPay = price.toNumber() / 3 // Odd this doesn't work with bignumber
-      await instance.pay({ from: buyer, value: valueToPay })
-      await instance.pay({ from: buyer, value: valueToPay })
-      await instance.pay({ from: buyer, value: valueToPay + 100 }) // extra in case of division remainder
-      let newStage = await instance.stage()
+      await purchase.pay({ from: buyer, value: valueToPay })
+      await purchase.pay({ from: buyer, value: valueToPay })
+      await purchase.pay({ from: buyer, value: valueToPay + 100 }) // extra in case of division remainder
+      let newStage = await purchase.stage()
       assert.equal(
         newStage.toNumber(),
         SHIPPING_PENDING,
@@ -107,11 +109,11 @@ contract("Purchase", accounts => {
 
     it("should progress when buyer confirms receipt", async function() {
       const valueToPay = price
-      await instance.pay({ from: buyer, value: valueToPay })
-      await instance.sellerConfirmShipped({ from: seller })
+      await purchase.pay({ from: buyer, value: valueToPay })
+      await purchase.sellerConfirmShipped({ from: seller })
       // We immediately confirm receipt (in real world could be a while)
-      await instance.buyerConfirmReceipt(5, "", { from: buyer })
-      let newStage = await instance.stage()
+      await purchase.buyerConfirmReceipt(5, "", { from: buyer })
+      let newStage = await purchase.stage()
       assert.equal(
         newStage.toNumber(),
         SELLER_PENDING,
@@ -127,7 +129,7 @@ contract("Purchase", accounts => {
 
       // Buyer pays
       const valueToPay = price
-      const payTransaction = await instance.pay({
+      const payTransaction = await purchase.pay({
         from: buyer,
         value: valueToPay,
         gasPrice: GAS_PRICE
@@ -141,7 +143,7 @@ contract("Purchase", accounts => {
         .minus(price)
 
       // Seller Ships
-      const shipTransaction = await instance.sellerConfirmShipped({
+      const shipTransaction = await purchase.sellerConfirmShipped({
         from: seller
       })
       const shipTransactionCost = web3
@@ -149,11 +151,11 @@ contract("Purchase", accounts => {
         .times(GAS_PRICE)
 
       // Buyer confirms
-      await instance.buyerConfirmReceipt(5, "IPFS", { from: buyer })
+      await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
 
       // Seller collects
       const sellerBalanceBefore = await web3.eth.getBalance(seller)
-      const payoutTransaction = await instance.sellerCollectPayout(
+      const payoutTransaction = await purchase.sellerCollectPayout(
         4,
         "IPFS_HASH_HERE",
         {
@@ -194,98 +196,115 @@ contract("Purchase", accounts => {
     })
   })
 
-  contract("Purchase", accounts => {
-    var buyer = accounts[0]
-    var seller = accounts[1]
-    var purchase
-    var listing
-    var totalPrice = 48
-    var initialPayment = 6
-
-    describe("Success path flow", async () => {
-      before(async () => {
-        listing = await Listing.new(
-          seller,
-          ipfsHash,
-          totalPrice,
-          unitsAvailable,
-          zeroAddress,
-          { from: seller }
-        )
-      })
-
-      it("should create and link the new purchase", async () => {
-        const unitsToBuy = 1
-        const buyTransaction = await listing.buyListing(unitsToBuy, {
-          from: buyer,
-          value: initialPayment
-        })
-        const listingPurchasedEvent = buyTransaction.logs.find(
-          e => e.event == "ListingPurchased"
-        )
-        purchase = await Purchase.at(listingPurchasedEvent.args._purchaseContract)
-
-        assert.equal(await listing.getPurchase(0), purchase.address)
-        assert.equal(await purchase.listingContract(), listing.address)
-        assert.equal((await purchase.stage()).toNumber(), AWAITING_PAYMENT)
-      })
-
-      it("should allow buyer to pay", async () => {
-        await purchase.pay({ from: buyer, value: totalPrice - initialPayment })
-        assert.equal((await purchase.stage()).toNumber(), SHIPPING_PENDING)
-      })
-
-      it("should allow seller to ship", async () => {
-        await purchase.sellerConfirmShipped({ from: seller })
-        assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
-      })
-
-      it("should allow buyer to confirm reciept", async () => {
-        await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
-        assert.equal((await purchase.stage()).toNumber(), SELLER_PENDING)
-      })
-
-      it("should allow seller to collect their money", async () => {
-        await purchase.sellerCollectPayout(1, "IPFS_HASH_HERE", { from: seller })
-        assert.equal((await purchase.stage()).toNumber(), COMPLETE)
-      })
+  describe("Success path flow", async () => {
+    before(async () => {
+      listing = await Listing.new(
+        seller,
+        ipfsHash,
+        totalPrice,
+        unitsAvailable,
+        zeroAddress,
+        { from: seller }
+      )
     })
 
-    describe("Reviews", async () => {
-      const reviewIpfsHash = "DCBA1234"
-      const reviewIpfsBytes =
-        "0x4443424131323334000000000000000000000000000000000000000000000000"
+    it("should create and link the new purchase", async () => {
+      const unitsToBuy = 1
+      const buyTransaction = await listing.buyListing(unitsToBuy, {
+        from: buyer,
+        value: initialPayment
+      })
+      const listingPurchasedEvent = buyTransaction.logs.find(
+        e => e.event == "ListingPurchased"
+      )
+      purchase = await Purchase.at(listingPurchasedEvent.args._purchaseContract)
 
+      assert.equal(await listing.getPurchase(0), purchase.address)
+      assert.equal(await purchase.listingContract(), listing.address)
+      assert.equal((await purchase.stage()).toNumber(), AWAITING_PAYMENT)
+    })
+
+    it("should allow buyer to pay", async () => {
+      await purchase.pay({ from: buyer, value: totalPrice - initialPayment })
+      assert.equal((await purchase.stage()).toNumber(), SHIPPING_PENDING)
+    })
+
+    it("should allow seller to ship", async () => {
+      await purchase.sellerConfirmShipped({ from: seller })
+      assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
+    })
+
+    it("should allow buyer to confirm reciept", async () => {
+      await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
+      assert.equal((await purchase.stage()).toNumber(), SELLER_PENDING)
+    })
+
+    it("should allow seller to collect their money", async () => {
+      await purchase.sellerCollectPayout(1, "IPFS_HASH_HERE", { from: seller })
+      assert.equal((await purchase.stage()).toNumber(), COMPLETE)
+    })
+  })
+
+  describe("Reviews", async () => {
+    const reviewIpfsHash = "DCBA1234"
+    const reviewIpfsBytes =
+      "0x4443424131323334000000000000000000000000000000000000000000000000"
+
+    beforeEach(async () => {
+      listing = await Listing.new(
+        seller,
+        ipfsHash,
+        totalPrice,
+        unitsAvailable,
+        zeroAddress,
+        { from: seller }
+      )
+      const unitsToBuy = 1
+      const buyTransaction = await listing.buyListing(unitsToBuy, {
+        from: buyer,
+        value: totalPrice
+      })
+      const listingPurchasedEvent = buyTransaction.logs.find(
+        e => e.event == "ListingPurchased"
+      )
+      purchase = await Purchase.at(listingPurchasedEvent.args._purchaseContract)
+      assert.equal((await purchase.stage()).toNumber(), SHIPPING_PENDING)
+      await purchase.sellerConfirmShipped({ from: seller })
+      assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
+    })
+
+    describe("Seller review of Buyer", async () => {
       beforeEach(async () => {
-        listing = await Listing.new(
-          seller,
-          ipfsHash,
-          totalPrice,
-          unitsAvailable,
-          zeroAddress,
-          { from: seller }
-        )
-        const unitsToBuy = 1
-        const buyTransaction = await listing.buyListing(unitsToBuy, {
-          from: buyer,
-          value: totalPrice
-        })
-        const listingPurchasedEvent = buyTransaction.logs.find(
-          e => e.event == "ListingPurchased"
-        )
-        purchase = await Purchase.at(listingPurchasedEvent.args._purchaseContract)
-        assert.equal((await purchase.stage()).toNumber(), SHIPPING_PENDING)
-        await purchase.sellerConfirmShipped({ from: seller })
-        assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
+        await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
       })
 
-      describe("Seller review of Buyer", async () => {
-        beforeEach(async () => {
-          await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
+      const itShouldAllowRating = async rating => {
+        it("Should allow rating " + rating, async () => {
+          const transaction = await purchase.sellerCollectPayout(
+            rating,
+            reviewIpfsHash,
+            {
+              from: seller
+            }
+          )
+          const reviewLog = transaction.logs.find(
+            e => e.event == "PurchaseReview"
+          )
+          assert.equal(reviewLog.args.reviewer, seller, "reviewer")
+          assert.equal(reviewLog.args.reviewee, buyer, "reviewee")
+          assert.equal(
+            reviewLog.args.revieweeRole.toNumber(),
+            ROLE_BUYER,
+            "revieweeRole"
+          )
+          assert.equal(reviewLog.args.rating, rating, "rating")
+          assert.equal(reviewLog.args.ipfsHash, reviewIpfsBytes, "ipfsHash")
         })
+      }
 
-        const itShouldAllowRating = async rating => {
-          it("Should allow rating " + rating, async () => {
+      const itShouldNotAllowRating = async rating => {
+        it("Should not allow rating " + rating, async () => {
+          try {
             const transaction = await purchase.sellerCollectPayout(
               rating,
               reviewIpfsHash,
@@ -293,54 +312,54 @@ contract("Purchase", accounts => {
                 from: seller
               }
             )
-            const reviewLog = transaction.logs.find(
-              e => e.event == "PurchaseReview"
-            )
-            assert.equal(reviewLog.args.reviewer, seller, "reviewer")
-            assert.equal(reviewLog.args.reviewee, buyer, "reviewee")
-            assert.equal(
-              reviewLog.args.revieweeRole.toNumber(),
-              ROLE_BUYER,
-              "revieweeRole"
-            )
-            assert.equal(reviewLog.args.rating, rating, "rating")
-            assert.equal(reviewLog.args.ipfsHash, reviewIpfsBytes, "ipfsHash")
-          })
-        }
+            assert.ok(false, "allowed an invalid rating")
+          } catch (err) {
+            assert.ok(isEVMError(err), "an EVM error should be thrown")
+          }
+        })
+      }
 
-        const itShouldNotAllowRating = async rating => {
-          it("Should not allow rating " + rating, async () => {
-            try {
-              const transaction = await purchase.sellerCollectPayout(
-                rating,
-                reviewIpfsHash,
-                {
-                  from: seller
-                }
-              )
-              assert.ok(false, "allowed an invalid rating")
-            } catch (err) {
-              assert.ok(isEVMError(err), "an EVM error should be thrown")
+      itShouldAllowRating(1)
+      itShouldAllowRating(2)
+      itShouldAllowRating(3)
+      itShouldAllowRating(4)
+      itShouldAllowRating(5)
+
+      itShouldNotAllowRating(-1)
+      itShouldNotAllowRating(0)
+      itShouldNotAllowRating(6)
+      itShouldNotAllowRating(255)
+      itShouldNotAllowRating(3000)
+    })
+
+    describe("Buyer review of Seller", async () => {
+      const itShouldAllowRating = async rating => {
+        it("Should allow rating " + rating, async () => {
+          const transaction = await purchase.buyerConfirmReceipt(
+            rating,
+            reviewIpfsHash,
+            {
+              from: buyer
             }
-          })
-        }
+          )
+          const reviewLog = transaction.logs.find(
+            e => e.event == "PurchaseReview"
+          )
+          assert.equal(reviewLog.args.reviewer, buyer, "reviewer")
+          assert.equal(reviewLog.args.reviewee, seller, "reviewee")
+          assert.equal(
+            reviewLog.args.revieweeRole.toNumber(),
+            ROLE_SELLER,
+            "revieweeRole"
+          )
+          assert.equal(reviewLog.args.rating, rating, "rating")
+          assert.equal(reviewLog.args.ipfsHash, reviewIpfsBytes, "ipfsHash")
+        })
+      }
 
-        itShouldAllowRating(1)
-        itShouldAllowRating(2)
-        itShouldAllowRating(3)
-        itShouldAllowRating(4)
-        itShouldAllowRating(5)
-
-        itShouldNotAllowRating(-1)
-        itShouldNotAllowRating(0)
-        itShouldNotAllowRating(6)
-        itShouldNotAllowRating(255)
-        itShouldNotAllowRating(3000)
-      })
-
-      describe("Buyer review of Seller", async () => {
-        const itShouldAllowRating = async rating => {
-          it("Should allow rating " + rating, async () => {
+      const itShouldNotAllowRating = async rating => {
+        it("Should not allow rating " + rating, async () => {
+          try {
             const transaction = await purchase.buyerConfirmReceipt(
               rating,
               reviewIpfsHash,
@@ -348,76 +367,50 @@ contract("Purchase", accounts => {
                 from: buyer
               }
             )
-            const reviewLog = transaction.logs.find(
-              e => e.event == "PurchaseReview"
-            )
-            assert.equal(reviewLog.args.reviewer, buyer, "reviewer")
-            assert.equal(reviewLog.args.reviewee, seller, "reviewee")
-            assert.equal(
-              reviewLog.args.revieweeRole.toNumber(),
-              ROLE_SELLER,
-              "revieweeRole"
-            )
-            assert.equal(reviewLog.args.rating, rating, "rating")
-            assert.equal(reviewLog.args.ipfsHash, reviewIpfsBytes, "ipfsHash")
-          })
-        }
+            assert.ok(false, "allowed an invalid rating")
+          } catch (err) {
+            assert.ok(isEVMError(err), "an EVM error should be thrown")
+          }
+        })
+      }
 
-        const itShouldNotAllowRating = async rating => {
-          it("Should not allow rating " + rating, async () => {
-            try {
-              const transaction = await purchase.buyerConfirmReceipt(
-                rating,
-                reviewIpfsHash,
-                {
-                  from: buyer
-                }
-              )
-              assert.ok(false, "allowed an invalid rating")
-            } catch (err) {
-              assert.ok(isEVMError(err), "an EVM error should be thrown")
-            }
-          })
-        }
+      itShouldAllowRating(1)
+      itShouldAllowRating(2)
+      itShouldAllowRating(3)
+      itShouldAllowRating(4)
+      itShouldAllowRating(5)
 
-        itShouldAllowRating(1)
-        itShouldAllowRating(2)
-        itShouldAllowRating(3)
-        itShouldAllowRating(4)
-        itShouldAllowRating(5)
+      itShouldNotAllowRating(-1)
+      itShouldNotAllowRating(0)
+      itShouldNotAllowRating(6)
+      itShouldNotAllowRating(255)
+      itShouldNotAllowRating(3000)
+    })
+  })
 
-        itShouldNotAllowRating(-1)
-        itShouldNotAllowRating(0)
-        itShouldNotAllowRating(6)
-        itShouldNotAllowRating(255)
-        itShouldNotAllowRating(3000)
+  describe("Buyer timeout", async () => {
+    beforeEach(async () => {
+      const buyTransaction = await listing.buyListing(1, {
+        from: buyer,
+        value: totalPrice // Pay all so that we are in buyer pending
       })
+      const listingPurchasedEvent = buyTransaction.logs.find(
+        e => e.event == "ListingPurchased"
+      )
+      purchase = await Purchase.at(listingPurchasedEvent.args._purchaseContract)
+      await timetravel(60 * 60) // Some time passes before shipping purchase
+      await purchase.sellerConfirmShipped({ from: seller })
+      assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
     })
 
-    describe("Buyer timeout", async () => {
-      beforeEach(async () => {
-        const buyTransaction = await listing.buyListing(1, {
-          from: buyer,
-          value: totalPrice // Pay all so that we are in buyer pending
-        })
-        const listingPurchasedEvent = buyTransaction.logs.find(
-          e => e.event == "ListingPurchased"
-        )
-        purchase = await Purchase.at(listingPurchasedEvent.args._purchaseContract)
-        await timetravel(60 * 60) // Some time passes before shipping purchase
-        await purchase.sellerConfirmShipped({ from: seller })
-        assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
-      })
+    it("should go to SELLER_PENDING when the time is up", async () => {
+      await timetravel(BUYER_TIMEOUT_SECONDS + 10) // Time travel is not yet an exact science
+      assert.equal((await purchase.stage()).toNumber(), SELLER_PENDING)
+    })
 
-      it("should go to SELLER_PENDING when the time is up", async () => {
-        await timetravel(BUYER_TIMEOUT_SECONDS + 10) // Time travel is not yet an exact science
-        assert.equal((await purchase.stage()).toNumber(), SELLER_PENDING)
-      })
-
-      it("should remain BUYER_PENDING when the time is not yet up", async () => {
-        await timetravel(BUYER_TIMEOUT_SECONDS - 10)
-        assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
-      })
+    it("should remain BUYER_PENDING when the time is not yet up", async () => {
+      await timetravel(BUYER_TIMEOUT_SECONDS - 10)
+      assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
     })
   })
 })
