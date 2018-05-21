@@ -111,11 +111,14 @@ class ContractService {
       const net = await this.web3.eth.net.getId()
       const account = await this.currentAccount()
       const instance = await this.deployed(ListingsRegistryContract)
+      let valueToGive
       if (!priceTokenContract) {
-        // If no token contract given, price is in wai (ETH)
-        priceTokenContract = "0x00000000000000000000000000000000000000000000000000000000000000000"
-        let valueToGive = this.web3.utils.toWei(String(price), "ether")
+        // If no token contract given, price is in wei (ETH)
+        priceTokenContract = "0x0000000000000000000000000000000000000000"
+        valueToGive = this.web3.utils.toWei(String(price), "ether")
       }
+      // TODO: handle case where priceTokenContract is specified
+
       // Note we cannot get the listingId returned by our contract.
       // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
       return instance.methods

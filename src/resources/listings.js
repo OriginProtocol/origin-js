@@ -67,7 +67,7 @@ class Listings extends ResourceBase {
     return listing
   }
 
-  async create(data, schemaType) {
+  async create(data, schemaType, priceTokenContract) {
     if (data.price == undefined) {
       throw "You must include a price"
     }
@@ -102,7 +102,7 @@ class Listings extends ResourceBase {
         ipfsHash,
         data.price,
         units,
-        data.priceTokenContract
+        priceTokenContract
       )
     } catch (error) {
       console.error(error)
@@ -116,14 +116,8 @@ class Listings extends ResourceBase {
 
   async buy(address, unitsToBuy, valueToPay) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
-    const value = this.contractService.web3.utils.toWei(String(ethToPay), "ether")
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {value:value, gas: 750000})
-  }
-
-  // We don't know here if Listing is priced in ETH or token, so the calling
-  // function has decide between buy() and buyWithToken()
-  async buyWithToken(address, unitsToBuy) {
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {gas: 650000})
+    const value = this.contractService.web3.utils.toWei(String(valueToPay), "ether")
+    return await this.contractFn(address, "buyListing", [unitsToBuy], {value:value, gas: 1500000})
   }
 
   async close(address) {
