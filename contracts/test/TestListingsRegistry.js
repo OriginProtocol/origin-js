@@ -78,7 +78,7 @@ contract("ListingsRegistry", accounts => {
     console.log("length", listingCount.toNumber(), Number(listingCount))
     assert.equal(
       listingCount.toNumber(),
-      initialListingsLength + 1,
+      initialListingsLength.toNumber() + 1,
       "listings count has incremented"
     )
     let [
