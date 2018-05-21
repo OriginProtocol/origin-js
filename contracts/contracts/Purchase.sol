@@ -95,7 +95,7 @@ contract Purchase {
   payable
   atStage(Stages.AWAITING_PAYMENT)
   {
-    if (listingContract.priceTokenContract() == 0x0000000000000000000000000000000000000000) {
+    if (address(listingContract.priceTokenContract()) == 0x0000000000000000000000000000000000000000) {
       // Price is in ETH (wei)
       if (address(this).balance >= listingContract.price()) {
         // Buyer (or their proxy) has paid enough to cover purchase
@@ -166,7 +166,7 @@ contract Purchase {
 
     // State changes
     internalStage = Stages.COMPLETE;
-    
+
     // Events
     emit PurchaseChange(internalStage);
     emit PurchaseReview(listingContract.owner(), buyer, Roles.BUYER, _rating, _ipfsHash);
