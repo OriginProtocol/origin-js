@@ -94,14 +94,14 @@ contract Listing {
 
     purchases.push(purchaseContract);
 
-    if (address(priceTokenContract) == 0x00) {
+    if (address(priceTokenContract) == 0x0000000000000000000000000000000000000000) {
       // Price is in ETH
       purchaseContract.pay.value(msg.value)();
     }
     else {
       // Price is in ERC827
-      priceTokenContract.transferFrom(tx.origin, purchaseContract, price);
-      /* purchaseContract.payERC827(); */
+      priceTokenContract.transferFrom(tx.origin, address(purchaseContract), price);
+      purchaseContract.pay();
     }
 
     emit ListingPurchased(purchaseContract);
