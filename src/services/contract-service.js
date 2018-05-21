@@ -116,8 +116,9 @@ class ContractService {
         // If no token contract given, price is in wei (ETH)
         priceTokenContract = "0x0000000000000000000000000000000000000000"
         valueToGive = this.web3.utils.toWei(String(price), "ether")
+      } else {
+        valueToGive = price
       }
-      // TODO: handle case where priceTokenContract is specified
 
       // Note we cannot get the listingId returned by our contract.
       // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
