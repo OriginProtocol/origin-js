@@ -148,7 +148,7 @@ contract("Listing", accounts => {
     })
   })
 
-  describe("with price in erc20 token", () => {
+  describe("with price in ERC20 token", () => {
     beforeEach(async function() {
       fooToken = await OriginToken.new({ from: fooTokenIssuer })
       await fooToken.transfer(buyer, price, {

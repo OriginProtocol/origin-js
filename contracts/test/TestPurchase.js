@@ -1,5 +1,6 @@
 const Purchase = artifacts.require("./Purchase.sol")
 const Listing = artifacts.require("./Listing.sol")
+const OriginToken = artifacts.require("./OriginToken.sol")
 
 // Used to assert error cases
 const isEVMError = function(err) {
@@ -49,6 +50,9 @@ contract("Purchase", accounts => {
   var purchase
   var totalPrice = 48
   var initialPayment = 6
+  var fooToken
+  var fooTokenIssuer = accounts[3]
+  var buyerInitialTokenBalance = 100
 
   describe("With price in eth", () => {
     beforeEach(async function() {
@@ -411,6 +415,58 @@ contract("Purchase", accounts => {
     it("should remain BUYER_PENDING when the time is not yet up", async () => {
       await timetravel(BUYER_TIMEOUT_SECONDS - 10)
       assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
+    })
+  })
+
+  describe("With price in ERC20 token", () => {
+    const tokenPrice = 10
+    beforeEach(async function() {
+      fooToken = await OriginToken.new({ from: fooTokenIssuer })
+      await fooToken.transfer(buyer, buyerInitialTokenBalance, {
+        from: fooTokenIssuer
+      }) // give buyer some foo token
+      // Listing that we will be buying
+      listing = await Listing.new(
+        seller,
+        ipfsHash,
+        tokenPrice,
+        unitsAvailable,
+        fooToken.address,
+        { from: seller }
+      )
+
+      purchase = await Purchase.new(listing.address, buyer, {
+        from: buyer
+      })
+    })
+
+    it("should transfer the correct amount between buyer and seller", async function() {
+      // Buyer pays
+      const valueToPay = tokenPrice
+      const unitsToBuy = 1
+      await fooToken.transfer(purchase.address, valueToPay, {
+        from: buyer
+      })
+      await purchase.pay()
+      buyerBalanceAfter = await fooToken.balanceOf(buyer)
+      buyerExpectedBalance = buyerInitialTokenBalance - valueToPay
+
+      assert.equal(buyerBalanceAfter, buyerExpectedBalance)
+
+      // Seller Ships
+      await purchase.sellerConfirmShipped({
+        from: seller
+      })
+
+      // Buyer confirms
+      await purchase.buyerConfirmReceipt(5, "IPFS", { from: buyer })
+
+      // Seller collects
+      await purchase.sellerCollectPayout(4, "IPFS_HASH_HERE", { from: seller })
+      const sellerBalanceAfter = await fooToken.balanceOf(seller)
+      const sellerExpectedBalance = valueToPay
+
+      assert.equal(sellerBalanceAfter, sellerExpectedBalance)
     })
   })
 })
