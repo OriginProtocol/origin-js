@@ -14,7 +14,8 @@
     "format": "npx prettier --write test/*.js src/**.js contracts/test/**.js",
     "prepare": "npm run build",
     "install:dev": "npm install && npm link",
-    "start": "node scripts/build.js serve"
+    "start": "node scripts/build.js serve",
+    "lint": "solium -d contracts/"
   },
   "files": [
     "dist"
@@ -63,6 +64,7 @@
     "node-watch": "^0.5.8",
     "prettier": "1.12.1",
     "sinon": "^5.0.7",
+    "solium": "^1.1.7",
     "truffle": "^4.1.8",
     "truffle-contract": "^3.0.5",
     "truffle-hdwallet-provider": "0.0.5",
