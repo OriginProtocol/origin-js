@@ -198,6 +198,13 @@ contract("Purchase", accounts => {
         "Seller should receive exactly their money"
       )
     })
+
+    describe("usesEth", () => {
+      it("should return true", async function() {
+        let usesEth = await purchase.usesEth()
+        assert.equal(usesEth, true)
+      })
+    })
   })
 
   describe("Success path flow", async () => {
@@ -467,6 +474,13 @@ contract("Purchase", accounts => {
       const sellerExpectedBalance = valueToPay
 
       assert.equal(sellerBalanceAfter, sellerExpectedBalance)
+    })
+
+    describe("usesEth", () => {
+      it("should return false", async function() {
+        let usesEth = await purchase.usesEth()
+        assert.equal(usesEth, false)
+      })
     })
   })
 })
