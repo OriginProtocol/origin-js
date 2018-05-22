@@ -94,7 +94,7 @@ contract Listing {
 
     purchases.push(purchaseContract);
 
-    if (address(priceTokenContract) == 0x0000000000000000000000000000000000000000) {
+    if (usesEth()) {
       // Price is in ETH
       purchaseContract.pay.value(msg.value)();
     }
@@ -138,4 +138,11 @@ contract Listing {
     );
   }
 
+  function usesEth()
+  public
+  view
+  returns (bool result)
+  {
+    return address(priceTokenContract) == 0x0000000000000000000000000000000000000000;
+  }
 }

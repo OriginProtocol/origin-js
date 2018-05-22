@@ -215,6 +215,6 @@ contract Purchase {
   view
   returns (bool result)
   {
-    return address(listingContract.priceTokenContract()) == 0x0000000000000000000000000000000000000000;
+    return listingContract.usesEth();
   }
 }
