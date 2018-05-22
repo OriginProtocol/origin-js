@@ -482,5 +482,12 @@ contract("Purchase", accounts => {
         assert.equal(usesEth, false)
       })
     })
+
+    describe("data", () => {
+      it("should return the price token contract address", async function() {
+        let [, , , , , priceTokenContractAddress] = await purchase.data()
+        assert.equal(priceTokenContractAddress, fooToken.address)
+      })
+    })
   })
 })

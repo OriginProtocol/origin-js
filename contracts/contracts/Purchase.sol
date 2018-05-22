@@ -83,8 +83,8 @@ contract Purchase {
   function data()
   public
   view
-  returns (Stages _stage, Listing _listingContract, address _buyer, uint _created, uint _buyerTimout) {
-      return (stage(), listingContract, buyer, created, buyerTimout);
+  returns (Stages _stage, Listing _listingContract, address _buyer, uint _created, uint _buyerTimout, address priceTokenContract) {
+      return (stage(), listingContract, buyer, created, buyerTimout, listingContract.priceTokenContract());
   }
 
   // Pay for listing
