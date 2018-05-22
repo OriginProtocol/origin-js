@@ -116,8 +116,13 @@ class Listings extends ResourceBase {
 
   async buy(address, unitsToBuy, valueToPay) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
-    const value = this.contractService.web3.utils.toWei(String(valueToPay), "ether")
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {value:value, gas: 1500000})
+    const usesEth = this.usesEth(address)
+    const asWei = this.contractService.web3.utils.toWei(String(valueToPay), "ether")
+    if (usesEth) {
+      return await this.contractFn(address, "buyListing", [unitsToBuy], {value:asWei, gas: 1500000})
+    } else {
+      return await this.contractFn(address, "buyListing", [unitsToBuy], {value:valueToPay, gas: 1500000})
+    }
   }
 
   async close(address) {
@@ -130,6 +135,10 @@ class Listings extends ResourceBase {
 
   async purchaseAddressByIndex(address, index) {
     return await this.contractFn(address, "getPurchase", [index])
+  }
+
+  async usesEth(address) {
+    return await this.contractFn(address, "usesEth")
   }
 }
 
