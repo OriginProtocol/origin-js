@@ -146,6 +146,13 @@ contract("Listing", accounts => {
       // Check that we can fetch the purchase address
       assert.equal(await listing.getPurchase(0), purchaseContract.address)
     })
+
+    describe("usesEth", () => {
+      it("should return true", async function() {
+        let usesEth = await listing.usesEth()
+        assert.equal(usesEth, true)
+      })
+    })
   })
 
   describe("with price in ERC20 token", () => {
@@ -205,6 +212,13 @@ contract("Listing", accounts => {
 
       // Check that tokens have been transferred to purchase contract
       assert.equal(await fooToken.balanceOf(purchaseContract.address), price)
+    })
+
+    describe("usesEth", () => {
+      it("should return false", async function() {
+        let usesEth = await listing.usesEth()
+        assert.equal(usesEth, false)
+      })
     })
   })
 })
