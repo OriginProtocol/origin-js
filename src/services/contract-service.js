@@ -7,6 +7,7 @@ import ListingContract from "./../../contracts/build/contracts/Listing.json"
 import PurchaseContract from "./../../contracts/build/contracts/Purchase.json"
 import UserRegistryContract from "./../../contracts/build/contracts/UserRegistry.json"
 import OriginIdentityContract from "./../../contracts/build/contracts/OriginIdentity.json"
+import ERC827Contract from "./../../contracts/build/contracts/ERC827.json"
 import bs58 from "bs58"
 import Web3 from "web3"
 
@@ -27,7 +28,8 @@ class ContractService {
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
       claimHolderPresignedContract: ClaimHolderPresignedContract,
-      originIdentityContract: OriginIdentityContract
+      originIdentityContract: OriginIdentityContract,
+      erc827Contract: ERC827Contract
     }
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
