@@ -95,7 +95,7 @@ contract Purchase {
   payable
   atStage(Stages.AWAITING_PAYMENT)
   {
-    if (address(listingContract.priceTokenContract()) == 0x0000000000000000000000000000000000000000) {
+    if (usesEth()) {
       // Price is in ETH (wei)
       if (address(this).balance >= listingContract.price()) {
         // Buyer (or their proxy) has paid enough to cover purchase
@@ -175,7 +175,7 @@ contract Purchase {
     // Send contract funds to seller (ie owner of Listing)
     // Transfering money always needs to be the last thing we do, do avoid
     // rentrancy bugs. (Though here the seller would just be getting their own money)
-    if (listingContract.priceTokenContract() == 0x0000000000000000000000000000000000000000) {
+    if (usesEth()) {
       // Price is in ETH (wei)
       listingContract.owner().transfer(address(this).balance);
     }
@@ -208,5 +208,13 @@ contract Purchase {
 
     // TODO: Create a dispute contract?
     // Right now there's no way to exit this state.
+  }
+
+  function usesEth()
+  public
+  view
+  returns (bool result)
+  {
+    return address(listingContract.priceTokenContract()) == 0x0000000000000000000000000000000000000000;
   }
 }
