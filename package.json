@@ -17,7 +17,7 @@
     "start": "node scripts/build.js serve"
   },
   "files": [
-    "dist"
+    "dist/index.js"
   ],
   "prettier": {
     "semi": false,
