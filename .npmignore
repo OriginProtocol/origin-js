@@ -27,3 +27,14 @@
 npm-debug.log
 testem.log
 /typings
+
+# project files not required on the npm module
+/.github
+/artifacts
+/contracts
+/test
+/src
+webpack.*.js
+
+# .gitignore overwrites
+!/dist
