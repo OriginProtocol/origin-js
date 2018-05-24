@@ -2,9 +2,9 @@ pragma solidity 0.4.23;
 
 /// @title Listing
 /// @dev Used to keep marketplace of listings for buyers and sellers
-/// @author Matt Liu <matt@originprotocol.com>, Josh Fraser <josh@originprotocol.com>, Stan James <stan@originprotocol.com>
 
 import "./Listing.sol";
+import '../../node_modules/openzeppelin-solidity/contracts/token/ERC827/ERC827.sol';
 
 contract ListingsRegistry {
 
@@ -24,15 +24,35 @@ contract ListingsRegistry {
   // Array of all listings
   Listing[] public listings;
 
+  // Our token
+  ERC827 token;
+
+  /*
+   * Modifiers
+   */
+  modifier isValidListingIndex(uint _index) {
+    require (_index < listings.length);
+    _;
+  }
+
+
+  modifier isOwner() {
+    require (msg.sender == owner);
+    _;
+  }
+
+
   /*
    * Public functions
    */
 
-  constructor()
+  constructor(address _tokenAddress)
     public
   {
     // Defines origin admin address - may be removed for public deployment
     owner = msg.sender;
+
+    token = ERC827(_tokenAddress);
   }
 
   /// @dev listingsLength(): Return number of listings
@@ -51,7 +71,7 @@ contract ListingsRegistry {
     constant
     returns (Listing, address, bytes32, uint, uint)
   {
-    // Test in truffle deelop:
+    // Test in truffle develop:
     // ListingsRegistry.deployed().then(function(instance){ return instance.getListing.call(0) })
 
     // TODO (Stan): Determine if less gas to do one array lookup into var, and
@@ -75,12 +95,18 @@ contract ListingsRegistry {
   function create(
     bytes32 _ipfsHash,
     uint _price,
-    uint _unitsAvailable
+    uint _unitsAvailable,
+    address _priceTokenContract
   )
     public
     returns (uint)
   {
-    listings.push(new Listing(msg.sender, _ipfsHash, _price, _unitsAvailable));
+    // TODO: We should avoid using `tx.origin` per
+    // https://ethereum.stackexchange.com/a/1892/20332
+    // ...But how else to determine who really made the listing?
+    // Maybe use the ERC725 identity?
+
+    listings.push(new Listing(tx.origin, _ipfsHash, _price, _unitsAvailable, _priceTokenContract));
     emit NewListing(listings.length-1);
     return listings.length;
   }
@@ -101,7 +127,7 @@ contract ListingsRegistry {
     returns (uint)
   {
     require (msg.sender == owner, "Only callable by registry owner");
-    listings.push(new Listing(_creatorAddress, _ipfsHash, _price, _unitsAvailable));
+    listings.push(new Listing(_creatorAddress, _ipfsHash, _price, _unitsAvailable, 0x0000000000000000000000000000000000000000));
     emit NewListing(listings.length-1);
     return listings.length;
   }

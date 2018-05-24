@@ -32,12 +32,27 @@ class Purchases extends ResourceBase {
       listingAddress: contractData[1],
       buyerAddress: contractData[2],
       created: Number(contractData[3]),
-      buyerTimout: Number(contractData[4])
+      buyerTimout: Number(contractData[4]),
+      priceTokenAddress: contractData[5]
     }
   }
 
-  async pay(address, amountWei) {
-    return await this.contractFn(address, "pay", [], { value: amountWei })
+  async pay(address, amount) {
+    let usesEth = await this.usesEth(address)
+    if (usesEth) {
+      return await this.contractFn(address, "pay", [], { value: amount })
+    } else {
+      // first transfer tokens to purchase contract
+      let { priceTokenAddress } = await this.get()
+      await this.contractService.contractFn(
+        this.contractService.erc827Contract,
+        priceTokenAddress,
+        "transfer",
+        [address, amount]
+      )
+      // execute contract's pay method
+      return await this.contractFn(address, "pay", [])
+    }
   }
 
   async sellerConfirmShipped(address) {
@@ -73,7 +88,7 @@ class Purchases extends ResourceBase {
       ipfsHashBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     }
     // Return review data
-    return {rating: rating, ipfsHashBytes: ipfsHashBytes} 
+    return {rating: rating, ipfsHashBytes: ipfsHashBytes}
   }
 
   async getLogs(address) {
@@ -121,6 +136,10 @@ class Purchases extends ResourceBase {
           .catch(error => reject(error))
       })
     })
+  }
+
+  async usesEth(address) {
+    return await this.contractFn(address, "usesEth")
   }
 }
 

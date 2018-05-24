@@ -27,6 +27,7 @@ class Listings extends ResourceBase {
       unitsAvailable: contractData[3],
       created: contractData[4],
       expiration: contractData[5],
+      priceTokenContract: contractData[5],
 
       name: ipfsData.data.name,
       category: ipfsData.data.category,
@@ -66,7 +67,7 @@ class Listings extends ResourceBase {
     return listing
   }
 
-  async create(data, schemaType) {
+  async create(data, schemaType, priceTokenContract) {
     if (data.price == undefined) {
       throw "You must include a price"
     }
@@ -93,28 +94,35 @@ class Listings extends ResourceBase {
     console.log(`IPFS file created with hash: ${ipfsHash} for data:`)
     console.log(jsonBlob)
 
-    // Submit to ETH contract
+    // Create listing contract
     const units = 1 // TODO: Allow users to set number of units in form
     let transactionReceipt
     try {
       transactionReceipt = await this.contractService.submitListing(
         ipfsHash,
-        formListing.formData.price,
-        units)
+        data.price,
+        units,
+        priceTokenContract
+      )
     } catch (error) {
       console.error(error)
-      throw new Error(`ETH Failure: ${error}`)
+      throw new Error(`Contract Failure: ${error}`)
     }
 
     // Success!
-    console.log(`Submitted to ETH blockchain with transactionReceipt.tx: ${transactionReceipt.tx}`)
+    console.log(`Submitted to blockchain with transactionReceipt.tx: ${transactionReceipt.tx}`)
     return transactionReceipt
   }
 
-  async buy(address, unitsToBuy, ethToPay) {
+  async buy(address, unitsToBuy, valueToPay) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
-    const value = this.contractService.web3.utils.toWei(String(ethToPay), "ether")
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {value:value, gas: 750000})
+    const usesEth = this.usesEth(address)
+    const asWei = this.contractService.web3.utils.toWei(String(valueToPay), "ether")
+    if (usesEth) {
+      return await this.contractFn(address, "buyListing", [unitsToBuy], {value:asWei, gas: 1500000})
+    } else {
+      return await this.contractFn(address, "buyListing", [unitsToBuy], {value:valueToPay, gas: 1500000})
+    }
   }
 
   async close(address) {
@@ -127,6 +135,10 @@ class Listings extends ResourceBase {
 
   async purchaseAddressByIndex(address, index) {
     return await this.contractFn(address, "getPurchase", [index])
+  }
+
+  async usesEth(address) {
+    return await this.contractFn(address, "usesEth")
   }
 }
 

@@ -1,3 +1,4 @@
+var OriginToken = artifacts.require("./OriginToken.sol")
 var ClaimHolder = artifacts.require("./ClaimHolder.sol")
 var ClaimHolderLibrary = artifacts.require("./ClaimHolderLibrary.sol")
 var ClaimHolderPresigned = artifacts.require("./ClaimHolderPresigned.sol")
@@ -17,11 +18,12 @@ module.exports = function(deployer, network) {
 }
 
 async function deployContracts(deployer) {
+  await deployer.deploy(OriginToken)
   await deployer.deploy(PurchaseLibrary)
   await deployer.link(PurchaseLibrary, ListingsRegistry)
   await deployer.link(PurchaseLibrary, Listing)
   await deployer.deploy(UserRegistry)
-  await deployer.deploy(ListingsRegistry)
+  await deployer.deploy(ListingsRegistry, OriginToken.address)
   await deployer.deploy(KeyHolderLibrary)
 
   await deployer.link(KeyHolderLibrary, KeyHolder)
