@@ -31,8 +31,8 @@
 
 ## Publish
 ### origin-js
-- [ ] _origin-js_ : In `package.json`, confirm version is `0.6.1` (should have been changed as part of previous release)
-- [ ] If contracts have changed: **CONTRACTS NOT CHANGED**
+- [ ] _origin-js_ : In `package.json`, confirm version is `0.6.1` 
+- [ ] If contracts have changed:
   - Show diff with: `git diff master..develop contracts/contracts/`  
   - `cd contracts`
   - [ ] Deploy new smart contracts to Ropsten. Be sure addresses are listed in ABI files. 
@@ -41,7 +41,7 @@
   - [ ] Deploy new smart contracts to Rinkeby.  Be sure addresses are listed in ABI files. 
     - `export RINKEBY_MNEMONIC=$ROPSTEN_MNEMONIC`
     - `npx truffle migrate --network rinkeby | tee releases/0.6.1_rinkeby.log`
-  - [ ] Migrate data from old contracts to new. (Once we get around to writing migrations!)
+  - [ ] [Migrate data from old contracts to new.](scripts/v0.1_migration)
   - [ ] _origin-js_: Build origin.js (in `dist/origin.js`) -- **Not redundant:** This will bake in the new contract addresses into the contract's `.json` files. 
     - `npm run install:dev`
 - [ ] _origin-js_: Merge `develop` into `master` and push
@@ -51,9 +51,6 @@
 - [ ] _origin-js_: [Publish to npm](https://docs.npmjs.com/cli/publish). 
   - `npm publish`
 ### demo-dapp
-- [ ] _demo-dapp_: Replace git reference with version number in `package.json`
-  -   ` "origin": "OriginProtocol/origin-js#develop"` --> `"origin": "0.6.1"`
-  - `sed -i -e 's/OriginProtocol\/origin-js#develop/0.6.1/g' package.json`
 - [ ] _demo-dapp_: Build against npm version. This will update `package-lock.json`
   - `npm unlink --no-save origin && npm install && npm run build`
 - [ ] `git add package.json && git commit -m "0.6.1 release"`
@@ -79,9 +76,6 @@
   - `git checkout develop`
   - `subl package.json`
 - [ ] `git push`
-- [ ] _demo-dapp_: Replace version number with git reference in `package.json`
-  -`"origin": "0.6.1"` --> ` "origin": "OriginProtocol/origin-js#develop"`
-  - `git push`
 - [ ] _docs_: Review docs for needed updates. Confirm example code on playground site (jsfiddle?) still work.
 - [ ] Copy this to-do list into new issue for next sprint.
 - [ ] Post notice of new release on Discord
