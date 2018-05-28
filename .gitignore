@@ -37,3 +37,6 @@ npm-debug.log
 testem.log
 /typings
 .DS_Store
+
+# code-coverage
+coverage.json
