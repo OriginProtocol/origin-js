@@ -2,6 +2,8 @@
 // contractService and ipfsService.
 
 import ResourceBase from "./_resource-base"
+// With Node 10, URL will be availael on top-level object
+import URL from "url-parse"
 
 class Listings extends ResourceBase {
   constructor({ contractService, ipfsService }) {
@@ -30,6 +32,14 @@ class Listings extends ResourceBase {
     let ipfsHash = this.contractService.getIpfsHashFromBytes32(contractData[1])
     const ipfsData = await this.ipfsService.getFile(ipfsHash)
 
+    // We only allow data: and dweb: protocols for images. data: for raw
+    // base64-enocded image data, and dweb: for links to ipfs hashs.
+    const safePictures = (ipfsData.data.pictures ?
+      ipfsData.data.pictures.filter(uri => {
+        try { return ['data:', 'dweb:'].includes((new URL(uri)).protocol) }
+        catch(error) { return false }
+      }) : [])
+
     let listing = {
       address: address,
       ipfsHash: ipfsHash,
@@ -44,18 +54,26 @@ class Listings extends ResourceBase {
       category: ipfsData.data.category,
       description: ipfsData.data.description,
       location: ipfsData.data.location,
-      pictures: ipfsData.data.pictures
+      pictures: safePictures
     }
 
     return listing
   }
 
-  // This method is DEPRCIATED
+  // This method is DEPRCIATED use get instead
   async getByIndex(listingIndex) {
     const contractData = await this.contractService.getListing(listingIndex)
     const ipfsData = await this.ipfsService.getFile(contractData.ipfsHash)
     // ipfsService should have already checked the contents match the hash,
     // and that the signature validates
+
+    // We only allow data: and dweb: protocols for images. data: for raw
+    // base64-enocded image data, and dweb: for links to ipfs hashs.
+    const safePictures = (ipfsData.data.pictures ?
+      ipfsData.data.pictures.filter(uri => {
+        try { return ['data:', 'dweb:'].includes((new URL(uri)).protocol) }
+        catch(error) { return false }
+      }) : [])
 
     // We explicitly set these fields to white list the allowed fields.
     const listing = {
@@ -63,8 +81,7 @@ class Listings extends ResourceBase {
       category: ipfsData.data.category,
       description: ipfsData.data.description,
       location: ipfsData.data.location,
-      pictures: ipfsData.data.pictures,
-
+      pictures: safePictures,
       address: contractData.address,
       index: contractData.index,
       ipfsHash: contractData.ipfsHash,
