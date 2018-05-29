@@ -10,15 +10,20 @@ import OriginIdentityContract from "./../../contracts/build/contracts/OriginIden
 import bs58 from "bs58"
 import Web3 from "web3"
 
+import WalletLinker from "./../resources/wallet-linker"
+
 class ContractService {
   constructor(options = {}) {
     const externalWeb3 = options.web3 || window.web3
     if (!externalWeb3) {
+      //Create dummy Web3 and return it.
       throw new Error(
         "web3 is required for Origin.js. Please pass in web3 as a config option."
       )
     }
     this.web3 = new Web3(externalWeb3.currentProvider)
+    this.opts = options
+    this.initWalletLinker()
 
     const contracts = {
       listingsRegistryContract: ListingsRegistryContract,
@@ -44,6 +49,29 @@ class ContractService {
         /* Ignore */
       }
     }
+  }
+
+  hasProvider() {
+    return Boolean(this.web3.currentProvider)
+  }
+
+  newWalletNetwork() {
+    this.web3.setProvider(this.walletLinker.getProvider())
+  }
+
+  initWalletLinker() {
+      if (!this.hasProvider())
+      {
+        if(!this.walletLinker)
+        {
+          this.walletLinker = new WalletLinker({linkerServerUrl:this.opts.walletLinkerUrl, fetch:this.opts.fetch, networkChangeCb:this.newWalletNetwork.bind(this), web3:this.web3})
+          this.walletLinker.initSession()
+        }
+      }
+  }
+
+  getMobileWalletLink() {
+      return this.walletLinker.getLinkCode()
   }
 
   // Return bytes32 hex string from base58 encoded ipfs hash,

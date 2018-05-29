@@ -17,6 +17,7 @@ const defaultIpfsApiPort = "5002"
 const defaultIpfsGatewayPort = "443"
 const defaultIpfsGatewayProtocol = "https"
 const defaultAttestationServerUrl = `${defaultBridgeServer}/api/attestations`
+const defaultWalletLinkerUrl = `${defaultBridgeServer}/api/wallet-linker`
 
 class Origin {
   constructor({
@@ -25,10 +26,11 @@ class Origin {
     ipfsGatewayPort = defaultIpfsGatewayPort,
     ipfsGatewayProtocol = defaultIpfsGatewayProtocol,
     attestationServerUrl = defaultAttestationServerUrl,
+    walletLinkerUrl = defaultWalletLinkerUrl,
     contractAddresses,
     web3
   } = {}) {
-    this.contractService = new ContractService({ contractAddresses, web3 })
+    this.contractService = new ContractService({contractAddresses, web3, walletLinkerUrl, fetch})
     this.ipfsService = new IpfsService({
       ipfsDomain,
       ipfsApiPort,
