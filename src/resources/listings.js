@@ -2,7 +2,7 @@
 // contractService and ipfsService.
 
 import ResourceBase from "./_resource-base"
-// With Node 10, URL will be availael on top-level object
+// With Node v10, URL will be available on top-level object
 import URL from "url-parse"
 
 class Listings extends ResourceBase {
