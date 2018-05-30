@@ -13,21 +13,46 @@ class WalletLinker {
     this.accounts = []
     this.networkChangeCb = networkChangeCb
     this.callbacks = {}
+    this.placeholder_on = false
+    this.PLACEHOLDER_ADDRESS = '0xAF298D050e4395d69670B12B7F41000000000000'
     this.session_token = ""
     this.web3 = web3
-    this.loadLocalStorage()
+    this.loadSessionStorage()
+    this.showPopUp = null // define callback here to display popUp
+    this.setLinkCode = null // define callback here to setLinkCode
   }
 
   logout() {
-      localStorage.setItem("walletLinkerData", JSON.stringify({
+      sessionStorage.setItem("walletLinkerData", JSON.stringify({
         accounts:[],
         session_token:""
       }))
-      this.loadLocalStorage()
+      this.loadSessionStorage()
+      clearInterval(self.interval)
   }
 
-  loadLocalStorage() {
-    let wallet_data_str = localStorage.getItem("walletLinkerData");
+  startPlaceholder(){
+    this.placeholder_on = true
+    return this.PLACEHOLDER_ADDRESS
+  }
+
+  endPlaceholder() {
+    this.placeholder_on = false
+  }
+
+  async startLink() {
+    let code = await this.generateLinkCode()
+    this.setLinkCode(code)
+    this.showPopUp(true)
+  }
+
+  cancelLink() {
+    this.pending_call = undefined
+    this.showPopUp(false)
+  }
+
+  loadSessionStorage() {
+    let wallet_data_str = sessionStorage.getItem("walletLinkerData");
     let wallet_data = undefined
     try{
        wallet_data = JSON.parse(wallet_data_str)
@@ -45,7 +70,7 @@ class WalletLinker {
   }
 
 
-  syncLocalStorage() {
+  syncSessionStorage() {
       let wallet_data = {
         accounts:this.accounts,
         networkRpcUrl:this.networkRpcUrl,
@@ -54,20 +79,30 @@ class WalletLinker {
         session_token:this.session_token,
         linked:this.linked
       }
-      localStorage.setItem("walletLinkerData", JSON.stringify(wallet_data))
+      sessionStorage.setItem("walletLinkerData", JSON.stringify(wallet_data))
   }
 
 
   getProvider() {
-    if (this.networkRpcUrl)
+    let provider = ZeroClientProvider({
+      rpcUrl:this.networkRpcUrl && this.linked ? this.networkRpcUrl : this.web3.currentProvider.host,
+      getAccounts: this.getAccounts.bind(this),
+      //signTransaction: this.signTransaction.bind(this)
+
+      processTransaction: this.processTransaction.bind(this)
+    })
+    let hookedWallet = provider._providers[6]
+
+    if (!hookedWallet.validateTransaction)
     {
-      return ZeroClientProvider({
-        rpcUrl:this.networkRpcUrl,
-        getAccounts: this.getAccounts.bind(this),
-        //signTransaction: this.signTransaction.bind(this)
-        processTransaction: this.processTransaction.bind(this)
-      })
+      console.log("The sub provider at [6] is NOT a hooked wallet.")
     }
+    else
+    {
+      //we basically make validate a passthrough for now
+      hookedWallet.validateTransaction = (txParams, cb) => {cb()}
+    }
+    return provider
   }
 
   getAccounts(callback) {
@@ -84,7 +119,7 @@ class WalletLinker {
 
   signTransaction(txn_object, callback) {
     let call_id = uuidv1()
-    txn_object["chainId"] = this.web3.utils.toHex(this.netId)
+    //txn_object["chainId"] = this.web3.utils.toHex(this.netId)
     txn_object["gasLimit"] = txn_object["gas"]
     let result = this.post("call-wallet", {session_token:this.session_token, call_id:call_id, accounts:this.accounts, call:["signTransaction",{txn_object}], return_url:this.getReturnUrl()})
 
@@ -103,17 +138,34 @@ class WalletLinker {
     let call_id = uuidv1()
     //translate gas to gasLimit
     txn_object["gasLimit"] = txn_object["gas"]
-    let result = this.post("call-wallet", {session_token:this.session_token, call_id:call_id, accounts:this.accounts, call:["processTransaction",{txn_object}], return_url:this.getReturnUrl()})
+    if (this.placeholder_on)
+    {
+      if (txn_object["from"].toLowerCase() == this.PLACEHOLDER_ADDRESS.toLowerCase())
+      {
+        txn_object["from"] = undefined
+      }
+    }
 
     this.callbacks[call_id] = (data) => {
       callback(undefined, data.hash)
     }
 
-    result.then((data) => {
-    }).catch((error_data) => {
-      delete this.callbacks[call_id]
-      callback(error_data, undefined);
-    });
+    if (!this.linked)
+    {
+      this.pending_call = {call_id, session_token: this.session_token, call:["processTransaction",{txn_object}]}
+      this.startLink()
+    }
+    else
+    {
+      let result = this.post("call-wallet", {session_token:this.session_token, call_id:call_id, accounts:this.accounts, call:["processTransaction",{txn_object}], return_url:this.getReturnUrl()})
+
+    
+      result.then((data) => {
+      }).catch((error_data) => {
+        delete this.callbacks[call_id]
+        callback(error_data, undefined);
+      });
+    }
   }
 
 
@@ -122,7 +174,7 @@ class WalletLinker {
     {
       this.networkRpcUrl = networkRpcUrl
       this.networkChangeCb()
-      this.netId = await this.web3.eth.net.getId()
+      //this.netId = await this.web3.eth.net.getId()
     }
   }
 
@@ -160,8 +212,8 @@ class WalletLinker {
       if (message.id != undefined)
       {
         this.last_message_id = message.id
-        this.syncLocalStorage()
       }
+      this.syncSessionStorage()
     }
   }
 
@@ -185,24 +237,28 @@ class WalletLinker {
   }
 
   initSession() {
-    if (this.linked)
+    if (this.linked && this.networkRpcUrl)
     {
       this.changeNetwork(this.networkRpcUrl, true)
-      this.startMessagesSync()
     }
     else
     {
-      this.generateLinkCode()
+      //set the network to us..
+      this.networkChangeCb()
     }
+    this.syncLinkMessages()
   }
 
   async generateLinkCode() {
-    let ret = await this.post("generate-code", {return_url:this.getReturnUrl()})
-    this.link_code = ret.link_code
-    this.linked = ret.linked
+    let ret = await this.post("generate-code", {session_token:this.session_token, return_url:this.getReturnUrl(), pending_call:this.pending_call})
     if (ret)
     {
+      this.session_token = ret.session_token
+      this.link_code = ret.link_code
+      this.linked = ret.linked
+      this.syncSessionStorage()
       this.startMessagesSync()
+      return ret.link_code
     }
   }
 
@@ -215,11 +271,33 @@ class WalletLinker {
     if (ret.session_token)
     {
       this.session_token = ret.session_token
+
+      if (!ret.linked && this.linked)
+      {
+        this.logout()
+      }
+      else
+      {
+        this.linked = ret.linked
+      }
+
+      if (this.linked)
+      {
+        this.cancelLink()
+      }
+      this.startMessagesSync()
+      if (ret.messages && ret.messages.length)
+      {
+        this.processMessages(ret.messages)
+      }
     }
-    if (ret.messages)
+    else
     {
-      this.linked = true
-      this.processMessages(ret.messages)
+      if (this.linked && ret.session_token == null)
+      {
+        //logout of this
+        this.logout()
+      }
     }
   }
 

@@ -51,16 +51,14 @@ class ContractService {
     }
   }
 
-  hasProvider() {
-    return Boolean(this.web3.currentProvider)
-  }
-
   newWalletNetwork() {
     this.web3.setProvider(this.walletLinker.getProvider())
   }
 
   initWalletLinker() {
-      if (!this.hasProvider())
+      // if there's no given provider
+      // we do it the funny wallet way
+      if (!Web3.givenProvider)
       {
         if(!this.walletLinker)
         {
@@ -68,6 +66,17 @@ class ContractService {
           this.walletLinker.initSession()
         }
       }
+  }
+  
+  hasWalletLinker() {
+    return this.walletLinker
+  }
+
+  showLinkPopUp() {
+    if (this.walletLinker)
+    {
+      this.walletLinker.startLink()
+    }
   }
 
   getMobileWalletLink() {
@@ -283,7 +292,7 @@ class ContractService {
   async contractFn(contractDefinition, address, functionName, args = [], options = {}) {
     // Setup options
     const opts = Object.assign(options, {}) // clone options
-    opts.from = opts.from || (await this.currentAccount())
+    opts.from = opts.from || await this.currentAccount()
     opts.gas = options.gas || 50000 // Default gas
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
@@ -294,12 +303,19 @@ class ContractService {
       return await method.call(opts)
     }
     var transaction = await new Promise((resolve, reject) => {
+      if ((!opts.from) && this.walletLinker && !this.walletLinker.linked)
+      {
+        opts.from = this.walletLinker.startPlaceholder()
+      }
       method
         .send(opts)
         .on("receipt", receipt => {
+          this.walletLinker.endPlaceholder()
           resolve(receipt)
         })
-        .on("error", err => reject(err))
+        .on("error", err =>{
+          this.walletLinker.endPlaceholder()
+          reject(err)})
     })
 
     transaction.tx = transaction.transactionHash
