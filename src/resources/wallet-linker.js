@@ -198,7 +198,8 @@ class WalletLinker {
           {
             if (message.result && message.result.purchase)
             {
-                alert("Purchase successful.")
+                //another hacky callback
+                this.showNextPage()
             }
           }
           break;
