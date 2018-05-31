@@ -42,14 +42,24 @@ describe("Notification Resource", function() {
     buyer_1 = accounts[2]
     buyer_2 = accounts[3]
     storeMock = new StoreMock()
-    storeMock.set("notificationSubscriptionStart", new Date("2017-01-01").getTime())
-    notifications = new Notifications({ contractService, listings, purchases, store: storeMock })
+    storeMock.set(
+      "notificationSubscriptionStart",
+      new Date("2017-01-01").getTime()
+    )
+    notifications = new Notifications({
+      contractService,
+      listings,
+      purchases,
+      store: storeMock
+    })
   })
 
   describe("all", () => {
     it("should return listing purchased notifications for seller", async () => {
       const for_seller = await notifications.all(seller)
-      const listingPurchased = for_seller.filter(({ type }) => type === "seller_listing_purchased")
+      const listingPurchased = for_seller.filter(
+        ({ type }) => type === "seller_listing_purchased"
+      )
       expect(listingPurchased.length).to.be.greaterThan(0)
       expect(listingPurchased[0].id).to.exist
       expect(listingPurchased[0].status).to.equal("unread")
@@ -57,7 +67,9 @@ describe("Notification Resource", function() {
 
     it("should return review received notifications for selle", async () => {
       const for_seller = await notifications.all(seller)
-      const reviewReceived = for_seller.filter(({ type }) => type === "seller_review_received")
+      const reviewReceived = for_seller.filter(
+        ({ type }) => type === "seller_review_received"
+      )
       expect(reviewReceived.length).to.be.greaterThan(0)
       expect(reviewReceived[0].id).to.exist
       expect(reviewReceived[0].status).to.equal("unread")
@@ -65,7 +77,9 @@ describe("Notification Resource", function() {
 
     it("should return listing shipped notifications for buyer", async () => {
       const for_seller = await notifications.all(buyer_1)
-      const reviewReceived = for_seller.filter(({ type }) => type === "buyer_listing_shipped")
+      const reviewReceived = for_seller.filter(
+        ({ type }) => type === "buyer_listing_shipped"
+      )
       expect(reviewReceived.length).to.be.greaterThan(0)
       expect(reviewReceived[0].id).to.exist
       expect(reviewReceived[0].status).to.equal("unread")
@@ -73,7 +87,9 @@ describe("Notification Resource", function() {
 
     it("should return review received notifications for buyer", async () => {
       const for_seller = await notifications.all(buyer_2)
-      const reviewReceived = for_seller.filter(({ type }) => type === "buyer_review_received")
+      const reviewReceived = for_seller.filter(
+        ({ type }) => type === "buyer_review_received"
+      )
       expect(reviewReceived.length).to.be.greaterThan(0)
       expect(reviewReceived[0].id).to.exist
       expect(reviewReceived[0].status).to.equal("unread")
