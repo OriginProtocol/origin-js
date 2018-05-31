@@ -32,6 +32,7 @@ class ContractService {
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
     this.libraries.KeyHolderLibrary = KeyHolderLibrary
+    this.currentAccountOverride = undefined
     for (let name in contracts) {
       this[name] = contracts[name]
       try {
@@ -74,10 +75,31 @@ class ContractService {
     return hashStr
   }
 
-  // Returns the first account listed
+  // Returns the first account listed, unless a current account has been set
+  // expcicitly
   async currentAccount() {
+    if (this.currentAccountOverride !== undefined) {
+      return this.currentAccountOverride
+    }
     const accounts = await this.web3.eth.getAccounts()
     return accounts[0]
+  }
+
+  // Runs the given function (which takes no parameters) as the provided
+  // account.
+  async asAccount(account, fn) {
+    const accounts = await this.web3.eth.getAccounts()
+    if (accounts.indexOf(account) === -1) {
+      throw new("invalid account specified")
+    }
+
+    const prevAccountOverride = this.currentAccountOverride
+    this.currentAccountOverride = account
+    try {
+      return await fn()
+    } finally {
+      this.currentAccountOverride = prevAccountOverride
+    }
   }
 
   // async convenience method for getting block details

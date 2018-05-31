@@ -11,6 +11,7 @@ describe("Listing Resource", function() {
   var contractService
   var ipfsService
   var testListingIds
+  var buyer
 
   before(async () => {
     let provider = new Web3.providers.HttpProvider("http://localhost:8545")
@@ -24,6 +25,8 @@ describe("Listing Resource", function() {
     })
     listings = new Listings({ contractService, ipfsService })
     testListingIds = await contractService.getAllListingIds()
+    const accounts = await web3.eth.getAccounts()
+    buyer = accounts[1]
 
     // Ensure that there are at least 2 sample listings
     await listings.create({ name: "Sample Listing 1", price: 1 }, "")
@@ -63,11 +66,9 @@ describe("Listing Resource", function() {
     await listings.create({ name: "My Listing", price: 1 }, "")
     let listingIds = await contractService.getAllListingIds()
     const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
-    const transaction = await listings.buy(
-      listing.address,
-      1,
-      listing.price * 1
-    )
+    const transaction = await contractService.asAccount(buyer, async () => {
+      await listings.buy(listing.address, 1, listing.price * 1)
+    })
   })
 
   it("should create a listing", async () => {
@@ -108,7 +109,9 @@ describe("Listing Resource", function() {
       await listings.create({ name: "My Listing", price: 1 }, "")
       const listingIds = await contractService.getAllListingIds()
       listing = await listings.getByIndex(listingIds[listingIds.length - 1])
-      const transaction = await listings.buy(listing.address, 1, 1)
+      await contractService.asAccount(buyer, async () => {
+        const transaction = await listings.buy(listing.address, 1, 1)
+      })
     })
 
     it("should get the number of purchases", async () => {
