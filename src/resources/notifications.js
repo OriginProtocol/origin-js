@@ -106,7 +106,8 @@ class Notifications {
   purchaseNotifications(logs, type) {
     return logs.map(log => {
       const id = `${type}_${log.transactionHash}`
-      const isWatched = log.timestamp > this.store.get("notificationSubscriptionStart")
+      const timestampInMilli = log.timestamp * 1000
+      const isWatched = timestampInMilli > this.store.get("notificationSubscriptionStart")
       const notificationStatuses = this.store.get("notificationStatuses")
       const status = (isWatched && notificationStatuses[id] !== readStatus)
         ? unreadStatus : readStatus
