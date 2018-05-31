@@ -52,12 +52,12 @@ class Notifications {
 
     const sellerListingPurchased = this.sellerListingPurchasedNotifications.apply(this, params)
     const sellerReviewReceived = this.sellerReviewReceivedNotifications.apply(this, params)
-    const buyerListingSent = this.buyerListingSentNotifications.apply(this, params)
+    const buyerListingShipped = this.buyerListingShippedNotifications.apply(this, params)
     const buyerReviewReceived = this.buyerReviewReceivedNotifications.apply(this, params)
 
     return sellerListingPurchased
       .concat(sellerReviewReceived)
-      .concat(buyerListingSent)
+      .concat(buyerListingShipped)
       .concat(buyerReviewReceived)
   }
 
@@ -83,13 +83,13 @@ class Notifications {
     )
   }
 
-  buyerListingSentNotifications(blockchainData, account) {
+  buyerListingShippedNotifications(blockchainData, account) {
     const purchaseStage = "buyer_pending"
     const logs = this.buyerPurchaseLogsFor(blockchainData, account)
     const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
-      "buyer_listing_sent"
+      "buyer_listing_shipped"
     )
   }
 
