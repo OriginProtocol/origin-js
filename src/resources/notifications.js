@@ -22,6 +22,9 @@ class Notifications {
     if (!store.get("notificationSubscriptionStart")) {
       store.set("notificationSubscriptionStart", Date.now())
     }
+    if (!store.get("notificationStatuses")) {
+      store.set("notificationStatuses", {})
+    }
     this.listings = listings
     this.purchases = purchases
     this.contractService = contractService
@@ -29,6 +32,14 @@ class Notifications {
   }
 
   // public methods
+
+  // we allow the entire notification to be passed in (for consistency with other resources + convenience)
+  // however all we are updating is the status
+  set({ id, status }) {
+    let notificationStatuses = this.store.get("notificationStatuses")
+    notificationStatuses[id] = status
+    this.store.set("notificationStatuses", notificationStatuses)
+  }
 
   async all(account) {
     const currentAccount = account || await this.contractService.currentAccount()
