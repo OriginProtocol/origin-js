@@ -65,7 +65,7 @@ describe("Notification Resource", function() {
       expect(listingPurchased[0].status).to.equal("unread")
     })
 
-    it("should return review received notifications for selle", async () => {
+    it("should return review received notifications for seller", async () => {
       const for_seller = await notifications.all(seller)
       const reviewReceived = for_seller.filter(
         ({ type }) => type === "seller_review_received"
