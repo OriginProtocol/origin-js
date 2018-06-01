@@ -14,8 +14,8 @@ const notificationTypes = {
 }
 
 const storeKeys = {
-  notificationSubscriptionStart: "notificationSubscriptionStart",
-  notificationStatuses: "notificationStatuses"
+  notificationSubscriptionStart: "notification_subscription_start",
+  notificationStatuses: "notification_statuses"
 }
 
 class NotificationObject {

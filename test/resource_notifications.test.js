@@ -43,7 +43,7 @@ describe("Notification Resource", function() {
     buyer_2 = accounts[3]
     storeMock = new StoreMock()
     storeMock.set(
-      "notificationSubscriptionStart",
+      "notification_subscription_start",
       new Date("2017-01-01").getTime()
     )
     notifications = new Notifications({
