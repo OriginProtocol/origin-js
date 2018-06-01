@@ -302,6 +302,15 @@ class WalletLinker {
     }
   }
 
+  async unlink() {
+    let ret = await this.post("unlink", {})
+    if (ret.success == true)
+    {
+      //logout of this
+      this.logout()
+    }
+  }
+
   async http(baseUrl, url, body, method) {
     let response = await this.fetch(
       appendSlash(baseUrl) + url,
