@@ -6,6 +6,18 @@ const ajv = new Ajv()
 const unreadStatus = "unread"
 const readStatus = "read"
 
+const notificationTypes = {
+  sellerListingPurchased: { name: "seller_listing_purchased", purchaseStage: "shipping_pending" },
+  sellerReviewReceived: { name: "seller_review_received", purchaseStage: "seller_pending" },
+  buyerListingShipped: { name: "buyer_listing_shipped", purchaseStage: "buyer_pending" },
+  buyerReviewReceived: { name: "buyer_review_received", purchaseStage: "complete" }
+}
+
+const storeKeys = {
+  notificationSubscriptionStart: "notificationSubscriptionStart",
+  notificationStatuses: "notificationStatuses"
+}
+
 class NotificationObject {
   constructor({ id, type, status = unreadStatus } = {}) {
     let validate = ajv.compile(notificationSchema)
@@ -19,11 +31,11 @@ class NotificationObject {
 
 class Notifications {
   constructor({ listings, purchases, contractService, store }) {
-    if (!store.get("notificationSubscriptionStart")) {
-      store.set("notificationSubscriptionStart", Date.now())
+    if (!store.get(storeKeys.notificationSubscriptionStart)) {
+      store.set(storeKeys.notificationSubscriptionStart, Date.now())
     }
-    if (!store.get("notificationStatuses")) {
-      store.set("notificationStatuses", {})
+    if (!store.get(storeKeys.notificationStatuses)) {
+      store.set(storeKeys.notificationStatuses, {})
     }
     this.listings = listings
     this.purchases = purchases
@@ -36,9 +48,9 @@ class Notifications {
   // we allow the entire notification to be passed in (for consistency with other resources + convenience)
   // however all we are updating is the status
   set({ id, status }) {
-    let notificationStatuses = this.store.get("notificationStatuses")
+    let notificationStatuses = this.store.get(storeKeys.notificationStatuses)
     notificationStatuses[id] = status
-    this.store.set("notificationStatuses", notificationStatuses)
+    this.store.set(storeKeys.notificationStatuses, notificationStatuses)
   }
 
   async all(account) {
@@ -64,42 +76,42 @@ class Notifications {
   // private methods
 
   sellerListingPurchasedNotifications(blockchainData, account) {
-    const purchaseStage = "shipping_pending"
+    const purchaseStage = notificationTypes.sellerListingPurchased.purchaseStage
     const logs = this.sellerPurchaseLogsFor(blockchainData, account)
     const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
-      "seller_listing_purchased"
+      notificationTypes.sellerListingPurchased.name
     )
   }
 
   sellerReviewReceivedNotifications(blockchainData, account) {
-    const purchaseStage = "seller_pending"
+    const purchaseStage = notificationTypes.sellerReviewReceived.purchaseStage
     const logs = this.sellerPurchaseLogsFor(blockchainData, account)
     const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
-      "seller_review_received"
+      notificationTypes.sellerReviewReceived.name
     )
   }
 
   buyerListingShippedNotifications(blockchainData, account) {
-    const purchaseStage = "buyer_pending"
+    const purchaseStage = notificationTypes.buyerListingShipped.purchaseStage
     const logs = this.buyerPurchaseLogsFor(blockchainData, account)
     const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
-      "buyer_listing_shipped"
+      notificationTypes.buyerListingShipped.name
     )
   }
 
   buyerReviewReceivedNotifications(blockchainData, account) {
-    const purchaseStage = "complete"
+    const purchaseStage = notificationTypes.buyerReviewReceived.purchaseStage
     const logs = this.buyerPurchaseLogsFor(blockchainData, account)
     const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
-      "buyer_review_received"
+      notificationTypes.buyerReviewReceived.name
     )
   }
 
@@ -107,8 +119,8 @@ class Notifications {
     return logs.map(log => {
       const id = `${type}_${log.transactionHash}`
       const timestampInMilli = log.timestamp * 1000
-      const isWatched = timestampInMilli > this.store.get("notificationSubscriptionStart")
-      const notificationStatuses = this.store.get("notificationStatuses")
+      const isWatched = timestampInMilli > this.store.get(storeKeys.notificationSubscriptionStart)
+      const notificationStatuses = this.store.get(storeKeys.notificationStatuses)
       const status = (isWatched && notificationStatuses[id] !== readStatus)
         ? unreadStatus : readStatus
       return new NotificationObject({
