@@ -136,7 +136,7 @@ class ContractService {
     const net = await this.web3.eth.net.getId()
     const bytecode = contract.bytecode
     const withLibraryAddresses = bytecode.replace(/__[^_]+_+/g, (matchedStr) => {
-      const libraryName = matchedStr.replace(/_/g, '')
+      const libraryName = matchedStr.replace(/_/g, "")
       const library = this.libraries[libraryName]
       const libraryAddress = library.networks[net] && library.networks[net].address
       const withoutPrefix = libraryAddress.slice(2)

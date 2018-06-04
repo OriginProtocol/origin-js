@@ -23,7 +23,7 @@ class AttestationObject {
 }
 
 const responseToUrl = (resp = {}) => {
-  return resp['url']
+  return resp["url"]
 }
 
 class Attestations {
@@ -34,9 +34,9 @@ class Attestations {
 
     this.responseToAttestation = (resp = {}) => {
       return new AttestationObject({
-        claimType: resp['claim-type'],
-        data: Web3.utils.soliditySha3(resp['data']),
-        signature: resp['signature']
+        claimType: resp["claim-type"],
+        data: Web3.utils.soliditySha3(resp["data"]),
+        signature: resp["signature"]
       })
     }
   }
@@ -133,7 +133,7 @@ class Attestations {
         method,
         body: body ? JSON.stringify(body) : undefined,
         headers: { "content-type": "application/json" },
-        credentials: 'include'
+        credentials: "include"
       }
     )
     const json = await response.json()
@@ -144,11 +144,11 @@ class Attestations {
   }
 
   async post(url, body, successFn) {
-    return await this.http(this.serverUrl, url, body, successFn, 'POST')
+    return await this.http(this.serverUrl, url, body, successFn, "POST")
   }
 
   async get(url, successFn) {
-    return await this.http(this.serverUrl, url, undefined, successFn, 'GET')
+    return await this.http(this.serverUrl, url, undefined, successFn, "GET")
   }
 
   async predictIdentityAddress(wallet) {

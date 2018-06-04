@@ -82,7 +82,7 @@ class Purchases extends ResourceBase {
     const contract = new web3.eth.Contract(this.contractDefinition.abi, address)
     return new Promise((resolve, reject) => {
       // Get all logs on this contract
-      contract.getPastEvents('allEvents', { fromBlock: 0 }, function(error, rawLogs) {
+      contract.getPastEvents("allEvents", { fromBlock: 0 }, function(error, rawLogs) {
         if (error) {
           return reject(error)
         }

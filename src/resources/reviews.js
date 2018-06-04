@@ -20,7 +20,7 @@ class Reviews extends ResourceBase{
     const purchaseContract = new web3.eth.Contract(purchaseDefinition.abi, address)
     return new Promise((resolve, reject) => {
       // Get all logs on this contract
-      purchaseContract.getPastEvents('allEvents', { fromBlock: 0 }, function(error, rawLogs) {
+      purchaseContract.getPastEvents("allEvents", { fromBlock: 0 }, function(error, rawLogs) {
         if (error) {
           return reject(error)
         }

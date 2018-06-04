@@ -90,8 +90,8 @@ class Listings extends ResourceBase {
 
     // TODO: Why can't we take schematype from the formListing object?
     const jsonBlob = {
-      'schema': `http://localhost:3000/schemas/${schemaType}.json`,
-      'data': formListing.formData,
+      "schema": `http://localhost:3000/schemas/${schemaType}.json`,
+      "data": formListing.formData,
     }
 
     let ipfsHash
