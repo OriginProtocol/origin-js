@@ -25,7 +25,7 @@ class Reviews extends ResourceBase{
           return reject(error)
         }
         // Format logs we receive
-        let logs = rawLogs
+        const logs = rawLogs
         .filter((x)=> x.event == "PurchaseReview")
         .map(log => {
           const values = log.returnValues

@@ -87,7 +87,7 @@ class Purchases extends ResourceBase {
           return reject(error)
         }
         // Format logs we receive
-        let logs = rawLogs
+        const logs = rawLogs
         .filter((x)=> x.event == "PurchaseChange")
         .map(log => {
           const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]

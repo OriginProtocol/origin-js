@@ -11,7 +11,7 @@ const dataHash_2 = "0xa183d4eb3552e730c2dd3df91384426eb88879869b890ad12698320d8b
 
 contract("ClaimHolderRegistered", accounts => {
   let claimHolderRegistered, userRegistry
-  let attestation_1 = {
+  const attestation_1 = {
     claimType: 1,
     scheme: 1,
     issuer: accounts[1],
@@ -19,7 +19,7 @@ contract("ClaimHolderRegistered", accounts => {
     data: dataHash_1,
     uri: ""
   }
-  let attestation_2 = {
+  const attestation_2 = {
       claimType: 2,
       scheme: 1,
       issuer: accounts[2],
@@ -34,7 +34,7 @@ contract("ClaimHolderRegistered", accounts => {
   })
 
   it("can add and get claim", async function() {
-    let claimId = Web3.utils.soliditySha3(
+    const claimId = Web3.utils.soliditySha3(
       attestation_1.issuer,
       attestation_1.claimType
     )
@@ -47,9 +47,9 @@ contract("ClaimHolderRegistered", accounts => {
       attestation_1.uri,
       { from: accounts[0] }
     )
-    let fetchedClaim = await claimHolderRegistered.getClaim(claimId, { from: accounts[0] })
+    const fetchedClaim = await claimHolderRegistered.getClaim(claimId, { from: accounts[0] })
     assert.ok(fetchedClaim)
-    let [ claimType, scheme, issuer, signature, data, uri ] = fetchedClaim
+    const [ claimType, scheme, issuer, signature, data, uri ] = fetchedClaim
     assert.equal(claimType.toNumber(), attestation_1.claimType)
     assert.equal(scheme.toNumber(), attestation_1.scheme)
     assert.equal(issuer, attestation_1.issuer)
@@ -68,13 +68,13 @@ contract("ClaimHolderRegistered", accounts => {
       { from: accounts[0] }
     )
 
-    let claimId_1 = Web3.utils.soliditySha3(
+    const claimId_1 = Web3.utils.soliditySha3(
       attestation_1.issuer,
       attestation_1.claimType
     )
-    let fetchedClaim_1 = await claimHolderRegistered.getClaim(claimId_1, { from: accounts[0] })
+    const fetchedClaim_1 = await claimHolderRegistered.getClaim(claimId_1, { from: accounts[0] })
     assert.ok(fetchedClaim_1)
-    let [ claimType_1, scheme_1, issuer_1, signature_1, data_1, uri_1 ] = fetchedClaim_1
+    const [ claimType_1, scheme_1, issuer_1, signature_1, data_1, uri_1 ] = fetchedClaim_1
     assert.equal(claimType_1.toNumber(), attestation_1.claimType)
     assert.equal(scheme_1.toNumber(), attestation_1.scheme)
     assert.equal(issuer_1, attestation_1.issuer)
@@ -82,13 +82,13 @@ contract("ClaimHolderRegistered", accounts => {
     assert.equal(data_1, attestation_1.data)
     assert.equal(uri_1, attestation_1.uri)
 
-    let claimId_2 = Web3.utils.soliditySha3(
+    const claimId_2 = Web3.utils.soliditySha3(
       attestation_2.issuer,
       attestation_2.claimType
     )
-    let fetchedClaim_2 = await claimHolderRegistered.getClaim(claimId_2, { from: accounts[0] })
+    const fetchedClaim_2 = await claimHolderRegistered.getClaim(claimId_2, { from: accounts[0] })
     assert.ok(fetchedClaim_2)
-    let [ claimType_2, scheme_2, issuer_2, signature_2, data_2, uri_2 ] = fetchedClaim_2
+    const [ claimType_2, scheme_2, issuer_2, signature_2, data_2, uri_2 ] = fetchedClaim_2
     assert.equal(claimType_2.toNumber(), attestation_2.claimType)
     assert.equal(scheme_2.toNumber(), attestation_2.scheme)
     assert.equal(issuer_2, attestation_2.issuer)
@@ -98,7 +98,7 @@ contract("ClaimHolderRegistered", accounts => {
   })
 
   it("registers the user", async function() {
-    let identityAddress = await userRegistry.users(accounts[0])
+    const identityAddress = await userRegistry.users(accounts[0])
     assert.ok(identityAddress)
     assert.notEqual(identityAddress, "0x0000000000000000000000000000000000000000")
   })

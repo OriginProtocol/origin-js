@@ -32,7 +32,7 @@ class ContractService {
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
     this.libraries.KeyHolderLibrary = KeyHolderLibrary
-    for (let name in contracts) {
+    for (const name in contracts) {
       this[name] = contracts[name]
       try {
         this[name].networks = Object.assign(
@@ -110,7 +110,6 @@ class ContractService {
 
   async submitListing(ipfsListing, ethPrice, units) {
     try {
-      const net = await this.web3.eth.net.getId()
       const account = await this.currentAccount()
       const instance = await this.deployed(ListingsRegistryContract)
 
@@ -128,28 +127,28 @@ class ContractService {
 
   async deployed(contract, addrs) {
     const net = await this.web3.eth.net.getId()
-    let storedAddress = contract.networks[net] && contract.networks[net].address
+    const storedAddress = contract.networks[net] && contract.networks[net].address
     addrs = addrs || storedAddress || null
     return new this.web3.eth.Contract(contract.abi, addrs)
   }
 
   async getBytecode(contract) {
-    let net = await this.web3.eth.net.getId()
-    let bytecode = contract.bytecode
-    let withLibraryAddresses = bytecode.replace(/__[^_]+_+/g, (matchedStr) => {
-      let libraryName = matchedStr.replace(/_/g, '')
-      let library = this.libraries[libraryName]
-      let libraryAddress = library.networks[net] && library.networks[net].address
-      let withoutPrefix = libraryAddress.slice(2)
+    const net = await this.web3.eth.net.getId()
+    const bytecode = contract.bytecode
+    const withLibraryAddresses = bytecode.replace(/__[^_]+_+/g, (matchedStr) => {
+      const libraryName = matchedStr.replace(/_/g, '')
+      const library = this.libraries[libraryName]
+      const libraryAddress = library.networks[net] && library.networks[net].address
+      const withoutPrefix = libraryAddress.slice(2)
       return withoutPrefix
     })
     return withLibraryAddresses
   }
 
   async deploy(contract, args, options) {
-    let bytecode = await this.getBytecode(contract)
-    let deployed = await this.deployed(contract)
-    let txReceipt = await new Promise((resolve, reject) => {
+    const bytecode = await this.getBytecode(contract)
+    const deployed = await this.deployed(contract)
+    const txReceipt = await new Promise((resolve, reject) => {
       deployed
         .deploy({
           data: bytecode,
@@ -226,7 +225,7 @@ class ContractService {
         return
       }
       var txCheckTimer
-      let txCheckTimerCallback = () => {
+      const txCheckTimerCallback = () => {
         this.web3.eth.getTransaction(transactionHash, (error, transaction) => {
           if (transaction.blockNumber != null) {
             console.log(`Transaction mined at block ${transaction.blockNumber}`)

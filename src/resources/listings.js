@@ -14,9 +14,9 @@ class Listings extends ResourceBase {
   }
 
   async allAddresses() {
-    let contract = this.contractService.listingsRegistryContract
-    let deployed = await this.contractService.deployed(contract)
-    let events = await deployed.getPastEvents(
+    const contract = this.contractService.listingsRegistryContract
+    const deployed = await this.contractService.deployed(contract)
+    const events = await deployed.getPastEvents(
       "NewListing",
       { fromBlock: 0, toBlock: "latest" }
     )
@@ -27,10 +27,10 @@ class Listings extends ResourceBase {
 
   async get(address) {
     const contractData = await this.contractFn(address, "data")
-    let ipfsHash = this.contractService.getIpfsHashFromBytes32(contractData[1])
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(contractData[1])
     const ipfsData = await this.ipfsService.getFile(ipfsHash)
 
-    let listing = {
+    const listing = {
       address: address,
       ipfsHash: ipfsHash,
       sellerAddress: contractData[0],
@@ -86,7 +86,7 @@ class Listings extends ResourceBase {
       throw "You must include a name"
     }
 
-    let formListing = { formData: data }
+    const formListing = { formData: data }
 
     // TODO: Why can't we take schematype from the formListing object?
     const jsonBlob = {

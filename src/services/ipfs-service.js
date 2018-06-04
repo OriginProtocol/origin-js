@@ -44,7 +44,6 @@ class IpfsService {
       this.mapCache.set(res.Hash, jsonData)
       return res.Hash
     } catch (e) {
-      throw e
       throw new Error("Failure to submit file to IPFS", e)
     }
   }
