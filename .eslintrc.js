@@ -5,6 +5,7 @@ module.exports = {
     'eslint:recommended'
   ],
   env: {
+    browser: true,
     es6: true,
     mocha: true,
     node: true
@@ -17,6 +18,8 @@ module.exports = {
     web3: true
   },
   rules: {
-    'prefer-const': ['error']
+    'no-console': ['off'],
+    'prefer-const': ['error'],
+    'semi': ['error', 'never']
   }
-};
+}
