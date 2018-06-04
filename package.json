@@ -32,11 +32,9 @@
   "license": "MIT",
   "dependencies": {
     "ajv": "^6.5.0",
-    "babel-eslint": "^8.2.3",
     "babel-polyfill": "^6.26.0",
     "bs58": "^4.0.1",
     "cross-fetch": "^2.1.1",
-    "eslint": "^4.19.1",
     "ethereumjs-util": "^5.2.0",
     "form-data": "^2.3.2",
     "map-cache": "^0.2.2",
@@ -46,6 +44,7 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.3",
     "babel-loader": "^7.1.4",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.6.1",
@@ -54,6 +53,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "chai": "^4.1.2",
     "chalk": "^2.4.1",
+    "eslint": "^4.19.1",
     "eth-gas-reporter": "^0.1.2",
     "fetch-mock": "^6.3.0",
     "flow-bin": "^0.71.0",
