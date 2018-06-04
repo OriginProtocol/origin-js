@@ -10,8 +10,6 @@ import Web3 from "web3"
 
 const issuerPrivatekey =
   "0000000000000000000000000000000000000000000000000000000000000001"
-const issuerPublicKey = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
-const issuerHashed = Web3.utils.soliditySha3(issuerPublicKey)
 
 let generateAttestation = async ({
   identityAddress,
@@ -21,7 +19,6 @@ let generateAttestation = async ({
 }) => {
   data = Web3.utils.soliditySha3(data)
   let msg = Web3.utils.soliditySha3(identityAddress, claimType, data)
-  let prefixedMsg = web3.eth.accounts.hashMessage(msg)
   let signing = web3.eth.accounts.sign(msg, issuerPrivatekey)
   let signature = signing.signature
   return new AttestationObject({ claimType, data, signature })
@@ -39,14 +36,13 @@ describe("User Resource", function() {
   let users
   let phoneAttestation
   let emailAttestation
-  let facebookAttestation
 
   beforeEach(async () => {
     let provider = new Web3.providers.HttpProvider("http://localhost:8545")
     let web3 = new Web3(provider)
     let accounts = await web3.eth.getAccounts()
     let contractService = new ContractService({ web3 })
-    let originIdentity = await contractService.deployed(
+    await contractService.deployed(
       contractService.originIdentityContract
     )
     let ipfsService = new IpfsService({
@@ -78,12 +74,12 @@ describe("User Resource", function() {
       claimType: 11,
       data: "email verified"
     })
-    return (facebookAttestation = await generateAttestation({
+    return await generateAttestation({
       identityAddress,
       web3,
       claimType: 3,
       data: "facebook verified"
-    }))
+    })
   })
 
   describe("set", () => {

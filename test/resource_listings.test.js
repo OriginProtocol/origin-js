@@ -11,7 +11,6 @@ describe("Listing Resource", function() {
   var listings
   var contractService
   var ipfsService
-  var testListingIds
   var buyer
 
   before(async () => {
@@ -25,7 +24,6 @@ describe("Listing Resource", function() {
       ipfsGatewayProtocol: "http"
     })
     listings = new Listings({ contractService, ipfsService })
-    testListingIds = await contractService.getAllListingIds()
     const accounts = await web3.eth.getAccounts()
     buyer = accounts[1]
 
@@ -111,7 +109,7 @@ describe("Listing Resource", function() {
       const listingIds = await contractService.getAllListingIds()
       listing = await listings.getByIndex(listingIds[listingIds.length - 1])
       await asAccount(contractService.web3, buyer, async () => {
-        const transaction = await listings.buy(listing.address, 1, 1)
+        await listings.buy(listing.address, 1, 1)
       })
     })
 

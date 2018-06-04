@@ -8,7 +8,7 @@ const isEVMError = function(err) {
 }
 
 const timetravel = async function(seconds) {
-  var transaction = await web3.currentProvider.send({
+  await web3.currentProvider.send({
     jsonrpc: "2.0",
     method: "evm_increaseTime",
     params: [seconds],
@@ -32,8 +32,8 @@ const AWAITING_PAYMENT = 0 // Buyer hasn't paid full amount yet
 const SHIPPING_PENDING = 1 // Buyer hasn't paid full amount yet
 const BUYER_PENDING = 2 // Waiting for buyer to confirm receipt
 const SELLER_PENDING = 3 // Waiting for seller to confirm all is good
-const IN_DISPUTE = 4 // We are in a dispute
-const REVIEW_PERIOD = 5 // Time for reviews (only when transaction did not go through)
+// const IN_DISPUTE = 4 // We are in a dispute
+// const REVIEW_PERIOD = 5 // Time for reviews (only when transaction did not go through)
 const COMPLETE = 6 // It's all over
 
 const ROLE_BUYER = 0
@@ -141,7 +141,7 @@ contract("Purchase", accounts => {
     const shipTransaction = await instance.sellerConfirmShipped({
       from: seller
     })
-    const shipTransactionCost = web3
+    web3
       .toBigNumber(shipTransaction.receipt.gasUsed)
       .times(GAS_PRICE)
 
@@ -164,21 +164,7 @@ contract("Purchase", accounts => {
     const sellerBalanceAfter = await web3.eth.getBalance(seller)
     const sellerExpectedBalance = sellerBalanceBefore
       .plus(price)
-      // .minus(shipTransactionCost)
       .minus(sellerCollectTransactionCost)
-
-    // console.log(`buyerBalanceBefore: ${buyerBalanceBefore}`)
-    // console.log(`buyerBalanceAfter : ${buyerBalanceAfter}`)
-    // console.log(`buyerdif : ${buyerBalanceAfter-buyerBalanceBefore}`)
-    // console.log(`sellerBalanceBefore: ${sellerBalanceBefore}`)
-    // console.log(`shipTransactionCost: ${shipTransactionCost}`)
-    // console.log(`sellerCollectTransactionCost: ${sellerCollectTransactionCost}`)
-    // console.log(`price : ${price}`)
-    // console.log(`sellerBalanceAfter : ${sellerBalanceAfter}`)
-    // console.log(`sellerExpectedBalance: ${sellerExpectedBalance}`)
-    // console.log(`seller actual recieved: ${sellerBalanceAfter - sellerBalanceBefore}`)
-    // console.log(`seller actual tx cost: ${sellerBalanceAfter - sellerBalanceBefore - price}`)
-    // console.log(`seller spent difference: ${sellerBalanceAfter-sellerExpectedBalance}`)
 
     assert(
       buyerBalanceAfter.eq(buyerExpectedBalance),
@@ -306,7 +292,7 @@ contract("Purchase", accounts => {
       const itShouldNotAllowRating = async rating => {
         it("Should not allow rating " + rating, async () => {
           try {
-            const transaction = await purchase.sellerCollectPayout(
+            await purchase.sellerCollectPayout(
               rating,
               reviewIpfsHash,
               {
@@ -361,7 +347,7 @@ contract("Purchase", accounts => {
       const itShouldNotAllowRating = async rating => {
         it("Should not allow rating " + rating, async () => {
           try {
-            const transaction = await purchase.buyerConfirmReceipt(
+            await purchase.buyerConfirmReceipt(
               rating,
               reviewIpfsHash,
               {

@@ -8,7 +8,7 @@ const isEVMError = function(err) {
 }
 
 const timetravel = async function(seconds) {
-  var transaction = await web3.currentProvider.send({
+  await web3.currentProvider.send({
     jsonrpc: "2.0",
     method: "evm_increaseTime",
     params: [seconds],

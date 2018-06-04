@@ -7,15 +7,8 @@ const initialListingsLength = 0
 const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
 
-// Used to assert error cases
-const isEVMError = function(err) {
-  let str = err.toString()
-  return str.includes("revert")
-}
-
 contract("ListingsRegistry", accounts => {
   var owner = accounts[0]
-  var notOwner = accounts[1]
   var instance
   var listingsRegistryStorage
 
@@ -45,7 +38,7 @@ contract("ListingsRegistry", accounts => {
       "listings count has incremented"
     )
     let [
-      listingAddress,
+      ,
       lister,
       hash,
       price,
@@ -78,7 +71,7 @@ contract("ListingsRegistry", accounts => {
       "listings count has incremented"
     )
     let [
-      listingAddress,
+      ,
       lister,
       hash,
       price,
@@ -98,7 +91,7 @@ contract("ListingsRegistry", accounts => {
     it("should verify a trusted listing", async function() {
       await instance.create(ipfsHash, 3000, 1, { from: owner })
       const listingIndex = (await instance.listingsLength()) - 1
-      trustedListingAddress = (await instance.getListing(listingIndex))[0]
+      const trustedListingAddress = (await instance.getListing(listingIndex))[0]
       const isVerified = await instance.isTrustedListing(trustedListingAddress)
       expect(isVerified).to.equal(true)
     })

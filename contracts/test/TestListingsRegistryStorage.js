@@ -6,12 +6,6 @@ const ListingsRegistry = artifacts.require("./ListingsRegistry.sol")
 const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
 
-// Used to assert error cases
-const isEVMError = function(err) {
-  let str = err.toString()
-  return str.includes("revert")
-}
-
 contract("ListingsRegistryStorage", accounts => {
   const owner = accounts[0]
   const notOwner = accounts[1]
@@ -36,7 +30,9 @@ contract("ListingsRegistryStorage", accounts => {
     it("should not allow the owner to be set by a stranger", async () => {
       try {
         await storage.setOwner(alice, { from: notOwner })
-      } catch (e) {}
+      } catch (e) {
+        expect(e).to.exist
+      }
       expect(await storage.owner()).to.equal(owner)
     })
   })
@@ -56,7 +52,9 @@ contract("ListingsRegistryStorage", accounts => {
         await storage.setActiveRegistry(otherRegistry.address, {
           from: notOwner
         })
-      } catch (e) {}
+      } catch (e) {
+        expect(e).to.exist
+      }
       expect(await storage.activeRegistry()).to.equal(activeRegistry.address)
     })
     xit("should allow the activeRegistry to be set by the registry", async () => {

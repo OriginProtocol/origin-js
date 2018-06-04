@@ -17,7 +17,6 @@ describe("Purchase Resource", function() {
   var reviews
   var contractService
   var ipfsService
-  var testListingIds
   var web3
   var buyer
 
