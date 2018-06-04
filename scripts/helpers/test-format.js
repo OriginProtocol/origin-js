@@ -1,14 +1,14 @@
-const { spawn } = require('child_process')
+const { spawn } = require("child_process")
 
 const testFormat = () => {
   return new Promise((resolve, reject) => {
-    const prettier = spawn('./node_modules/.bin/eslint', ['src/**/*.js', 'test/**/*test.js', 'contracts/test/**/*.js'])
-    prettier.stdout.on('data', data => {
+    const prettier = spawn("./node_modules/.bin/eslint", ["src/**/*.js", "test/**/*test.js", "contracts/test/**/*.js", "scripts/**/*.js"])
+    prettier.stdout.on("data", data => {
       reject(`Code formatter inspection failed:\n${String(data)}`)
     })
-    prettier.on('exit', code => {
+    prettier.on("exit", code => {
       if (code === 0) {
-        console.log('Code formatter inspection passed.')
+        console.log("Code formatter inspection passed.")
       }
       resolve()
     })
