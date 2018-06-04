@@ -88,17 +88,17 @@ class Purchases extends ResourceBase {
         }
         // Format logs we receive
         const logs = rawLogs
-        .filter((x)=> x.event == "PurchaseChange")
-        .map(log => {
-          const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]
-          return {
-            transactionHash: log.transactionHash,
-            stage: stage,
-            blockNumber: log.blockNumber,
-            blockHash: log.blockHash,
-            event: log.event
-          }
-        })
+          .filter((x)=> x.event == "PurchaseChange")
+          .map(log => {
+            const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]
+            return {
+              transactionHash: log.transactionHash,
+              stage: stage,
+              blockNumber: log.blockNumber,
+              blockHash: log.blockHash,
+              event: log.event
+            }
+          })
         // Fetch user and timestamp information for all logs, in parallel
         const addUserAddressFn = async event => {
           event.from = (await self.contractService.getTransaction(

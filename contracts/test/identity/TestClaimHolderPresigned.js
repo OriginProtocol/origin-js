@@ -19,12 +19,12 @@ contract("ClaimHolderPresigned", accounts => {
     uri: ""
   }
   const attestation_2 = {
-      claimType: 2,
-      scheme: 1,
-      issuer: accounts[2],
-      signature: signature_2,
-      data: dataHash_2,
-      uri: ""
+    claimType: 2,
+    scheme: 1,
+    issuer: accounts[2],
+    signature: signature_2,
+    data: dataHash_2,
+    uri: ""
   }
 
   it("should deploy identity with attestations", async function() {
