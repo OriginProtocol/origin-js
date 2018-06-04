@@ -11,7 +11,7 @@
     "test:contracts": "node scripts/test-contracts.js",
     "test:js": "mocha --compilers js:babel-core/register --require babel-polyfill",
     "build": "node scripts/build.js",
-    "format": "npx eslint --fix src/**/*.js test/**/*test.js contracts/test/**/*.js scripts/**/*.js",
+    "format": "npx eslint --fix 'src/**/*.js' 'test/**/*test.js' 'contracts/test/**/*.js' 'scripts/**/*.js'",
     "prepare": "npm run build",
     "install:dev": "npm install && npm link",
     "start": "node scripts/build.js serve",
