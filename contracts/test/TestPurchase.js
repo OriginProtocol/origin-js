@@ -3,7 +3,7 @@ const Listing = artifacts.require("./Listing.sol")
 
 // Used to assert error cases
 const isEVMError = function(err) {
-  let str = err.toString()
+  const str = err.toString()
   return str.includes("revert")
 }
 
@@ -63,14 +63,14 @@ contract("Purchase", accounts => {
   })
 
   it("should start in stage 0", async function() {
-    let newStage = await instance.stage()
+    const newStage = await instance.stage()
     assert.equal(newStage, AWAITING_PAYMENT, "stage is AWAITING_PAYMENT")
   })
 
   it("should fail when not enough paid", async function() {
     const valueToPay = price.minus(10)
     await instance.pay({ from: buyer, value: valueToPay })
-    let newStage = await instance.stage()
+    const newStage = await instance.stage()
     assert.notEqual(
       newStage.toNumber(),
       BUYER_PENDING,
@@ -81,7 +81,7 @@ contract("Purchase", accounts => {
   it("should progress when buyer pays full amount", async function() {
     const valueToPay = price
     await instance.pay({ from: buyer, value: valueToPay })
-    let newStage = await instance.stage()
+    const newStage = await instance.stage()
     assert.equal(
       newStage.toNumber(),
       SHIPPING_PENDING,
@@ -94,7 +94,7 @@ contract("Purchase", accounts => {
     await instance.pay({ from: buyer, value: valueToPay })
     await instance.pay({ from: buyer, value: valueToPay })
     await instance.pay({ from: buyer, value: valueToPay + 100 }) // extra in case of division remainder
-    let newStage = await instance.stage()
+    const newStage = await instance.stage()
     assert.equal(
       newStage.toNumber(),
       SHIPPING_PENDING,
@@ -108,7 +108,7 @@ contract("Purchase", accounts => {
     await instance.sellerConfirmShipped({ from: seller })
     // We immediately confirm receipt (in real world could be a while)
     await instance.buyerConfirmReceipt(5, "", { from: buyer })
-    let newStage = await instance.stage()
+    const newStage = await instance.stage()
     assert.equal(
       newStage.toNumber(),
       SELLER_PENDING,

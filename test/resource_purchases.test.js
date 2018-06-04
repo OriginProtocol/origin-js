@@ -21,7 +21,7 @@ describe("Purchase Resource", function() {
   var buyer
 
   before(async () => {
-    let provider = new Web3.providers.HttpProvider("http://localhost:8545")
+    const provider = new Web3.providers.HttpProvider("http://localhost:8545")
     web3 = new Web3(provider)
     contractService = new ContractService({ web3 })
     ipfsService = new IpfsService({
@@ -40,7 +40,7 @@ describe("Purchase Resource", function() {
   // Helpers
   // -----
 
-  let resetListingAndPurchase = async () => {
+  const resetListingAndPurchase = async () => {
     // Create a new listing and a new purchase for the tests to use.
     const listingData = {
       name: "Australorp Rooser",
@@ -69,7 +69,7 @@ describe("Purchase Resource", function() {
     purchase = await purchases.get(purchaseEvent.returnValues._purchaseContract)
   }
 
-  let expectStage = function(expectedStage) {
+  const expectStage = function(expectedStage) {
     expect(purchase.stage).to.equal(expectedStage)
   }
 

@@ -41,8 +41,8 @@ class Origin {
     })
 
     // Instantiate each resource and give it access to contracts and IPFS
-    for (let resourceName in resources) {
-      let Resource = resources[resourceName]
+    for (const resourceName in resources) {
+      const Resource = resources[resourceName]
       // A `Resource` constructor always takes a contractService and ipfsService
       this[resourceName] = new Resource({
         contractService: this.contractService,

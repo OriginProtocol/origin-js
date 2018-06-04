@@ -21,7 +21,7 @@ contract("ListingsRegistry", accounts => {
   })
 
   it("should have owner as owner of contract", async function() {
-    let contractOwner = await instance.owner()
+    const contractOwner = await instance.owner()
     assert.equal(contractOwner, owner)
   })
 
@@ -31,13 +31,13 @@ contract("ListingsRegistry", accounts => {
     await instance.create(ipfsHash, initPrice, initUnitsAvailable, {
       from: accounts[0]
     })
-    let listingCount = await instance.listingsLength()
+    const listingCount = await instance.listingsLength()
     assert.equal(
       listingCount,
       initialListingsLength + 1,
       "listings count has incremented"
     )
-    let [
+    const [
       ,
       lister,
       hash,
@@ -64,13 +64,13 @@ contract("ListingsRegistry", accounts => {
       accounts[1],
       { from: accounts[0] }
     )
-    let listingCount = await instance.listingsLength()
+    const listingCount = await instance.listingsLength()
     assert.equal(
       listingCount,
       initialListingsLength + 1,
       "listings count has incremented"
     )
-    let [
+    const [
       ,
       lister,
       hash,

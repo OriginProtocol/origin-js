@@ -3,7 +3,7 @@ const Purchase = artifacts.require("./Purchase.sol")
 
 // Used to assert error cases
 const isEVMError = function(err) {
-  let str = err.toString()
+  const str = err.toString()
   return str.includes("revert")
 }
 
@@ -41,12 +41,12 @@ contract("Listing", accounts => {
   })
 
   it("should have correct price", async function() {
-    let newPrice = await listing.price()
+    const newPrice = await listing.price()
     assert.equal(newPrice, price, "price is correct")
   })
 
   it("should allow getting listing information", async function() {
-    let data = await listing.data()
+    const data = await listing.data()
     assert.equal(data[0], seller, "owner")
     assert.equal(data[1], ipfsHash, "ipfsHash")
     assert.equal(data[2], price, "price")
@@ -136,7 +136,7 @@ contract("Listing", accounts => {
     )
 
     // Check units available decreased
-    let newUnitsAvailable = await listing.unitsAvailable()
+    const newUnitsAvailable = await listing.unitsAvailable()
     assert.equal(
       newUnitsAvailable,
       unitsAvailable - unitsToBuy,

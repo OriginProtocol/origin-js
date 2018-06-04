@@ -14,8 +14,8 @@ describe("Listing Resource", function() {
   var buyer
 
   before(async () => {
-    let provider = new Web3.providers.HttpProvider("http://localhost:8545")
-    let web3 = new Web3(provider)
+    const provider = new Web3.providers.HttpProvider("http://localhost:8545")
+    const web3 = new Web3(provider)
     contractService = new ContractService({ web3 })
     ipfsService = new IpfsService({
       ipfsDomain: "127.0.0.1",
@@ -39,13 +39,13 @@ describe("Listing Resource", function() {
 
   it("should get all listing addresses", async () => {
     await listings.create({ name: "Sample Listing 2", price: 2 }, "")
-    let addresses = await listings.allAddresses()
+    const addresses = await listings.allAddresses()
     expect(addresses.length).to.be.greaterThan(1)
   })
 
   it("should get a listing by index", async () => {
     await listings.create({ name: "Foo Bar", price: 1 }, "")
-    let listingIds = await contractService.getAllListingIds()
+    const listingIds = await contractService.getAllListingIds()
     const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
     expect(listing.name).to.equal("Foo Bar")
     expect(listing.index).to.equal(listingIds.length - 1)
@@ -53,7 +53,7 @@ describe("Listing Resource", function() {
 
   it("should get a listing by address", async () => {
     await listings.create({ name: "Foo Bar", price: 1 }, "")
-    let listingIds = await contractService.getAllListingIds()
+    const listingIds = await contractService.getAllListingIds()
     const listingFromIndex = await listings.getByIndex(
       listingIds[listingIds.length - 1]
     )
@@ -63,7 +63,7 @@ describe("Listing Resource", function() {
 
   it("should buy a listing", async () => {
     await listings.create({ name: "My Listing", price: 1 }, "")
-    let listingIds = await contractService.getAllListingIds()
+    const listingIds = await contractService.getAllListingIds()
     const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
     await asAccount(contractService.web3, buyer, async () => {
       await listings.buy(listing.address, 1, listing.price * 1)
@@ -90,7 +90,7 @@ describe("Listing Resource", function() {
       { name: "Closing Listing", price: 1, unitsAvailable: 1 },
       ""
     )
-    let listingIds = await contractService.getAllListingIds()
+    const listingIds = await contractService.getAllListingIds()
     const listingIndex = listingIds[listingIds.length - 1]
 
     const listingBefore = await listings.getByIndex(listingIndex)

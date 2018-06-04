@@ -11,16 +11,16 @@ import Web3 from "web3"
 const issuerPrivatekey =
   "0000000000000000000000000000000000000000000000000000000000000001"
 
-let generateAttestation = async ({
+const generateAttestation = async ({
   identityAddress,
   web3,
   claimType,
   data
 }) => {
   data = Web3.utils.soliditySha3(data)
-  let msg = Web3.utils.soliditySha3(identityAddress, claimType, data)
-  let signing = web3.eth.accounts.sign(msg, issuerPrivatekey)
-  let signature = signing.signature
+  const msg = Web3.utils.soliditySha3(identityAddress, claimType, data)
+  const signing = web3.eth.accounts.sign(msg, issuerPrivatekey)
+  const signature = signing.signature
   return new AttestationObject({ claimType, data, signature })
 }
 
@@ -38,30 +38,30 @@ describe("User Resource", function() {
   let emailAttestation
 
   beforeEach(async () => {
-    let provider = new Web3.providers.HttpProvider("http://localhost:8545")
-    let web3 = new Web3(provider)
-    let accounts = await web3.eth.getAccounts()
-    let contractService = new ContractService({ web3 })
+    const provider = new Web3.providers.HttpProvider("http://localhost:8545")
+    const web3 = new Web3(provider)
+    const accounts = await web3.eth.getAccounts()
+    const contractService = new ContractService({ web3 })
     await contractService.deployed(
       contractService.originIdentityContract
     )
-    let ipfsService = new IpfsService({
+    const ipfsService = new IpfsService({
       ipfsDomain: "127.0.0.1",
       ipfsApiPort: "5002",
       ipfsGatewayPort: "8080",
       ipfsGatewayProtocol: "http"
     })
-    let attestations = new Attestations({ contractService })
+    const attestations = new Attestations({ contractService })
     users = new Users({ contractService, ipfsService })
 
     // clear user before each test because blockchain persists between tests
     // sort of a hack to force clean state at beginning of each test
-    let userRegistry = await contractService.deployed(
+    const userRegistry = await contractService.deployed(
       contractService.userRegistryContract
     )
     await userRegistry.methods.clearUser().send({ from: accounts[0] })
 
-    let identityAddress = await attestations.getIdentityAddress(accounts[0])
+    const identityAddress = await attestations.getIdentityAddress(accounts[0])
     phoneAttestation = await generateAttestation({
       identityAddress,
       web3,
@@ -87,7 +87,7 @@ describe("User Resource", function() {
       await users.set({
         profile: { claims: { name: "Wonder Woman" } }
       })
-      let user = await users.get()
+      const user = await users.get()
 
       expect(user.attestations.length).to.equal(0)
       expect(user.profile.claims.name).to.equal("Wonder Woman")
@@ -133,7 +133,7 @@ describe("User Resource", function() {
         profile: { claims: { name: "Black Widow" } },
         attestations: [phoneAttestation, emailAttestation]
       })
-      let user = await users.get()
+      const user = await users.get()
 
       expect(user.attestations.length).to.equal(2)
       expect(user.profile.claims.name).to.equal("Black Widow")
@@ -144,7 +144,7 @@ describe("User Resource", function() {
         profile: { claims: { name: "Deadpool" } },
         attestations: [phoneAttestation, emailAttestation, invalidAttestation]
       })
-      let user = await users.get()
+      const user = await users.get()
 
       expect(user.attestations.length).to.equal(2)
       expect(user.profile.claims.name).to.equal("Deadpool")
