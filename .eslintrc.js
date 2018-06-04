@@ -17,5 +17,6 @@ module.exports = {
     web3: true
   },
   rules: {
+    'prefer-const': ['error']
   }
 };
