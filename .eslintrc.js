@@ -1,8 +1,8 @@
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
+  parser: "babel-eslint",
   extends: [
-    'eslint:recommended'
+    "eslint:recommended"
   ],
   env: {
     browser: true,
@@ -18,8 +18,16 @@ module.exports = {
     web3: true
   },
   rules: {
-    'no-console': ['off'],
-    'prefer-const': ['error'],
-    'semi': ['error', 'never']
+    "no-console": ["off"],
+    "prefer-const": ["error"],
+    semi: ["error", "never"],
+    quotes: [
+      "error",
+      "double",
+      {
+        "avoidEscape": true,
+        "allowTemplateLiterals": true
+      }
+    ]
   }
 }
