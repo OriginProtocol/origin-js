@@ -224,7 +224,7 @@ class ContractService {
         reject(`Invalid transactionHash passed: ${transactionHash}`)
         return
       }
-      var txCheckTimer
+      let txCheckTimer = null
       const txCheckTimerCallback = () => {
         this.web3.eth.getTransaction(transactionHash, (error, transaction) => {
           if (transaction.blockNumber != null) {
@@ -264,7 +264,7 @@ class ContractService {
     if (method._method.constant) {
       return await method.call(opts)
     }
-    var transaction = await new Promise((resolve, reject) => {
+    const transaction = await new Promise((resolve, reject) => {
       method
         .send(opts)
         .on("receipt", receipt => {

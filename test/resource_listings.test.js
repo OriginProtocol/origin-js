@@ -8,10 +8,10 @@ import asAccount from "./helpers/as-account"
 describe("Listing Resource", function() {
   this.timeout(5000) // default is 2000
 
-  var listings
-  var contractService
-  var ipfsService
-  var buyer
+  let listings
+  let contractService
+  let ipfsService
+  let buyer
 
   before(async () => {
     const provider = new Web3.providers.HttpProvider("http://localhost:8545")
@@ -103,7 +103,7 @@ describe("Listing Resource", function() {
   })
 
   describe("Getting purchase addresses", async () => {
-    var listing
+    let listing
     before(async () => {
       await listings.create({ name: "My Listing", price: 1 }, "")
       const listingIds = await contractService.getAllListingIds()

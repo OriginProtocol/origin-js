@@ -1,4 +1,4 @@
-var Web3 = require("web3")
+const Web3 = require("web3")
 
 const ClaimHolderPresigned = artifacts.require("ClaimHolderPresigned")
 const UserRegistry = artifacts.require("UserRegistry")

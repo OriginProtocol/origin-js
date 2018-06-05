@@ -3,7 +3,7 @@ import IpfsService from "./services/ipfs-service"
 import { Attestations } from "./resources/attestations"
 import fetch from "cross-fetch"
 
-var resources = {
+const resources = {
   listings: require("./resources/listings"),
   purchases: require("./resources/purchases"),
   reviews: require("./resources/reviews"),

@@ -42,10 +42,10 @@ const ROLE_SELLER = 1
 const BUYER_TIMEOUT_SECONDS = 21 * 24 * 60 * 60
 
 contract("Purchase", accounts => {
-  var buyer = accounts[0]
-  var seller = accounts[1]
-  var instance
-  var listingInstance
+  const buyer = accounts[0]
+  const seller = accounts[1]
+  let instance
+  let listingInstance
 
   beforeEach(async function() {
     // Listing that we will be buying
@@ -178,12 +178,12 @@ contract("Purchase", accounts => {
 })
 
 contract("Purchase", accounts => {
-  var buyer = accounts[0]
-  var seller = accounts[1]
-  var purchase
-  var listing
-  var totalPrice = 48
-  var initialPayment = 6
+  const buyer = accounts[0]
+  const seller = accounts[1]
+  let purchase
+  let listing
+  const totalPrice = 48
+  const initialPayment = 6
 
   describe("Success path flow", async () => {
     before(async () => {

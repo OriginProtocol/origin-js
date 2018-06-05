@@ -10,15 +10,15 @@ import asAccount from "./helpers/as-account"
 describe("Purchase Resource", function() {
   this.timeout(5000) // default is 2000
 
-  var listings
-  var listing
-  var purchases
-  var purchase
-  var reviews
-  var contractService
-  var ipfsService
-  var web3
-  var buyer
+  let listings
+  let listing
+  let purchases
+  let purchase
+  let reviews
+  let contractService
+  let ipfsService
+  let web3
+  let buyer
 
   before(async () => {
     const provider = new Web3.providers.HttpProvider("http://localhost:8545")
@@ -117,7 +117,7 @@ describe("Purchase Resource", function() {
 
     it("should allow the seller to collect money", async () => {
       expectStage("seller_pending")
-      var reviewText = "Some delay before marking purchase recieved"
+      const reviewText = "Some delay before marking purchase recieved"
       await purchases.sellerGetPayout(purchase.address, {
         rating: 4,
         reviewText: reviewText
@@ -133,7 +133,7 @@ describe("Purchase Resource", function() {
     })
 
     it("should list logs", async () => {
-      var logs = await purchases.getLogs(purchase.address)
+      const logs = await purchases.getLogs(purchase.address)
       expect(logs[0].stage).to.equal("awaiting_payment")
       expect(logs[1].stage).to.equal("shipping_pending")
       expect(logs[2].stage).to.equal("buyer_pending")

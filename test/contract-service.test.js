@@ -106,7 +106,7 @@ describe("ContractService", function() {
         listingsRegistryContract: { 4: { address: registryAddress } }
       }
 
-      var contSrv = new ContractService({ web3, contractAddresses })
+      const contSrv = new ContractService({ web3, contractAddresses })
 
       expect(contSrv.userRegistryContract.networks[4].address).to.equal(
         userAddress

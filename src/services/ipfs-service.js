@@ -33,14 +33,14 @@ class IpfsService {
 
   async submitFile(jsonData) {
     try {
-      var formData = new FormData()
+      const formData = new FormData()
       formData.append("file", this.content(jsonData))
 
-      var rawRes = await fetch(`${this.api}/api/v0/add`, {
+      const rawRes = await fetch(`${this.api}/api/v0/add`, {
         method: "POST",
         body: formData
       })
-      var res = await rawRes.json()
+      const res = await rawRes.json()
       this.mapCache.set(res.Hash, jsonData)
       return res.Hash
     } catch (e) {
@@ -62,7 +62,7 @@ class IpfsService {
     }
 
     const response = await fetch(this.gatewayUrlForHash(ipfsHashStr))
-    var ipfsData = await response.json()
+    const ipfsData = await response.json()
     this.mapCache.set(ipfsHashStr, ipfsData)
 
     return ipfsData

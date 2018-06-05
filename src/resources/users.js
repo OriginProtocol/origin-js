@@ -10,8 +10,8 @@ import {
 } from "ethereumjs-util"
 import Web3 from "web3"
 
-var Ajv = require("ajv")
-var ajv = new Ajv()
+const Ajv = require("ajv")
+const ajv = new Ajv()
 
 const selfAttestationClaimType = 13 // TODO: use the correct number here
 const zeroAddress = "0x0000000000000000000000000000000000000000"

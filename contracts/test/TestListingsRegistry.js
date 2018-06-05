@@ -8,9 +8,9 @@ const ipfsHash =
   "0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba"
 
 contract("ListingsRegistry", accounts => {
-  var owner = accounts[0]
-  var instance
-  var listingsRegistryStorage
+  const owner = accounts[0]
+  let instance
+  let listingsRegistryStorage
 
   beforeEach(async function() {
     listingsRegistryStorage = await ListingsRegistryStorage.new({ from: owner })

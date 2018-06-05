@@ -4,7 +4,7 @@ const PORT = 8545
 
 const startGanache = () => {
   return new Promise((resolve, reject) => {
-    var server = Ganache.server({
+    const server = Ganache.server({
       total_accounts: 10,
       default_balance_ether: 100,
       network_id: 999,

@@ -29,10 +29,10 @@ const unitsAvailable = 42
 const LISTING_EXPIRATION_SECONDS = 60 * 24 * 60 * 60
 
 contract("Listing", accounts => {
-  var seller = accounts[0]
-  var buyer = accounts[1]
-  var stranger = accounts[2]
-  var listing
+  const seller = accounts[0]
+  const buyer = accounts[1]
+  const stranger = accounts[2]
+  let listing
 
   beforeEach(async function() {
     listing = await Listing.new(seller, ipfsHash, price, unitsAvailable, {
