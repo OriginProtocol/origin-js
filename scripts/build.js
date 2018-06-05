@@ -9,15 +9,17 @@ const webpack = require("webpack")
 const webpackConfig = require("../webpack.config.js")
 
 const args = process.argv.slice(2)
-const shouldWatch = (args.length && args[0] === "serve")
-const noGanache = (args.length && args[1] === "no-ganache")
+const shouldWatch = args.length && args[0] === "serve"
+const noGanache = args.length && args[1] === "no-ganache"
 
 const start = async () => {
   const compiler = webpack(webpackConfig)
 
   if (shouldWatch) {
     if (!noGanache) {
-      console.log(chalk`\n{bold.hex('#1a82ff') ⬢  Starting Local Blockchain }\n`)
+      console.log(
+        chalk`\n{bold.hex('#1a82ff') ⬢  Starting Local Blockchain }\n`
+      )
       await startGanache()
     }
     console.log(chalk`\n{bold.hex('#26d198') ⬢  Deploying Smart Contracts }\n`)
@@ -33,14 +35,16 @@ const start = async () => {
 
     // watch js
     compiler.watch({}, (err, stats) => {
-      if(err || stats.hasErrors()) {
+      if (err || stats.hasErrors()) {
         console.error(err)
       } else {
-        console.log(stats.toString({
-          hash: false,
-          modules: false,
-          version: false
-        }))
+        console.log(
+          stats.toString({
+            hash: false,
+            modules: false,
+            version: false
+          })
+        )
       }
     })
 
@@ -50,8 +54,8 @@ const start = async () => {
     console.log(chalk`\n{bold.hex('#1a82ff') ⬢  Compiling Smart Contracts }\n`)
     await buildContracts()
     console.log(chalk`\n{bold.hex('#26d198') ⬢  Compiling Webpack }\n`)
-    compiler.run((err) => {
-      if(err) {
+    compiler.run(err => {
+      if (err) {
         console.log(err)
       } else {
         console.log("webpack compiled successfully")
@@ -59,6 +63,5 @@ const start = async () => {
     })
   }
 }
-
 
 start()

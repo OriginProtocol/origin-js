@@ -37,13 +37,9 @@ contract("ListingsRegistry", accounts => {
       initialListingsLength + 1,
       "listings count has incremented"
     )
-    const [
-      ,
-      lister,
-      hash,
-      price,
-      unitsAvailable
-    ] = await instance.getListing(initialListingsLength)
+    const [, lister, hash, price, unitsAvailable] = await instance.getListing(
+      initialListingsLength
+    )
     assert.equal(lister, accounts[0], "lister is correct")
     assert.equal(hash, ipfsHash, "ipfsHash is correct")
     assert.equal(price, initPrice, "price is correct")
@@ -70,13 +66,9 @@ contract("ListingsRegistry", accounts => {
       initialListingsLength + 1,
       "listings count has incremented"
     )
-    const [
-      ,
-      lister,
-      hash,
-      price,
-      unitsAvailable
-    ] = await instance.getListing(initialListingsLength)
+    const [, lister, hash, price, unitsAvailable] = await instance.getListing(
+      initialListingsLength
+    )
     assert.equal(lister, accounts[1], "lister is correct as other account")
     assert.equal(hash, ipfsHash, "ipfsHash is correct")
     assert.equal(price, initPrice, "price is correct")

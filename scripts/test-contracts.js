@@ -34,10 +34,14 @@ const start = async () => {
   runTests()
 
   // watch contracts
-  watch(["./contracts/contracts", "./contracts/test"], { recursive: true }, async (evt, name) => {
-    console.log("%s changed.", name)
-    runTests()
-  })
+  watch(
+    ["./contracts/contracts", "./contracts/test"],
+    { recursive: true },
+    async (evt, name) => {
+      console.log("%s changed.", name)
+      runTests()
+    }
+  )
 }
 
 start()

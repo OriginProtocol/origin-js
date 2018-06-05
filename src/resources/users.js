@@ -16,7 +16,7 @@ const ajv = new Ajv()
 const selfAttestationClaimType = 13 // TODO: use the correct number here
 const zeroAddress = "0x0000000000000000000000000000000000000000"
 
-const validateUser = (data) => {
+const validateUser = data => {
   const validate = ajv.compile(userSchema)
   if (!validate(data)) {
     throw new Error("Invalid user data")
@@ -62,7 +62,9 @@ class Users extends ResourceBase {
 
   async identityAddress(address) {
     const account = await this.contractService.currentAccount()
-    const userRegistry = await this.contractService.deployed(this.contractService.userRegistryContract)
+    const userRegistry = await this.contractService.deployed(
+      this.contractService.userRegistryContract
+    )
     address = address || account
     const result = await userRegistry.methods.users(address).call()
     if (String(result) === zeroAddress) {
@@ -83,7 +85,8 @@ class Users extends ResourceBase {
       claimType: selfAttestationClaimType,
       data: asBytes32,
       issuer: "0x0000000000000000000000000000000000000000",
-      signature: "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      signature:
+        "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     })
   }
 
@@ -94,13 +97,17 @@ class Users extends ResourceBase {
       const claims = await this.getClaims(identityAddress)
       existingAttestations = claims.attestations
     }
-    return attestations.filter((attestation) => {
-      const matchingAttestation = existingAttestations.filter((existingAttestation) => {
-        const claimTypeMatches = attestation.claimType === existingAttestation.claimType
-        const dataMatches = attestation.data === existingAttestation.data
-        const sigMatches = attestation.signature === existingAttestation.signature
-        return claimTypeMatches && dataMatches && sigMatches
-      })
+    return attestations.filter(attestation => {
+      const matchingAttestation = existingAttestations.filter(
+        existingAttestation => {
+          const claimTypeMatches =
+            attestation.claimType === existingAttestation.claimType
+          const dataMatches = attestation.data === existingAttestation.data
+          const sigMatches =
+            attestation.signature === existingAttestation.signature
+          return claimTypeMatches && dataMatches && sigMatches
+        }
+      )
       const isNew = matchingAttestation.length === 0
       return isNew
     })
@@ -108,18 +115,28 @@ class Users extends ResourceBase {
 
   async addAttestations(attestations) {
     const account = await this.contractService.currentAccount()
-    const userRegistry = await this.contractService.deployed(this.contractService.userRegistryContract)
+    const userRegistry = await this.contractService.deployed(
+      this.contractService.userRegistryContract
+    )
     const identityAddress = await this.identityAddress()
     if (attestations.length) {
       // format params for solidity methods to batch add claims
       const claimTypes = attestations.map(({ claimType }) => claimType)
       const issuers = attestations.map(({ issuer }) => issuer)
-      const sigs = "0x" + attestations.map(({ signature }) => {
-        return signature.substr(2)
-      }).join("")
-      const data = "0x" + attestations.map(({ data }) => {
-        return data.substr(2)
-      }).join("")
+      const sigs =
+        "0x" +
+        attestations
+          .map(({ signature }) => {
+            return signature.substr(2)
+          })
+          .join("")
+      const data =
+        "0x" +
+        attestations
+          .map(({ data }) => {
+            return data.substr(2)
+          })
+          .join("")
       const dataOffsets = attestations.map(() => 32) // all data hashes will be 32 bytes
 
       if (identityAddress) {
@@ -150,9 +167,7 @@ class Users extends ResourceBase {
       // create identity
       return await this.contractService.deploy(
         this.contractService.claimHolderRegisteredContract,
-        [
-          userRegistry.options.address,
-        ],
+        [userRegistry.options.address],
         { from: account, gas: 4000000 }
       )
     }
@@ -163,8 +178,12 @@ class Users extends ResourceBase {
       this.contractService.claimHolderRegisteredContract,
       identityAddress
     )
-    const allEvents = await identity.getPastEvents("allEvents", { fromBlock: 0 })
-    const claimAddedEvents = allEvents.filter(({ event }) => event === "ClaimAdded" )
+    const allEvents = await identity.getPastEvents("allEvents", {
+      fromBlock: 0
+    })
+    const claimAddedEvents = allEvents.filter(
+      ({ event }) => event === "ClaimAdded"
+    )
     const mapped = claimAddedEvents.map(({ returnValues }) => {
       return {
         claimId: returnValues.claimId,
@@ -176,21 +195,32 @@ class Users extends ResourceBase {
         uri: returnValues.uri
       }
     })
-    const profileClaims = mapped.filter(({ claimType }) => claimType === selfAttestationClaimType )
-    const nonProfileClaims = mapped.filter(({ claimType }) => claimType !== selfAttestationClaimType )
+    const profileClaims = mapped.filter(
+      ({ claimType }) => claimType === selfAttestationClaimType
+    )
+    const nonProfileClaims = mapped.filter(
+      ({ claimType }) => claimType !== selfAttestationClaimType
+    )
     let profile = {}
     if (profileClaims.length) {
       const bytes32 = profileClaims[profileClaims.length - 1].data
       const ipfsHash = this.contractService.getIpfsHashFromBytes32(bytes32)
       profile = await this.ipfsService.getFile(ipfsHash)
     }
-    const validAttestations = await this.validAttestations(identityAddress, nonProfileClaims)
-    const attestations = validAttestations.map(att => new AttestationObject(att))
+    const validAttestations = await this.validAttestations(
+      identityAddress,
+      nonProfileClaims
+    )
+    const attestations = validAttestations.map(
+      att => new AttestationObject(att)
+    )
     return { profile, attestations }
   }
 
   async isValidAttestation({ claimType, data, signature }, identityAddress) {
-    const originIdentity = await this.contractService.deployed(this.contractService.originIdentityContract)
+    const originIdentity = await this.contractService.deployed(
+      this.contractService.originIdentityContract
+    )
     const msg = Web3.utils.soliditySha3(identityAddress, claimType, data)
     const prefixedMsg = this.web3EthAccounts.hashMessage(msg)
     const dataBuf = toBuffer(prefixedMsg)
@@ -203,8 +233,11 @@ class Users extends ResourceBase {
   }
 
   async validAttestations(identityAddress, attestations) {
-    const promiseWithValidation = attestations.map(async (attestation) => {
-      const isValid = await this.isValidAttestation(attestation, identityAddress)
+    const promiseWithValidation = attestations.map(async attestation => {
+      const isValid = await this.isValidAttestation(
+        attestation,
+        identityAddress
+      )
       return { isValid, attestation }
     })
     const withValidation = await Promise.all(promiseWithValidation)

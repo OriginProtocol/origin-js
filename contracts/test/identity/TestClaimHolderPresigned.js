@@ -3,11 +3,15 @@ const Web3 = require("web3")
 const ClaimHolderPresigned = artifacts.require("ClaimHolderPresigned")
 const UserRegistry = artifacts.require("UserRegistry")
 
-const signature_1 = "0xeb6123e537e17e2c67b67bbc0b93e6b25ea9eae276c4c2ab353bd7e853ebad2446cc7e91327f3737559d7a9a90fc88529a6b72b770a612f808ab0ba57a46866e1c"
-const signature_2 = "0x061ef9cdd7707d90d7a7d95b53ddbd94905cb05dfe4734f97744c7976f2776145fef298fd0e31afa43a103cd7f5b00e3b226b0d62e4c492d54bec02eb0c2a0901b"
+const signature_1 =
+  "0xeb6123e537e17e2c67b67bbc0b93e6b25ea9eae276c4c2ab353bd7e853ebad2446cc7e91327f3737559d7a9a90fc88529a6b72b770a612f808ab0ba57a46866e1c"
+const signature_2 =
+  "0x061ef9cdd7707d90d7a7d95b53ddbd94905cb05dfe4734f97744c7976f2776145fef298fd0e31afa43a103cd7f5b00e3b226b0d62e4c492d54bec02eb0c2a0901b"
 
-const dataHash_1 = "0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9"
-const dataHash_2 = "0xa183d4eb3552e730c2dd3df91384426eb88879869b890ad12698320d8b88cb48"
+const dataHash_1 =
+  "0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9"
+const dataHash_2 =
+  "0xa183d4eb3552e730c2dd3df91384426eb88879869b890ad12698320d8b88cb48"
 
 contract("ClaimHolderPresigned", accounts => {
   const attestation_1 = {
@@ -28,11 +32,11 @@ contract("ClaimHolderPresigned", accounts => {
   }
 
   it("should deploy identity with attestations", async function() {
-    const userRegistry = await UserRegistry.new( { from: accounts[3] } )
+    const userRegistry = await UserRegistry.new({ from: accounts[3] })
     const instance = await ClaimHolderPresigned.new(
       userRegistry.address,
-      [ attestation_1.claimType, attestation_2.claimType ],
-      [ attestation_1.issuer, attestation_2.issuer ],
+      [attestation_1.claimType, attestation_2.claimType],
+      [attestation_1.issuer, attestation_2.issuer],
       attestation_1.signature + attestation_2.signature.slice(2),
       attestation_1.data + attestation_2.data.slice(2),
       [32, 32],
@@ -40,10 +44,22 @@ contract("ClaimHolderPresigned", accounts => {
     )
 
     // Check attestation 1
-    const claimId_1 = Web3.utils.soliditySha3(attestation_1.issuer, attestation_1.claimType)
-    const fetchedClaim_1 = await instance.getClaim(claimId_1, { from: accounts[0] })
+    const claimId_1 = Web3.utils.soliditySha3(
+      attestation_1.issuer,
+      attestation_1.claimType
+    )
+    const fetchedClaim_1 = await instance.getClaim(claimId_1, {
+      from: accounts[0]
+    })
     assert.ok(fetchedClaim_1)
-    const [ claimType_1, scheme_1, issuer_1, signature_1, data_1, uri_1 ] = fetchedClaim_1
+    const [
+      claimType_1,
+      scheme_1,
+      issuer_1,
+      signature_1,
+      data_1,
+      uri_1
+    ] = fetchedClaim_1
     assert.equal(claimType_1.toNumber(), attestation_1.claimType)
     assert.equal(scheme_1.toNumber(), attestation_1.scheme)
     assert.equal(issuer_1, attestation_1.issuer)
@@ -52,10 +68,22 @@ contract("ClaimHolderPresigned", accounts => {
     assert.equal(uri_1, attestation_1.uri)
 
     // Check attestation 2
-    const claimId_2 = Web3.utils.soliditySha3(attestation_2.issuer, attestation_2.claimType)
-    const fetchedClaim_2 = await instance.getClaim(claimId_2, { from: accounts[0] })
+    const claimId_2 = Web3.utils.soliditySha3(
+      attestation_2.issuer,
+      attestation_2.claimType
+    )
+    const fetchedClaim_2 = await instance.getClaim(claimId_2, {
+      from: accounts[0]
+    })
     assert.ok(fetchedClaim_2)
-    const [ claimType_2, scheme_2, issuer_2, signature_2, data_2, uri_2 ] = fetchedClaim_2
+    const [
+      claimType_2,
+      scheme_2,
+      issuer_2,
+      signature_2,
+      data_2,
+      uri_2
+    ] = fetchedClaim_2
     assert.equal(claimType_2.toNumber(), attestation_2.claimType)
     assert.equal(scheme_2.toNumber(), attestation_2.scheme)
     assert.equal(issuer_2, attestation_2.issuer)
@@ -66,6 +94,9 @@ contract("ClaimHolderPresigned", accounts => {
     // Check user registry
     const identityAddress = await userRegistry.users(accounts[0])
     assert.ok(identityAddress)
-    assert.notEqual(identityAddress, "0x0000000000000000000000000000000000000000")
+    assert.notEqual(
+      identityAddress,
+      "0x0000000000000000000000000000000000000000"
+    )
   })
 })

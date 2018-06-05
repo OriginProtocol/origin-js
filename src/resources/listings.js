@@ -16,10 +16,10 @@ class Listings extends ResourceBase {
   async allAddresses() {
     const contract = this.contractService.listingsRegistryContract
     const deployed = await this.contractService.deployed(contract)
-    const events = await deployed.getPastEvents(
-      "NewListing",
-      { fromBlock: 0, toBlock: "latest" }
-    )
+    const events = await deployed.getPastEvents("NewListing", {
+      fromBlock: 0,
+      toBlock: "latest"
+    })
     return events.map(({ returnValues }) => {
       return returnValues["_address"]
     })
@@ -27,7 +27,9 @@ class Listings extends ResourceBase {
 
   async get(address) {
     const contractData = await this.contractFn(address, "data")
-    const ipfsHash = this.contractService.getIpfsHashFromBytes32(contractData[1])
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(
+      contractData[1]
+    )
     const ipfsData = await this.ipfsService.getFile(ipfsHash)
 
     const listing = {
@@ -90,8 +92,8 @@ class Listings extends ResourceBase {
 
     // TODO: Why can't we take schematype from the formListing object?
     const jsonBlob = {
-      "schema": `http://localhost:3000/schemas/${schemaType}.json`,
-      "data": formListing.formData,
+      schema: `http://localhost:3000/schemas/${schemaType}.json`,
+      data: formListing.formData
     }
 
     let ipfsHash
@@ -112,21 +114,32 @@ class Listings extends ResourceBase {
       transactionReceipt = await this.contractService.submitListing(
         ipfsHash,
         formListing.formData.price,
-        units)
+        units
+      )
     } catch (error) {
       console.error(error)
       throw new Error(`ETH Failure: ${error}`)
     }
 
     // Success!
-    console.log(`Submitted to ETH blockchain with transactionReceipt.tx: ${transactionReceipt.tx}`)
+    console.log(
+      `Submitted to ETH blockchain with transactionReceipt.tx: ${
+        transactionReceipt.tx
+      }`
+    )
     return transactionReceipt
   }
 
   async buy(address, unitsToBuy, ethToPay) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
-    const value = this.contractService.web3.utils.toWei(String(ethToPay), "ether")
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {value:value, gas: 750000})
+    const value = this.contractService.web3.utils.toWei(
+      String(ethToPay),
+      "ether"
+    )
+    return await this.contractFn(address, "buyListing", [unitsToBuy], {
+      value: value,
+      gas: 750000
+    })
   }
 
   async close(address) {

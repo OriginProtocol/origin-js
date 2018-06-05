@@ -127,7 +127,8 @@ class ContractService {
 
   async deployed(contract, addrs) {
     const net = await this.web3.eth.net.getId()
-    const storedAddress = contract.networks[net] && contract.networks[net].address
+    const storedAddress =
+      contract.networks[net] && contract.networks[net].address
     addrs = addrs || storedAddress || null
     return new this.web3.eth.Contract(contract.abi, addrs)
   }
@@ -135,10 +136,11 @@ class ContractService {
   async getBytecode(contract) {
     const net = await this.web3.eth.net.getId()
     const bytecode = contract.bytecode
-    const withLibraryAddresses = bytecode.replace(/__[^_]+_+/g, (matchedStr) => {
+    const withLibraryAddresses = bytecode.replace(/__[^_]+_+/g, matchedStr => {
       const libraryName = matchedStr.replace(/_/g, "")
       const library = this.libraries[libraryName]
-      const libraryAddress = library.networks[net] && library.networks[net].address
+      const libraryAddress =
+        library.networks[net] && library.networks[net].address
       const withoutPrefix = libraryAddress.slice(2)
       return withoutPrefix
     })
@@ -251,7 +253,13 @@ class ContractService {
     return blockNumber
   }
 
-  async contractFn(contractDefinition, address, functionName, args = [], options = {}) {
+  async contractFn(
+    contractDefinition,
+    address,
+    functionName,
+    args = [],
+    options = {}
+  ) {
     // Setup options
     const opts = Object.assign(options, {}) // clone options
     opts.from = opts.from || (await this.currentAccount())

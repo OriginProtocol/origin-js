@@ -42,9 +42,7 @@ describe("User Resource", function() {
     const web3 = new Web3(provider)
     const accounts = await web3.eth.getAccounts()
     const contractService = new ContractService({ web3 })
-    await contractService.deployed(
-      contractService.originIdentityContract
-    )
+    await contractService.deployed(contractService.originIdentityContract)
     const ipfsService = new IpfsService({
       ipfsDomain: "127.0.0.1",
       ipfsApiPort: "5002",

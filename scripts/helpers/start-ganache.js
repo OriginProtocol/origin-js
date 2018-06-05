@@ -10,7 +10,8 @@ const startGanache = () => {
       network_id: 999,
       seed: 123,
       blocktime: 0,
-      mnemonic: "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
+      mnemonic:
+        "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
     })
     server.listen(PORT, err => {
       if (err) {

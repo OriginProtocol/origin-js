@@ -8,8 +8,8 @@ const claimTypeMapping = {
   11: "email"
 }
 
-const appendSlash = (url) => {
-  return (url.substr(-1) === "/") ? url : url + "/"
+const appendSlash = url => {
+  return url.substr(-1) === "/" ? url : url + "/"
 }
 
 class AttestationObject {
@@ -44,9 +44,12 @@ class Attestations {
   async getIdentityAddress(wallet) {
     const currentAccount = await this.contractService.currentAccount()
     wallet = wallet || currentAccount
-    const userRegistry = await this.contractService.deployed(this.contractService.userRegistryContract)
+    const userRegistry = await this.contractService.deployed(
+      this.contractService.userRegistryContract
+    )
     const identityAddress = await userRegistry.methods.users(wallet).call()
-    const hasRegisteredIdentity = identityAddress !== "0x0000000000000000000000000000000000000000"
+    const hasRegisteredIdentity =
+      identityAddress !== "0x0000000000000000000000000000000000000000"
     if (hasRegisteredIdentity) {
       return Web3.utils.toChecksumAddress(identityAddress)
     } else {
@@ -89,10 +92,7 @@ class Attestations {
   }
 
   async facebookAuthUrl() {
-    return await this.get(
-      `facebook/auth-url`,
-      responseToUrl
-    )
+    return await this.get(`facebook/auth-url`, responseToUrl)
   }
 
   async facebookVerify({ wallet, code }) {
@@ -108,10 +108,7 @@ class Attestations {
   }
 
   async twitterAuthUrl() {
-    return await this.get(
-      `twitter/auth-url`,
-      responseToUrl
-    )
+    return await this.get(`twitter/auth-url`, responseToUrl)
   }
 
   async twitterVerify({ wallet, code }) {
@@ -127,15 +124,12 @@ class Attestations {
   }
 
   async http(baseUrl, url, body, successFn, method) {
-    const response = await this.fetch(
-      appendSlash(baseUrl) + url,
-      {
-        method,
-        body: body ? JSON.stringify(body) : undefined,
-        headers: { "content-type": "application/json" },
-        credentials: "include"
-      }
-    )
+    const response = await this.fetch(appendSlash(baseUrl) + url, {
+      method,
+      body: body ? JSON.stringify(body) : undefined,
+      headers: { "content-type": "application/json" },
+      credentials: "include"
+    })
     const json = await response.json()
     if (response.ok) {
       return successFn ? successFn(json) : json
@@ -153,12 +147,13 @@ class Attestations {
 
   async predictIdentityAddress(wallet) {
     const web3 = this.contractService.web3
-    const nonce = await new Promise((resolve) => {
+    const nonce = await new Promise(resolve => {
       web3.eth.getTransactionCount(wallet, (err, count) => {
         resolve(count)
       })
     })
-    const address = "0x" + Web3.utils.sha3(RLP.encode([wallet, nonce])).substring(26, 66)
+    const address =
+      "0x" + Web3.utils.sha3(RLP.encode([wallet, nonce])).substring(26, 66)
     return Web3.utils.toChecksumAddress(address)
   }
 }

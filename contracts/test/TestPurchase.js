@@ -141,9 +141,7 @@ contract("Purchase", accounts => {
     const shipTransaction = await instance.sellerConfirmShipped({
       from: seller
     })
-    web3
-      .toBigNumber(shipTransaction.receipt.gasUsed)
-      .times(GAS_PRICE)
+    web3.toBigNumber(shipTransaction.receipt.gasUsed).times(GAS_PRICE)
 
     // Buyer confirms
     await instance.buyerConfirmReceipt(5, "IPFS", { from: buyer })
@@ -292,13 +290,9 @@ contract("Purchase", accounts => {
       const itShouldNotAllowRating = async rating => {
         it("Should not allow rating " + rating, async () => {
           try {
-            await purchase.sellerCollectPayout(
-              rating,
-              reviewIpfsHash,
-              {
-                from: seller
-              }
-            )
+            await purchase.sellerCollectPayout(rating, reviewIpfsHash, {
+              from: seller
+            })
             assert.ok(false, "allowed an invalid rating")
           } catch (err) {
             assert.ok(isEVMError(err), "an EVM error should be thrown")
@@ -347,13 +341,9 @@ contract("Purchase", accounts => {
       const itShouldNotAllowRating = async rating => {
         it("Should not allow rating " + rating, async () => {
           try {
-            await purchase.buyerConfirmReceipt(
-              rating,
-              reviewIpfsHash,
-              {
-                from: buyer
-              }
-            )
+            await purchase.buyerConfirmReceipt(rating, reviewIpfsHash, {
+              from: buyer
+            })
             assert.ok(false, "allowed an invalid rating")
           } catch (err) {
             assert.ok(isEVMError(err), "an EVM error should be thrown")

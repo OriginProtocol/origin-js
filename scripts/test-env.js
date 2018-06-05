@@ -16,8 +16,7 @@ const start = async () => {
     await deployContracts()
     console.log(chalk`\n{bold.hex('#26d198') ⬢  Starting Local IPFS }\n`)
     await startIpfs()
-  }
-  catch(error) {
+  } catch (error) {
     console.log(chalk`\n{bold ⚠️  Env failed. }\n`)
     console.error(error)
   }

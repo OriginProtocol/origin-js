@@ -22,8 +22,7 @@ const start = async () => {
     await testJavascript()
     console.log(chalk`\n{bold ✅  Tests passed. :) }\n`)
     process.exit()
-  }
-  catch(error) {
+  } catch (error) {
     console.log(chalk`\n{bold ⚠️  Tests failed. :( }\n`)
     console.error(error)
     process.exit(1)
