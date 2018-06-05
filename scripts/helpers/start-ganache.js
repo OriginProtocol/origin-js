@@ -1,4 +1,4 @@
-const Ganache = require("ganache-core")
+const Ganache = require('ganache-core')
 
 const PORT = 8545
 
@@ -11,7 +11,7 @@ const startGanache = () => {
       seed: 123,
       blocktime: 0,
       mnemonic:
-        "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
+        'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
     })
     server.listen(PORT, err => {
       if (err) {

@@ -5,8 +5,8 @@
  * size
  */
 
-const fs = require("fs")
-const contractDir = __dirname + "/../../contracts/build/contracts"
+const fs = require('fs')
+const contractDir = __dirname + '/../../contracts/build/contracts'
 
 module.exports = function() {
   const files = fs.readdirSync(contractDir)

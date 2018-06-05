@@ -1,16 +1,16 @@
-const chalk = require("chalk")
-const startGanache = require("./helpers/start-ganache")
-const buildContracts = require("./helpers/build-contracts")
-const deployContracts = require("./helpers/deploy-contracts")
-const startIpfs = require("./helpers/start-ipfs")
-const startTestServer = require("./helpers/start-test-server")
-const watch = require("node-watch")
-const webpack = require("webpack")
-const webpackConfig = require("../webpack.config.js")
+const chalk = require('chalk')
+const startGanache = require('./helpers/start-ganache')
+const buildContracts = require('./helpers/build-contracts')
+const deployContracts = require('./helpers/deploy-contracts')
+const startIpfs = require('./helpers/start-ipfs')
+const startTestServer = require('./helpers/start-test-server')
+const watch = require('node-watch')
+const webpack = require('webpack')
+const webpackConfig = require('../webpack.config.js')
 
 const args = process.argv.slice(2)
-const shouldWatch = args.length && args[0] === "serve"
-const noGanache = args.length && args[1] === "no-ganache"
+const shouldWatch = args.length && args[0] === 'serve'
+const noGanache = args.length && args[1] === 'no-ganache'
 
 const start = async () => {
   const compiler = webpack(webpackConfig)
@@ -28,8 +28,8 @@ const start = async () => {
     await startIpfs()
 
     // watch contracts
-    watch("./contracts/contracts", { recursive: true }, (evt, name) => {
-      console.log("%s changed.", name)
+    watch('./contracts/contracts', { recursive: true }, (evt, name) => {
+      console.log('%s changed.', name)
       deployContracts()
     })
 
@@ -58,7 +58,7 @@ const start = async () => {
       if (err) {
         console.log(err)
       } else {
-        console.log("webpack compiled successfully")
+        console.log('webpack compiled successfully')
       }
     })
   }

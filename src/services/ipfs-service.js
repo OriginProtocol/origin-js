@@ -2,13 +2,13 @@
  * IPFS interface
  */
 
-const MapCache = require("map-cache")
-const fetch = require("cross-fetch")
-const FormData = require("form-data")
+const MapCache = require('map-cache')
+const fetch = require('cross-fetch')
+const FormData = require('form-data')
 
 const Ports = {
-  http: "80",
-  https: "443"
+  http: '80',
+  https: '443'
 }
 
 class IpfsService {
@@ -34,22 +34,22 @@ class IpfsService {
   async submitFile(jsonData) {
     try {
       const formData = new FormData()
-      formData.append("file", this.content(jsonData))
+      formData.append('file', this.content(jsonData))
 
       const rawRes = await fetch(`${this.api}/api/v0/add`, {
-        method: "POST",
+        method: 'POST',
         body: formData
       })
       const res = await rawRes.json()
       this.mapCache.set(res.Hash, jsonData)
       return res.Hash
     } catch (e) {
-      throw new Error("Failure to submit file to IPFS", e)
+      throw new Error('Failure to submit file to IPFS', e)
     }
   }
 
   content(data) {
-    if (typeof Blob === "undefined") {
+    if (typeof Blob === 'undefined') {
       return new Buffer(JSON.stringify(data))
     } else {
       return new Blob([JSON.stringify(data)])

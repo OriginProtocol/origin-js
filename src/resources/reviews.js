@@ -1,4 +1,4 @@
-import ResourceBase from "./_resource-base"
+import ResourceBase from './_resource-base'
 
 class Reviews extends ResourceBase {
   constructor({ contractService, ipfsService }) {
@@ -23,7 +23,7 @@ class Reviews extends ResourceBase {
     )
     return new Promise((resolve, reject) => {
       // Get all logs on this contract
-      purchaseContract.getPastEvents("allEvents", { fromBlock: 0 }, function(
+      purchaseContract.getPastEvents('allEvents', { fromBlock: 0 }, function(
         error,
         rawLogs
       ) {
@@ -32,12 +32,12 @@ class Reviews extends ResourceBase {
         }
         // Format logs we receive
         const logs = rawLogs
-          .filter(x => x.event == "PurchaseReview")
+          .filter(x => x.event == 'PurchaseReview')
           .map(log => {
             const values = log.returnValues
             const hasHash =
               values.ipfsHash !=
-              "0x0000000000000000000000000000000000000000000000000000000000000000"
+              '0x0000000000000000000000000000000000000000000000000000000000000000'
             const ipfsHash = hasHash
               ? self.contractService.getIpfsHashFromBytes32(values.ipfsHash)
               : undefined
@@ -45,10 +45,10 @@ class Reviews extends ResourceBase {
               purchaseAddress: address,
               reviewerAddress: values.reviewer,
               revieweeAddress: values.reviewee,
-              revieweeRole: ["BUYER", "SELLER"][values.revieweeRole],
+              revieweeRole: ['BUYER', 'SELLER'][values.revieweeRole],
               rating: parseInt(values.rating),
               ipfsHash: ipfsHash,
-              reviewText: "",
+              reviewText: '',
               transactionHash: log.transactionHash,
               blockNumber: log.blockNumber,
               blockHash: log.blockHash

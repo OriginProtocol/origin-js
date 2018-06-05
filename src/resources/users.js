@@ -1,25 +1,25 @@
-import ResourceBase from "./_resource-base"
-import { AttestationObject } from "./attestations"
-import userSchema from "../schemas/user.json"
+import ResourceBase from './_resource-base'
+import { AttestationObject } from './attestations'
+import userSchema from '../schemas/user.json'
 import {
   fromRpcSig,
   ecrecover,
   toBuffer,
   bufferToHex,
   pubToAddress
-} from "ethereumjs-util"
-import Web3 from "web3"
+} from 'ethereumjs-util'
+import Web3 from 'web3'
 
-const Ajv = require("ajv")
+const Ajv = require('ajv')
 const ajv = new Ajv()
 
 const selfAttestationClaimType = 13 // TODO: use the correct number here
-const zeroAddress = "0x0000000000000000000000000000000000000000"
+const zeroAddress = '0x0000000000000000000000000000000000000000'
 
 const validateUser = data => {
   const validate = ajv.compile(userSchema)
   if (!validate(data)) {
-    throw new Error("Invalid user data")
+    throw new Error('Invalid user data')
   } else {
     return data
   }
@@ -84,9 +84,9 @@ class Users extends ResourceBase {
     return new AttestationObject({
       claimType: selfAttestationClaimType,
       data: asBytes32,
-      issuer: "0x0000000000000000000000000000000000000000",
+      issuer: '0x0000000000000000000000000000000000000000',
       signature:
-        "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
     })
   }
 
@@ -124,19 +124,19 @@ class Users extends ResourceBase {
       const claimTypes = attestations.map(({ claimType }) => claimType)
       const issuers = attestations.map(({ issuer }) => issuer)
       const sigs =
-        "0x" +
+        '0x' +
         attestations
           .map(({ signature }) => {
             return signature.substr(2)
           })
-          .join("")
+          .join('')
       const data =
-        "0x" +
+        '0x' +
         attestations
           .map(({ data }) => {
             return data.substr(2)
           })
-          .join("")
+          .join('')
       const dataOffsets = attestations.map(() => 32) // all data hashes will be 32 bytes
 
       if (identityAddress) {
@@ -144,7 +144,7 @@ class Users extends ResourceBase {
         return await this.contractService.contractFn(
           this.contractService.claimHolderRegisteredContract,
           identityAddress,
-          "addClaims",
+          'addClaims',
           [claimTypes, issuers, sigs, data, dataOffsets],
           { from: account, gas: 4000000 }
         )
@@ -178,11 +178,11 @@ class Users extends ResourceBase {
       this.contractService.claimHolderRegisteredContract,
       identityAddress
     )
-    const allEvents = await identity.getPastEvents("allEvents", {
+    const allEvents = await identity.getPastEvents('allEvents', {
       fromBlock: 0
     })
     const claimAddedEvents = allEvents.filter(
-      ({ event }) => event === "ClaimAdded"
+      ({ event }) => event === 'ClaimAdded'
     )
     const mapped = claimAddedEvents.map(({ returnValues }) => {
       return {

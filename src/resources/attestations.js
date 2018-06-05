@@ -1,15 +1,15 @@
-import RLP from "rlp"
-import Web3 from "web3"
+import RLP from 'rlp'
+import Web3 from 'web3'
 
 const claimTypeMapping = {
-  3: "facebook",
-  4: "twitter",
-  10: "phone",
-  11: "email"
+  3: 'facebook',
+  4: 'twitter',
+  10: 'phone',
+  11: 'email'
 }
 
 const appendSlash = url => {
-  return url.substr(-1) === "/" ? url : url + "/"
+  return url.substr(-1) === '/' ? url : url + '/'
 }
 
 class AttestationObject {
@@ -23,7 +23,7 @@ class AttestationObject {
 }
 
 const responseToUrl = (resp = {}) => {
-  return resp["url"]
+  return resp['url']
 }
 
 class Attestations {
@@ -34,9 +34,9 @@ class Attestations {
 
     this.responseToAttestation = (resp = {}) => {
       return new AttestationObject({
-        claimType: resp["claim-type"],
-        data: Web3.utils.soliditySha3(resp["data"]),
-        signature: resp["signature"]
+        claimType: resp['claim-type'],
+        data: Web3.utils.soliditySha3(resp['data']),
+        signature: resp['signature']
       })
     }
   }
@@ -49,7 +49,7 @@ class Attestations {
     )
     const identityAddress = await userRegistry.methods.users(wallet).call()
     const hasRegisteredIdentity =
-      identityAddress !== "0x0000000000000000000000000000000000000000"
+      identityAddress !== '0x0000000000000000000000000000000000000000'
     if (hasRegisteredIdentity) {
       return Web3.utils.toChecksumAddress(identityAddress)
     } else {
@@ -58,13 +58,13 @@ class Attestations {
   }
 
   async phoneGenerateCode({ phone }) {
-    return await this.post("phone/generate-code", { phone })
+    return await this.post('phone/generate-code', { phone })
   }
 
   async phoneVerify({ wallet, phone, code }) {
     const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "phone/verify",
+      'phone/verify',
       {
         identity,
         phone,
@@ -75,13 +75,13 @@ class Attestations {
   }
 
   async emailGenerateCode({ email }) {
-    return await this.post("email/generate-code", { email })
+    return await this.post('email/generate-code', { email })
   }
 
   async emailVerify({ wallet, email, code }) {
     const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "email/verify",
+      'email/verify',
       {
         identity,
         email,
@@ -98,7 +98,7 @@ class Attestations {
   async facebookVerify({ wallet, code }) {
     const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "facebook/verify",
+      'facebook/verify',
       {
         identity,
         code
@@ -114,10 +114,10 @@ class Attestations {
   async twitterVerify({ wallet, code }) {
     const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "twitter/verify",
+      'twitter/verify',
       {
         identity,
-        "oauth-verifier": code
+        'oauth-verifier': code
       },
       this.responseToAttestation
     )
@@ -127,8 +127,8 @@ class Attestations {
     const response = await this.fetch(appendSlash(baseUrl) + url, {
       method,
       body: body ? JSON.stringify(body) : undefined,
-      headers: { "content-type": "application/json" },
-      credentials: "include"
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include'
     })
     const json = await response.json()
     if (response.ok) {
@@ -138,11 +138,11 @@ class Attestations {
   }
 
   async post(url, body, successFn) {
-    return await this.http(this.serverUrl, url, body, successFn, "POST")
+    return await this.http(this.serverUrl, url, body, successFn, 'POST')
   }
 
   async get(url, successFn) {
-    return await this.http(this.serverUrl, url, undefined, successFn, "GET")
+    return await this.http(this.serverUrl, url, undefined, successFn, 'GET')
   }
 
   async predictIdentityAddress(wallet) {
@@ -153,7 +153,7 @@ class Attestations {
       })
     })
     const address =
-      "0x" + Web3.utils.sha3(RLP.encode([wallet, nonce])).substring(26, 66)
+      '0x' + Web3.utils.sha3(RLP.encode([wallet, nonce])).substring(26, 66)
     return Web3.utils.toChecksumAddress(address)
   }
 }

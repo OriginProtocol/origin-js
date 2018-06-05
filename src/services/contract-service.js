@@ -1,21 +1,21 @@
-import ClaimHolderRegisteredContract from "./../../contracts/build/contracts/ClaimHolderRegistered.json"
-import ClaimHolderPresignedContract from "./../../contracts/build/contracts/ClaimHolderPresigned.json"
-import ClaimHolderLibrary from "./../../contracts/build/contracts/ClaimHolderLibrary.json"
-import KeyHolderLibrary from "./../../contracts/build/contracts/KeyHolderLibrary.json"
-import ListingsRegistryContract from "./../../contracts/build/contracts/ListingsRegistry.json"
-import ListingContract from "./../../contracts/build/contracts/Listing.json"
-import PurchaseContract from "./../../contracts/build/contracts/Purchase.json"
-import UserRegistryContract from "./../../contracts/build/contracts/UserRegistry.json"
-import OriginIdentityContract from "./../../contracts/build/contracts/OriginIdentity.json"
-import bs58 from "bs58"
-import Web3 from "web3"
+import ClaimHolderRegisteredContract from './../../contracts/build/contracts/ClaimHolderRegistered.json'
+import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
+import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
+import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
+import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
+import ListingContract from './../../contracts/build/contracts/Listing.json'
+import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
+import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
+import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
+import bs58 from 'bs58'
+import Web3 from 'web3'
 
 class ContractService {
   constructor(options = {}) {
     const externalWeb3 = options.web3 || window.web3
     if (!externalWeb3) {
       throw new Error(
-        "web3 is required for Origin.js. Please pass in web3 as a config option."
+        'web3 is required for Origin.js. Please pass in web3 as a config option.'
       )
     }
     this.web3 = new Web3(externalWeb3.currentProvider)
@@ -53,11 +53,11 @@ class ContractService {
   // "0x017dfd85d4f6cb4dcd715a88101f7b1f06cd1e009b2327a0809d01eb9c91f231"
   getBytes32FromIpfsHash(ipfsListing) {
     return (
-      "0x" +
+      '0x' +
       bs58
         .decode(ipfsListing)
         .slice(2)
-        .toString("hex")
+        .toString('hex')
     )
   }
 
@@ -68,8 +68,8 @@ class ContractService {
     // Add our default ipfs values for first 2 bytes:
     // function:0x12=sha2, size:0x20=256 bits
     // and cut off leading "0x"
-    const hashHex = "1220" + bytes32Hex.slice(2)
-    const hashBytes = Buffer.from(hashHex, "hex")
+    const hashHex = '1220' + bytes32Hex.slice(2)
+    const hashBytes = Buffer.from(hashHex, 'hex')
     const hashStr = bs58.encode(hashBytes)
     return hashStr
   }
@@ -113,14 +113,14 @@ class ContractService {
       const account = await this.currentAccount()
       const instance = await this.deployed(ListingsRegistryContract)
 
-      const weiToGive = this.web3.utils.toWei(String(ethPrice), "ether")
+      const weiToGive = this.web3.utils.toWei(String(ethPrice), 'ether')
       // Note we cannot get the listingId returned by our contract.
       // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
       return instance.methods
         .create(this.getBytes32FromIpfsHash(ipfsListing), weiToGive, units)
         .send({ from: account, gas: 4476768 })
     } catch (error) {
-      console.error("Error submitting to the Ethereum blockchain: " + error)
+      console.error('Error submitting to the Ethereum blockchain: ' + error)
       throw error
     }
   }
@@ -137,7 +137,7 @@ class ContractService {
     const net = await this.web3.eth.net.getId()
     const bytecode = contract.bytecode
     const withLibraryAddresses = bytecode.replace(/__[^_]+_+/g, matchedStr => {
-      const libraryName = matchedStr.replace(/_/g, "")
+      const libraryName = matchedStr.replace(/_/g, '')
       const library = this.libraries[libraryName]
       const libraryAddress =
         library.networks[net] && library.networks[net].address
@@ -157,10 +157,10 @@ class ContractService {
           arguments: args
         })
         .send(options)
-        .on("receipt", receipt => {
+        .on('receipt', receipt => {
           resolve(receipt)
         })
-        .on("error", err => reject(err))
+        .on('error', err => reject(err))
     })
     return txReceipt
   }
@@ -209,7 +209,7 @@ class ContractService {
       address: listing[0],
       lister: listing[1],
       ipfsHash: this.getIpfsHashFromBytes32(listing[2]),
-      price: this.web3.utils.fromWei(listing[3], "ether"),
+      price: this.web3.utils.fromWei(listing[3], 'ether'),
       unitsAvailable: listing[4]
     }
     return listingObject
@@ -219,7 +219,7 @@ class ContractService {
     transactionHash,
     pollIntervalMilliseconds = 1000
   ) {
-    console.log("Waiting for transaction")
+    console.log('Waiting for transaction')
     console.log(transactionHash)
     const blockNumber = await new Promise((resolve, reject) => {
       if (!transactionHash) {
@@ -275,10 +275,10 @@ class ContractService {
     const transaction = await new Promise((resolve, reject) => {
       method
         .send(opts)
-        .on("receipt", receipt => {
+        .on('receipt', receipt => {
           resolve(receipt)
         })
-        .on("error", err => reject(err))
+        .on('error', err => reject(err))
     })
 
     transaction.tx = transaction.transactionHash

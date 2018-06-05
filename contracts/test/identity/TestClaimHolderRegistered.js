@@ -1,19 +1,19 @@
-const Web3 = require("web3")
+const Web3 = require('web3')
 
-const ClaimHolderRegistered = artifacts.require("ClaimHolderRegistered")
-const UserRegistry = artifacts.require("UserRegistry")
+const ClaimHolderRegistered = artifacts.require('ClaimHolderRegistered')
+const UserRegistry = artifacts.require('UserRegistry')
 
 const signature_1 =
-  "0xeb6123e537e17e2c67b67bbc0b93e6b25ea9eae276c4c2ab353bd7e853ebad2446cc7e91327f3737559d7a9a90fc88529a6b72b770a612f808ab0ba57a46866e1c"
+  '0xeb6123e537e17e2c67b67bbc0b93e6b25ea9eae276c4c2ab353bd7e853ebad2446cc7e91327f3737559d7a9a90fc88529a6b72b770a612f808ab0ba57a46866e1c'
 const signature_2 =
-  "0x061ef9cdd7707d90d7a7d95b53ddbd94905cb05dfe4734f97744c7976f2776145fef298fd0e31afa43a103cd7f5b00e3b226b0d62e4c492d54bec02eb0c2a0901b"
+  '0x061ef9cdd7707d90d7a7d95b53ddbd94905cb05dfe4734f97744c7976f2776145fef298fd0e31afa43a103cd7f5b00e3b226b0d62e4c492d54bec02eb0c2a0901b'
 
 const dataHash_1 =
-  "0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9"
+  '0x4f32f7a7d40b4d65a917926cbfd8fd521483e7472bcc4d024179735622447dc9'
 const dataHash_2 =
-  "0xa183d4eb3552e730c2dd3df91384426eb88879869b890ad12698320d8b88cb48"
+  '0xa183d4eb3552e730c2dd3df91384426eb88879869b890ad12698320d8b88cb48'
 
-contract("ClaimHolderRegistered", accounts => {
+contract('ClaimHolderRegistered', accounts => {
   let claimHolderRegistered, userRegistry
   const attestation_1 = {
     claimType: 1,
@@ -21,7 +21,7 @@ contract("ClaimHolderRegistered", accounts => {
     issuer: accounts[1],
     signature: signature_1,
     data: dataHash_1,
-    uri: ""
+    uri: ''
   }
   const attestation_2 = {
     claimType: 2,
@@ -29,7 +29,7 @@ contract("ClaimHolderRegistered", accounts => {
     issuer: accounts[2],
     signature: signature_2,
     data: dataHash_2,
-    uri: ""
+    uri: ''
   }
 
   beforeEach(async function() {
@@ -40,7 +40,7 @@ contract("ClaimHolderRegistered", accounts => {
     )
   })
 
-  it("can add and get claim", async function() {
+  it('can add and get claim', async function() {
     const claimId = Web3.utils.soliditySha3(
       attestation_1.issuer,
       attestation_1.claimType
@@ -67,7 +67,7 @@ contract("ClaimHolderRegistered", accounts => {
     assert.equal(uri, attestation_1.uri)
   })
 
-  it("can batch add claims", async function() {
+  it('can batch add claims', async function() {
     await claimHolderRegistered.addClaims(
       [attestation_1.claimType, attestation_2.claimType],
       [attestation_1.issuer, attestation_2.issuer],
@@ -124,12 +124,12 @@ contract("ClaimHolderRegistered", accounts => {
     assert.equal(uri_2, attestation_2.uri)
   })
 
-  it("registers the user", async function() {
+  it('registers the user', async function() {
     const identityAddress = await userRegistry.users(accounts[0])
     assert.ok(identityAddress)
     assert.notEqual(
       identityAddress,
-      "0x0000000000000000000000000000000000000000"
+      '0x0000000000000000000000000000000000000000'
     )
   })
 })

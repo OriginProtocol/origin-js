@@ -1,7 +1,7 @@
 // For now, we are just wrapping the methods that are already in
 // contractService and ipfsService.
 
-import ResourceBase from "./_resource-base"
+import ResourceBase from './_resource-base'
 
 class Listings extends ResourceBase {
   constructor({ contractService, ipfsService }) {
@@ -16,17 +16,17 @@ class Listings extends ResourceBase {
   async allAddresses() {
     const contract = this.contractService.listingsRegistryContract
     const deployed = await this.contractService.deployed(contract)
-    const events = await deployed.getPastEvents("NewListing", {
+    const events = await deployed.getPastEvents('NewListing', {
       fromBlock: 0,
-      toBlock: "latest"
+      toBlock: 'latest'
     })
     return events.map(({ returnValues }) => {
-      return returnValues["_address"]
+      return returnValues['_address']
     })
   }
 
   async get(address) {
-    const contractData = await this.contractFn(address, "data")
+    const contractData = await this.contractFn(address, 'data')
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(
       contractData[1]
     )
@@ -37,7 +37,7 @@ class Listings extends ResourceBase {
       ipfsHash: ipfsHash,
       sellerAddress: contractData[0],
       priceWei: contractData[2].toString(),
-      price: this.contractService.web3.utils.fromWei(contractData[2], "ether"),
+      price: this.contractService.web3.utils.fromWei(contractData[2], 'ether'),
       unitsAvailable: contractData[3],
       created: contractData[4],
       expiration: contractData[5],
@@ -82,10 +82,10 @@ class Listings extends ResourceBase {
 
   async create(data, schemaType) {
     if (data.price == undefined) {
-      throw "You must include a price"
+      throw 'You must include a price'
     }
     if (data.name == undefined) {
-      throw "You must include a name"
+      throw 'You must include a name'
     }
 
     const formListing = { formData: data }
@@ -134,24 +134,24 @@ class Listings extends ResourceBase {
     // TODO: ethToPay should really be replaced by something that takes Wei.
     const value = this.contractService.web3.utils.toWei(
       String(ethToPay),
-      "ether"
+      'ether'
     )
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {
+    return await this.contractFn(address, 'buyListing', [unitsToBuy], {
       value: value,
       gas: 750000
     })
   }
 
   async close(address) {
-    return await this.contractFn(address, "close")
+    return await this.contractFn(address, 'close')
   }
 
   async purchasesLength(address) {
-    return Number(await this.contractFn(address, "purchasesLength"))
+    return Number(await this.contractFn(address, 'purchasesLength'))
   }
 
   async purchaseAddressByIndex(address, index) {
-    return await this.contractFn(address, "getPurchase", [index])
+    return await this.contractFn(address, 'getPurchase', [index])
   }
 }
 
