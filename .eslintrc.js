@@ -18,8 +18,9 @@ module.exports = {
     web3: true
   },
   rules: {
-    "indent": ["error", 2],
+    indent: ["error", 2],
     "no-console": ["off"],
+    "no-var": ["error"],
     "prefer-const": ["error"],
     semi: ["error", "never"],
     quotes: [
