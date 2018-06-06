@@ -19,12 +19,13 @@ const storeKeys = {
 }
 
 class NotificationObject {
-  constructor({ id, type, status = unreadStatus } = {}) {
+  constructor({ id, type, status = unreadStatus, resources = {} } = {}) {
     let validate = ajv.compile(notificationSchema)
     if (validate({ id, type, status })) {
       this.id = id // id can be anything as long as it is unique and reproducible
       this.type = type
       this.status = status
+      this.resources = resources
     }
   }
 }
@@ -78,7 +79,7 @@ class Notifications {
   sellerListingPurchasedNotifications(blockchainData, account) {
     const purchaseStage = notificationTypes.sellerListingPurchased.purchaseStage
     const logs = this.sellerPurchaseLogsFor(blockchainData, account)
-    const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
+    const logsForStage = logs.filter(({ log: { stage } }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
       notificationTypes.sellerListingPurchased.name
@@ -88,7 +89,7 @@ class Notifications {
   sellerReviewReceivedNotifications(blockchainData, account) {
     const purchaseStage = notificationTypes.sellerReviewReceived.purchaseStage
     const logs = this.sellerPurchaseLogsFor(blockchainData, account)
-    const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
+    const logsForStage = logs.filter(({ log: { stage } }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
       notificationTypes.sellerReviewReceived.name
@@ -98,7 +99,7 @@ class Notifications {
   buyerListingShippedNotifications(blockchainData, account) {
     const purchaseStage = notificationTypes.buyerListingShipped.purchaseStage
     const logs = this.buyerPurchaseLogsFor(blockchainData, account)
-    const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
+    const logsForStage = logs.filter(({ log: { stage } }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
       notificationTypes.buyerListingShipped.name
@@ -108,7 +109,7 @@ class Notifications {
   buyerReviewReceivedNotifications(blockchainData, account) {
     const purchaseStage = notificationTypes.buyerReviewReceived.purchaseStage
     const logs = this.buyerPurchaseLogsFor(blockchainData, account)
-    const logsForStage = logs.filter(({ stage }) => stage === purchaseStage)
+    const logsForStage = logs.filter(({ log: { stage } }) => stage === purchaseStage)
     return this.purchaseNotifications(
       logsForStage,
       notificationTypes.buyerReviewReceived.name
@@ -116,7 +117,7 @@ class Notifications {
   }
 
   purchaseNotifications(logs, type) {
-    return logs.map(log => {
+    return logs.map(({ log, listing, purchase }) => {
       const id = `${type}_${log.transactionHash}`
       const timestampInMilli = log.timestamp * 1000
       const isWatched = timestampInMilli > this.store.get(storeKeys.notificationSubscriptionStart)
@@ -126,7 +127,8 @@ class Notifications {
       return new NotificationObject({
         id,
         type,
-        status
+        status,
+        resources: { listing, purchase }
       })
     })
   }
@@ -165,14 +167,22 @@ class Notifications {
   sellerPurchaseLogsFor(blockchainData, account) {
     const logsByPurchase = blockchainData.filter(({ listing }) => {
       return listing.sellerAddress === account
-    }).map(({ purchaseLogs }) => purchaseLogs )
+    }).map(({ purchaseLogs, listing, purchase }) => {
+      return purchaseLogs.map(log => {
+        return { log, listing, purchase }
+      })
+    })
     return [].concat.apply([], logsByPurchase)
   }
 
   buyerPurchaseLogsFor(blockchainData, account) {
     const logsByPurchase = blockchainData.filter(({ purchase }) => {
       return purchase.buyerAddress === account
-    }).map(({ purchaseLogs }) => purchaseLogs )
+    }).map(({ purchaseLogs, listing, purchase }) => {
+      return purchaseLogs.map(log => {
+        return { log, listing, purchase }
+      })
+    })
     return [].concat.apply([], logsByPurchase)
   }
 }
