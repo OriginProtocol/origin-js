@@ -74,11 +74,10 @@ describe("Listing Resource", function() {
 
   it("should create a listing", async () => {
     const listingData = {
-      name: "1972 Geo Metro 255K",
+      name: "1992 Geo Metro 255K",
       category: "Cars & Trucks",
       location: "New York City",
-      description:
-        "The American auto-show highlight reel will be disproportionately concentrated on the happenings in New York.",
+      description: "An amazing automobile.",
       pictures: undefined,
       price: 3.3
     }
@@ -102,6 +101,36 @@ describe("Listing Resource", function() {
 
     const listingAfter = await listings.getByIndex(listingIndex)
     expect(listingAfter.unitsAvailable).to.equal(0)
+  })
+
+  it("should only allow data: and dweb: uris for images", async () => {
+    const listingData = {
+      name: "1992 Geo Metro 255K",
+      category: "Cars & Trucks",
+      location: "New York City",
+      description: "An amazing automobile.",
+      pictures: [
+        "https://upload.wikimedia.org/wikipedia/commons/4/40/97_Geo_Metro.jpg",
+        "dweb:/ipfs/QmSZ3QjZc7ubrfMFLMAUiUkJHfZ4WUEPop5dLkoVX3ewA5",
+        "data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7",
+        "garbage",
+        42
+      ],
+      price: 3.3
+    }
+    const validPicturees = [
+      "dweb:/ipfs/QmSZ3QjZc7ubrfMFLMAUiUkJHfZ4WUEPop5dLkoVX3ewA5",
+      "data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7"
+    ]
+    const schema = "for-sale"
+    await listings.create(listingData, schema)
+
+    const listingIds = await contractService.getAllListingIds()
+    const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
+
+    expect(JSON.stringify(listing.pictures)).to.equal(
+      JSON.stringify(validPicturees)
+    )
   })
 
   describe("Getting purchase addresses", async () => {
