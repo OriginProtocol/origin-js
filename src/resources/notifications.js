@@ -165,24 +165,25 @@ class Notifications {
   }
 
   sellerPurchaseLogsFor(blockchainData, account) {
-    const logsByPurchase = blockchainData.filter(({ listing }) => {
+    return this.purchaseLogsFor(blockchainData, account, ({ listing }) => {
       return listing.sellerAddress === account
-    }).map(({ purchaseLogs, listing, purchase }) => {
-      return purchaseLogs.map(log => {
-        return { log, listing, purchase }
-      })
     })
-    return [].concat.apply([], logsByPurchase)
   }
 
   buyerPurchaseLogsFor(blockchainData, account) {
-    const logsByPurchase = blockchainData.filter(({ purchase }) => {
+    return this.purchaseLogsFor(blockchainData, account, ({ purchase }) => {
       return purchase.buyerAddress === account
-    }).map(({ purchaseLogs, listing, purchase }) => {
-      return purchaseLogs.map(log => {
-        return { log, listing, purchase }
-      })
     })
+  }
+
+  purchaseLogsFor(blockchainData, account, filterFn) {
+    const logsByPurchase = blockchainData
+      .filter(filterFn)
+      .map(({ purchaseLogs, listing, purchase }) => {
+        return purchaseLogs.map(log => {
+          return { log, listing, purchase }
+        })
+      })
     return [].concat.apply([], logsByPurchase)
   }
 }
