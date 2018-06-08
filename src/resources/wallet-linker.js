@@ -196,7 +196,7 @@ class WalletLinker {
           }
           else
           {
-            if (message.result && message.result.purchase)
+            if (message.result && message.result.call)
             {
                 //another hacky callback
                 this.showNextPage()
