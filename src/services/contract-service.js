@@ -16,7 +16,6 @@ class ContractService {
   constructor(options = {}) {
     const externalWeb3 = options.web3 || window.web3
     if (!externalWeb3) {
-      //Create dummy Web3 and return it.
       throw new Error(
         "web3 is required for Origin.js. Please pass in web3 as a config option."
       )
@@ -58,7 +57,7 @@ class ContractService {
   initWalletLinker() {
       // if there's no given provider
       // we do it the funny wallet way
-      if (!Web3.givenProvider)
+      if (!Web3.givenProvider && this.opts.walletLinkerUrl)
       {
         if(!this.walletLinker)
         {
