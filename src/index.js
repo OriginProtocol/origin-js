@@ -6,18 +6,18 @@ import Users from "./resources/users"
 import fetch from "cross-fetch"
 import store from "store"
 
-var resources = {
-  listings: require("./resources/listings"),
-  purchases: require("./resources/purchases"),
-  reviews: require("./resources/reviews"),
-  users: require("./resources/users")
+const resources = {
+  listings: require('./resources/listings'),
+  purchases: require('./resources/purchases'),
+  reviews: require('./resources/reviews'),
+  users: require('./resources/users')
 }
 
-const defaultBridgeServer = "https://bridge.originprotocol.com"
-const defaultIpfsDomain = "gateway.originprotocol.com"
-const defaultIpfsApiPort = "5002"
-const defaultIpfsGatewayPort = "443"
-const defaultIpfsGatewayProtocol = "https"
+const defaultBridgeServer = 'https://bridge.originprotocol.com'
+const defaultIpfsDomain = 'gateway.originprotocol.com'
+const defaultIpfsApiPort = '5002'
+const defaultIpfsGatewayPort = '443'
+const defaultIpfsGatewayProtocol = 'https'
 const defaultAttestationServerUrl = `${defaultBridgeServer}/api/attestations`
 
 class Origin {
@@ -44,8 +44,8 @@ class Origin {
     })
 
     // Instantiate each resource and give it access to contracts and IPFS
-    for (let resourceName in resources) {
-      let Resource = resources[resourceName]
+    for (const resourceName in resources) {
+      const Resource = resources[resourceName]
       // A `Resource` constructor always takes a contractService and ipfsService
       this[resourceName] = new Resource({
         contractService: this.contractService,
