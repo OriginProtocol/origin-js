@@ -85,43 +85,46 @@ class Purchases extends ResourceBase {
     const contract = new web3.eth.Contract(this.contractDefinition.abi, address)
     return new Promise((resolve, reject) => {
       // Get all logs on this contract
-      contract.getPastEvents("PurchaseChange", { fromBlock: 0, toBlock: "latest" }, function(error, rawLogs) {
-        if (error) {
-          return reject(error)
-        }
-        // Format logs we receive
-        let logs = rawLogs
-        .map(log => {
-          const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]
-          return {
-            transactionHash: log.transactionHash,
-            stage: stage,
-            blockNumber: log.blockNumber,
-            blockHash: log.blockHash,
-            event: log.event
+      contract.getPastEvents(
+        'PurchaseChange',
+        { fromBlock: 0, toBlock: 'latest' },
+        function(error, rawLogs) {
+          if (error) {
+            return reject(error)
           }
-        })
-        // Fetch user and timestamp information for all logs, in parallel
-        const addUserAddressFn = async event => {
-          event.from = (await self.contractService.getTransaction(
-            event.transactionHash
-          )).from
-        }
-        const addTimestampFn = async event => {
-          event.timestamp = (await self.contractService.getBlock(
-            event.blockHash
-          )).timestamp
-        }
-        const fetchPromises = [].concat(
-          logs.map(addUserAddressFn),
-          logs.map(addTimestampFn)
-        )
-        Promise.all(fetchPromises)
-          .then(() => {
-            resolve(logs)
+          // Format logs we receive
+          const logs = rawLogs.map(log => {
+            const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]
+            return {
+              transactionHash: log.transactionHash,
+              stage: stage,
+              blockNumber: log.blockNumber,
+              blockHash: log.blockHash,
+              event: log.event
+            }
           })
-          .catch(error => reject(error))
-      })
+          // Fetch user and timestamp information for all logs, in parallel
+          const addUserAddressFn = async event => {
+            event.from = (await self.contractService.getTransaction(
+              event.transactionHash
+            )).from
+          }
+          const addTimestampFn = async event => {
+            event.timestamp = (await self.contractService.getBlock(
+              event.blockHash
+            )).timestamp
+          }
+          const fetchPromises = [].concat(
+            logs.map(addUserAddressFn),
+            logs.map(addTimestampFn)
+          )
+          Promise.all(fetchPromises)
+            .then(() => {
+              resolve(logs)
+            })
+            .catch(error => reject(error))
+        }
+      )
     })
   }
 }

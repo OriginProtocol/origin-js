@@ -1,10 +1,10 @@
-import ContractService from "./services/contract-service"
-import IpfsService from "./services/ipfs-service"
-import { Attestations } from "./resources/attestations"
-import Notifications from "./resources/notifications"
-import Users from "./resources/users"
-import fetch from "cross-fetch"
-import store from "store"
+import ContractService from './services/contract-service'
+import IpfsService from './services/ipfs-service'
+import { Attestations } from './resources/attestations'
+import Notifications from './resources/notifications'
+import Users from './resources/users'
+import fetch from 'cross-fetch'
+import store from 'store'
 
 const resources = {
   listings: require('./resources/listings'),
