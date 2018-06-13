@@ -42,7 +42,7 @@ contract Purchase {
   Listing public listingContract; // listing that is being purchased
   address public buyer; // User who is buying. Seller is derived from listing
   uint public created;
-  uint public buyerTimout;
+  uint public buyerTimeout;
 
   /*
   * Modifiers
@@ -82,8 +82,8 @@ contract Purchase {
   function data()
   public
   view
-  returns (Stages _stage, Listing _listingContract, address _buyer, uint _created, uint _buyerTimout) {
-      return (stage(), listingContract, buyer, created, buyerTimout);
+  returns (Stages _stage, Listing _listingContract, address _buyer, uint _created, uint _buyerTimeout) {
+      return (stage(), listingContract, buyer, created, buyerTimeout);
   }
 
   // Pay for listing
@@ -96,8 +96,7 @@ contract Purchase {
   {
     if (address(this).balance >= listingContract.price()) {
       // Buyer (or their proxy) has paid enough to cover purchase
-      internalStage = Stages.SHIPPING_PENDING;
-      emit PurchaseChange(internalStage);
+      setStage(Stages.SHIPPING_PENDING);
     }
     // Possible that nothing happens, and contract just accumulates sent value
   }
@@ -108,7 +107,7 @@ contract Purchase {
   returns (Stages _stage)
   {
     if (internalStage == Stages.BUYER_PENDING) {
-      if (now > buyerTimout) {
+      if (now > buyerTimeout) {
         return Stages.SELLER_PENDING;
       }
     }
@@ -120,9 +119,8 @@ contract Purchase {
   isSeller
   atStage(Stages.SHIPPING_PENDING)
   {
-      internalStage = Stages.BUYER_PENDING;
-      buyerTimout = now + 21 days;
-      emit PurchaseChange(internalStage);
+      buyerTimeout = now + 21 days;
+      setStage(Stages.BUYER_PENDING);
   }
 
   function buyerConfirmReceipt(uint8 _rating, bytes32 _ipfsHash)
@@ -135,10 +133,9 @@ contract Purchase {
     require(_rating <= 5);
 
     // State changes
-    internalStage = Stages.SELLER_PENDING;
+    setStage(Stages.SELLER_PENDING);
 
     // Events
-    emit PurchaseChange(internalStage);
     emit PurchaseReview(buyer, listingContract.owner(), Roles.SELLER, _rating, _ipfsHash);
   }
 
@@ -152,10 +149,9 @@ contract Purchase {
     require(_rating <= 5);
 
     // State changes
-    internalStage = Stages.COMPLETE;
-    
+    setStage(Stages.COMPLETE);
+
     // Events
-    emit PurchaseChange(internalStage);
     emit PurchaseReview(listingContract.owner(), buyer, Roles.BUYER, _rating, _ipfsHash);
 
     // Transfers
@@ -180,10 +176,16 @@ contract Purchase {
       (stage() == Stages.SELLER_PENDING)
     );
 
-    internalStage = Stages.IN_DISPUTE;
-    emit PurchaseChange(internalStage);
+    setStage(Stages.IN_DISPUTE);
 
     // TODO: Create a dispute contract?
     // Right now there's no way to exit this state.
+  }
+
+  function setStage(Stages _stage)
+  private
+  {
+    internalStage = _stage;
+    emit PurchaseChange(_stage);
   }
 }
