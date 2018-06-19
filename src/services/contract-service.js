@@ -115,7 +115,8 @@ class ContractService {
   async currentAccount() {
     const accounts = await this.web3.eth.getAccounts()
     const defaultAccount = this.web3.eth.defaultAccount
-    return defaultAccount || accounts[0]
+    const walletAccount = this.web3.eth.accounts.wallet.length && this.web3.eth.accounts.wallet[0].address
+    return walletAccount || defaultAccount || accounts[0]
   }
 
   // async convenience method for getting block details
