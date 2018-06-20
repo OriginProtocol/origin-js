@@ -1,4 +1,4 @@
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 /// @title Listing
 /// @dev Used to keep marketplace of listings for buyers and sellers

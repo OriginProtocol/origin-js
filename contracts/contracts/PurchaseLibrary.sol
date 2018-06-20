@@ -1,4 +1,4 @@
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 /// @title PurchaseLibrary
 /// @dev An collection of helper tools for a purchase
