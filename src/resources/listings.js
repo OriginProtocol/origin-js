@@ -1,7 +1,7 @@
 // For now, we are just wrapping the methods that are already in
 // contractService and ipfsService.
 
-import ResourceBase from "./_resource-base"
+import ResourceBase from './_resource-base'
 
 class Listings extends ResourceBase {
   constructor({ contractService, ipfsService }) {
@@ -13,26 +13,41 @@ class Listings extends ResourceBase {
     return await this.contractService.getAllListingIds()
   }
 
-  async get(address) {
-    const contractData = await this.contractFn(address, "data")
-    let ipfsHash = this.contractService.getIpfsHashFromBytes32(contractData[1])
-    const ipfsData = await this.ipfsService.getFile(ipfsHash)
+  async allAddresses() {
+    const contract = this.contractService.listingsRegistryContract
+    const deployed = await this.contractService.deployed(contract)
+    const events = await deployed.getPastEvents('NewListing', {
+      fromBlock: 0,
+      toBlock: 'latest'
+    })
+    return events.map(({ returnValues }) => {
+      return returnValues['_address']
+    })
+  }
 
-    let listing = {
+  async get(address) {
+    const contractData = await this.contractFn(address, 'data')
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(
+      contractData[1]
+    )
+    const ipfsData = await this.ipfsService.getFile(ipfsHash)
+    const hasIpfsData = ipfsData && ipfsData.data
+
+    const listing = {
       address: address,
       ipfsHash: ipfsHash,
       sellerAddress: contractData[0],
       priceWei: contractData[2].toString(),
-      price: this.contractService.web3.utils.fromWei(contractData[2], "ether"),
+      price: this.contractService.web3.utils.fromWei(contractData[2], 'ether'),
       unitsAvailable: contractData[3],
       created: contractData[4],
       expiration: contractData[5],
 
-      name: ipfsData.data.name,
-      category: ipfsData.data.category,
-      description: ipfsData.data.description,
-      location: ipfsData.data.location,
-      pictures: ipfsData.data.pictures
+      name: hasIpfsData ? ipfsData.data.name : null,
+      category: hasIpfsData ? ipfsData.data.category : null,
+      description: hasIpfsData ? ipfsData.data.description : null,
+      location: hasIpfsData ? ipfsData.data.location : null,
+      pictures: hasIpfsData ? ipfsData.data.pictures : null
     }
 
     return listing
@@ -68,18 +83,18 @@ class Listings extends ResourceBase {
 
   async create(data, schemaType) {
     if (data.price == undefined) {
-      throw "You must include a price"
+      throw 'You must include a price'
     }
     if (data.name == undefined) {
-      throw "You must include a name"
+      throw 'You must include a name'
     }
 
-    let formListing = { formData: data }
+    const formListing = { formData: data }
 
     // TODO: Why can't we take schematype from the formListing object?
     const jsonBlob = {
-      'schema': `http://localhost:3000/schemas/${schemaType}.json`,
-      'data': formListing.formData,
+      schema: `http://localhost:3000/schemas/${schemaType}.json`,
+      data: formListing.formData
     }
 
     let ipfsHash
@@ -100,33 +115,44 @@ class Listings extends ResourceBase {
       transactionReceipt = await this.contractService.submitListing(
         ipfsHash,
         formListing.formData.price,
-        units)
+        units
+      )
     } catch (error) {
       console.error(error)
       throw new Error(`ETH Failure: ${error}`)
     }
 
     // Success!
-    console.log(`Submitted to ETH blockchain with transactionReceipt.tx: ${transactionReceipt.tx}`)
+    console.log(
+      `Submitted to ETH blockchain with transactionReceipt.tx: ${
+        transactionReceipt.tx
+      }`
+    )
     return transactionReceipt
   }
 
   async buy(address, unitsToBuy, ethToPay) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
-    const value = this.contractService.web3.utils.toWei(String(ethToPay), "ether")
-    return await this.contractFn(address, "buyListing", [unitsToBuy], {value:value, gas: 750000})
+    const value = this.contractService.web3.utils.toWei(
+      String(ethToPay),
+      'ether'
+    )
+    return await this.contractFn(address, 'buyListing', [unitsToBuy], {
+      value: value,
+      gas: 750000
+    })
   }
 
   async close(address) {
-    return await this.contractFn(address, "close")
+    return await this.contractFn(address, 'close')
   }
 
   async purchasesLength(address) {
-    return Number(await this.contractFn(address, "purchasesLength"))
+    return Number(await this.contractFn(address, 'purchasesLength'))
   }
 
   async purchaseAddressByIndex(address, index) {
-    return await this.contractFn(address, "getPurchase", [index])
+    return await this.contractFn(address, 'getPurchase', [index])
   }
 }
 
