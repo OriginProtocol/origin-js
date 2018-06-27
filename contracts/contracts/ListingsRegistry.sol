@@ -5,6 +5,7 @@ pragma solidity 0.4.23;
 /// @author Matt Liu <matt@originprotocol.com>, Josh Fraser <josh@originprotocol.com>, Stan James <stan@originprotocol.com>
 
 import "./UnitListing.sol";
+import "./FractionalListing.sol";
 import "./ListingsRegistryStorage.sol";
 
 contract ListingsRegistry {
@@ -82,6 +83,20 @@ contract ListingsRegistry {
     returns (uint)
   {
     Listing newListing = new UnitListing(msg.sender, _ipfsHash, _price, _unitsAvailable);
+    listingStorage.add(newListing);
+    emit NewListing((listingStorage.length())-1, address(newListing));
+    return listingStorage.length();
+  }
+
+  /// @dev createFractional(): Create a new fractional listing
+  /// @param _ipfsHash Hash of data on ipfsHash
+  function createFractional(
+    bytes32 _ipfsHash
+  )
+    public
+    returns (uint)
+  {
+    Listing newListing = new FractionalListing(msg.sender, _ipfsHash);
     listingStorage.add(newListing);
     emit NewListing((listingStorage.length())-1, address(newListing));
     return listingStorage.length();
