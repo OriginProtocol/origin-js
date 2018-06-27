@@ -4,6 +4,7 @@ import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLib
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
 import UnitListingContract from './../../contracts/build/contracts/UnitListing.json'
+import FractionalListingContract from './../../contracts/build/contracts/FractionalListing.json'
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
@@ -23,6 +24,7 @@ class ContractService {
     const contracts = {
       listingsRegistryContract: ListingsRegistryContract,
       unitListingContract: UnitListingContract,
+      fractionalListingContract: FractionalListingContract,
       purchaseContract: PurchaseContract,
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
