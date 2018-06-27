@@ -1,5 +1,5 @@
 {
-  "$id":"http://json-schema.org/draft-06/schema",
+  "$id":"origin-unit-listing",
   "title": "UnitListing",
   "type": "object",
   "required": ["name"],

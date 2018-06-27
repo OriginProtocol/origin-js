@@ -1,0 +1,63 @@
+{
+  "$id":"origin-fractional-listing",
+  "title": "FractionalListing",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "priceWei": {
+      "type": "number"
+    },
+    "created": {
+      "type": "number"
+    },
+    "expiration": {
+      "type": "number"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "priceWei": {
+            "type": "number"
+          },
+          "timeUnit": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
