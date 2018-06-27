@@ -99,7 +99,8 @@ class Listings extends ResourceBase {
       category: hasIpfsData ? ipfsData.data.category : null,
       description: hasIpfsData ? ipfsData.data.description : null,
       location: hasIpfsData ? ipfsData.data.location : null,
-      pictures: hasIpfsData ? ipfsData.data.pictures : null
+      pictures: hasIpfsData ? ipfsData.data.pictures : null,
+      listingType: hasIpfsData ? ipfsData.data.listingType : unitListingType
     }
 
     validateUnitListing(listing)
@@ -121,6 +122,7 @@ class Listings extends ResourceBase {
       description: ipfsData.data.description,
       location: ipfsData.data.location,
       pictures: ipfsData.data.pictures,
+      listingType: ipfsData.data.listingType || unitListingType,
 
       address: contractData.address,
       index: contractData.index,
@@ -225,8 +227,9 @@ class Listings extends ResourceBase {
     return transactionReceipt
   }
 
-  async createFractional(json) {
-    validateFractionalListing(json)
+  async createFractional(data) {
+    validateFractionalListing(data)
+    const json = { data }
 
     // Submit to IPFS
     let ipfsHash
@@ -339,7 +342,8 @@ class Listings extends ResourceBase {
         category: ipfsData ? ipfsData['category'] : null,
         description: ipfsData ? ipfsData['description'] : null,
         location: ipfsData ? ipfsData['location'] : null,
-        pictures: ipfsData ? ipfsData['pictures'] : null
+        pictures: ipfsData ? ipfsData['pictures'] : null,
+        listingType: ipfsData ? ipfsData['listingType'] : unitListingType
       }
       validateUnitListing(listing)
       return listing
