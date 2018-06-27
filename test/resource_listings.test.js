@@ -60,6 +60,7 @@ describe('Listing Resource', function() {
     )
     const listing = await listings.get(listingFromIndex.address)
     expect(listing.name).to.equal('Foo Bar')
+    expect(listing.listingType).to.equal('unit')
   })
 
   it('should buy a listing', async () => {
