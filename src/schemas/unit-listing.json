@@ -1,49 +1,17 @@
 {
-  "$id":"origin-unit-listing",
+  "$id":"unit-listing.json",
   "title": "UnitListing",
-  "type": "object",
-  "required": ["name"],
-  "properties": {
-    "address": {
-      "type": "string"
-    },
-    "ipfsHash": {
-      "type": "string"
-    },
-    "sellerAddress": {
-      "type": "string"
-    },
-    "priceWei": {
-      "type": "number"
-    },
-    "price": {
-      "type": "number"
-    },
-    "unitsAvailable": {
-      "type": "number"
-    },
-    "created": {
-      "type": "number"
-    },
-    "expiration": {
-      "type": "number"
-    },
-    "name": {
-      "type": "string"
-    },
-    "category": {
-      "type": "string"
-    },
-    "description": {
-      "type": "string"
-    },
-    "location": {
-      "type": "string"
-    },
-    "pictures": {
-      "type": "array",
-      "items": {
-        "type": "string"
+  "$merge": {
+    "source": { "$ref": "listing.json" },
+    "with": {
+      "required": ["name", "price"],
+      "properties": {
+        "price": {
+          "type": "number"
+        },
+        "unitsAvailable": {
+          "type": "number"
+        }
       }
     }
   }

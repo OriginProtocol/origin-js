@@ -3,19 +3,40 @@
 
 import ResourceBase from './_resource-base'
 import Ajv from 'ajv'
+import ajvEnableMerge from 'ajv-merge-patch/keywords/merge'
+import listingSchema from '../schemas/listing.json'
 import unitListingSchema from '../schemas/unit-listing.json'
 import fractionalListingSchema from '../schemas/fractional-listing.json'
 
-const ajv = new Ajv()
-const validateUnitListing = ajv.compile(unitListingSchema)
-const validateFractionalListing = ajv.compile(fractionalListingSchema)
+const unitListingType = 'unit'
+const fractionalListingType = 'fractional'
+
+const listingSchemaId = 'listing.json'
+const unitSchemaId = 'unit-listing.json'
+const fractionalSchemaId = 'fractional-listing.json'
+
+let ajv = new Ajv({
+  schemas: [
+    listingSchema,
+    unitListingSchema,
+    fractionalListingSchema
+  ]
+})
+ajvEnableMerge(ajv)
+
+const validateListing = ajv.getSchema(listingSchemaId)
+const validateUnitListing = ajv.getSchema(unitSchemaId)
+const validateFractionalListing = ajv.getSchema(fractionalSchemaId)
 
 const appendSlash = url => {
   return url.substr(-1) === '/' ? url : url + '/'
 }
 
-const unitListingType = 'unit'
-const fractionalListingType = 'fractional'
+function validate(validateFn, data, schema) {
+  if (!validateFn(data)) {
+    throw new Error(`Data invalid for schema. Data: ${JSON.stringify(data)}. Schema: ${JSON.stringify(schema)}`)
+  }
+}
 
 class Listings extends ResourceBase {
   constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
@@ -103,8 +124,6 @@ class Listings extends ResourceBase {
       listingType: hasIpfsData ? ipfsData.data.listingType : unitListingType
     }
 
-    validateUnitListing(listing)
-
     return listing
   }
 
@@ -131,8 +150,6 @@ class Listings extends ResourceBase {
       price: Number(contractData.price),
       unitsAvailable: Number(contractData.unitsAvailable)
     }
-
-    validateUnitListing(listing)
 
     return listing
   }
@@ -176,14 +193,7 @@ class Listings extends ResourceBase {
   */
 
   async createUnit(data, schemaType) {
-    validateUnitListing(data)
-
-    if (data.price == undefined) {
-      throw 'You must include a price'
-    }
-    if (data.name == undefined) {
-      throw 'You must include a name'
-    }
+    validate(validateUnitListing, data, unitListingSchema)
 
     const formListing = { formData: data }
 
@@ -228,7 +238,7 @@ class Listings extends ResourceBase {
   }
 
   async createFractional(data) {
-    validateFractionalListing(data)
+    validate(validateFractionalListing, data, fractionalListingSchema)
     const json = { data }
 
     // Submit to IPFS
@@ -329,7 +339,7 @@ class Listings extends ResourceBase {
     const json = await response.json()
     return json.objects.map(obj => {
       const ipfsData = obj['ipfs_data']
-      const listing = {
+      return {
         address: obj['contract_address'],
         ipfsHash: obj['ipfs_hash'],
         sellerAddress: obj['owner_address'],
@@ -345,8 +355,6 @@ class Listings extends ResourceBase {
         pictures: ipfsData ? ipfsData['pictures'] : null,
         listingType: ipfsData ? ipfsData['listingType'] : unitListingType
       }
-      validateUnitListing(listing)
-      return listing
     })
   }
 }
