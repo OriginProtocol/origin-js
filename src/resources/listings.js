@@ -2,6 +2,11 @@
 // contractService and ipfsService.
 
 import ResourceBase from './_resource-base'
+import Ajv from 'ajv'
+import unitListingSchema from '../schemas/unit-listing.json'
+
+const ajv = new Ajv()
+const validateUnitListing = ajv.compile(unitListingSchema)
 
 const appendSlash = url => {
   return url.substr(-1) === '/' ? url : url + '/'
@@ -88,6 +93,8 @@ class Listings extends ResourceBase {
       pictures: hasIpfsData ? ipfsData.data.pictures : null
     }
 
+    validateUnitListing(listing)
+
     return listing
   }
 
@@ -114,7 +121,7 @@ class Listings extends ResourceBase {
       unitsAvailable: Number(contractData.unitsAvailable)
     }
 
-    // TODO: Validation
+    validateUnitListing(listing)
 
     return listing
   }
@@ -257,7 +264,7 @@ class Listings extends ResourceBase {
     const json = await response.json()
     return json.objects.map(obj => {
       const ipfsData = obj['ipfs_data']
-      return {
+      const listing = {
         address: obj['contract_address'],
         ipfsHash: obj['ipfs_hash'],
         sellerAddress: obj['owner_address'],
@@ -272,6 +279,8 @@ class Listings extends ResourceBase {
         location: ipfsData ? ipfsData['location'] : null,
         pictures: ipfsData ? ipfsData['pictures'] : null
       }
+      validateUnitListing(listing)
+      return listing
     })
   }
 }
