@@ -1,0 +1,50 @@
+{
+  "$id":"http://json-schema.org/draft-06/schema",
+  "title": "UnitListing",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "address": {
+      "type": "string"
+    },
+    "ipfsHash": {
+      "type": "string"
+    },
+    "sellerAddress": {
+      "type": "string"
+    },
+    "priceWei": {
+      "type": "number"
+    },
+    "price": {
+      "type": "number"
+    },
+    "unitsAvailable": {
+      "type": "number"
+    },
+    "created": {
+      "type": "number"
+    },
+    "expiration": {
+      "type": "number"
+    },
+    "name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "pictures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
