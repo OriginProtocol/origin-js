@@ -291,8 +291,8 @@ class Listings extends ResourceBase {
         address: obj['contract_address'],
         ipfsHash: obj['ipfs_hash'],
         sellerAddress: obj['owner_address'],
-        price: obj['price'],
-        unitsAvailable: obj['units'],
+        price: Number(obj['price']),
+        unitsAvailable: Number(obj['units']),
         created: obj['created_at'],
         expiration: obj['expires_at'],
 
@@ -318,7 +318,7 @@ class Listings extends ResourceBase {
       sellerAddress: contractData[0],
       priceWei: contractData[2].toString(),
       price: this.contractService.web3.utils.fromWei(contractData[2], 'ether'),
-      unitsAvailable: contractData[3],
+      unitsAvailable: Number(contractData[3]),
       created: contractData[4],
       expiration: contractData[5],
 
