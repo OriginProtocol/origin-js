@@ -104,4 +104,12 @@ contract UnitListing is Listing {
     // hard-coded for now as we're not yet supporting edits for unit listings
     return 0;
   }
+
+  function ipfsHash()
+    public
+    constant
+    returns (bytes32)
+  {
+    return ipfsHash;
+  }
 }
