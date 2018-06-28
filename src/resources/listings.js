@@ -281,34 +281,6 @@ class Listings extends ResourceBase {
     }
   }
 
-  async getListing(listingId) {
-    const instance = await this.contractService.deployed(
-      this.contractService.listingsRegistryContract
-    )
-
-    let listing
-    try {
-      listing = await instance.methods.getListing(listingId).call()
-    } catch (error) {
-      console.log('Error fetching listingId: ' + listingId)
-      throw error
-    }
-
-    // Listing is returned as array of properties.
-    // IPFS hash (as bytes32 hex string) is in results[2]
-    // Convert it to regular IPFS base-58 encoded hash
-    // Address of Listing contract is in: listing[0]
-    const listingObject = {
-      index: listingId,
-      address: listing[0],
-      lister: listing[1],
-      ipfsHash: this.contractService.getIpfsHashFromBytes32(listing[2]),
-      price: this.contractService.web3.utils.fromWei(listing[3], 'ether'),
-      unitsAvailable: listing[4]
-    }
-    return listingObject
-  }
-
   async allIndexed() {
     const url = appendSlash(this.indexingServerUrl) + 'listing'
     const response = await this.fetch(url, { method: 'GET' })
