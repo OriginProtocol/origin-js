@@ -11,20 +11,14 @@ import fractionalListingSchema from '../schemas/fractional-listing.json'
 const unitListingType = 'unit'
 const fractionalListingType = 'fractional'
 
-const listingSchemaId = 'listing.json'
 const unitSchemaId = 'unit-listing.json'
 const fractionalSchemaId = 'fractional-listing.json'
 
-let ajv = new Ajv({
-  schemas: [
-    listingSchema,
-    unitListingSchema,
-    fractionalListingSchema
-  ]
+const ajv = new Ajv({
+  schemas: [listingSchema, unitListingSchema, fractionalListingSchema]
 })
 ajvEnableMerge(ajv)
 
-const validateListing = ajv.getSchema(listingSchemaId)
 const validateUnitListing = ajv.getSchema(unitSchemaId)
 const validateFractionalListing = ajv.getSchema(fractionalSchemaId)
 
@@ -34,7 +28,11 @@ const appendSlash = url => {
 
 function validate(validateFn, data, schema) {
   if (!validateFn(data)) {
-    throw new Error(`Data invalid for schema. Data: ${JSON.stringify(data)}. Schema: ${JSON.stringify(schema)}`)
+    throw new Error(
+      `Data invalid for schema. Data: ${JSON.stringify(
+        data
+      )}. Schema: ${JSON.stringify(schema)}`
+    )
   }
 }
 
@@ -115,7 +113,7 @@ class Listings extends ResourceBase {
     if (ipfsData.listingType === unitListingType) {
       return await this.getUnitListing(address, ipfsData, ipfsHash)
     } else if (ipfsData.listingType === fractionalListingType) {
-       return this.getFractionalListing(address, ipfsData, ipfsHash)
+      return this.getFractionalListing(address, ipfsData, ipfsHash)
     } else {
       throw new Error('Invalid listing type:', ipfsData.listingType)
     }
@@ -126,7 +124,9 @@ class Listings extends ResourceBase {
     const listingsRegistry = await this.contractService.deployed(
       this.contractService.listingsRegistryContract
     )
-    const listingAddress = await listingsRegistry.methods.getListingAddress(listingIndex).call()
+    const listingAddress = await listingsRegistry.methods
+      .getListingAddress(listingIndex)
+      .call()
     return await this.get(listingAddress)
   }
 
@@ -146,22 +146,43 @@ class Listings extends ResourceBase {
       String(ethToPay),
       'ether'
     )
-    return await this.contractService.contractFn(this.contractService.unitListingContract, address, 'buyListing', [unitsToBuy], {
-      value: value,
-      gas: 850000
-    })
+    return await this.contractService.contractFn(
+      this.contractService.unitListingContract,
+      address,
+      'buyListing',
+      [unitsToBuy],
+      {
+        value: value,
+        gas: 850000
+      }
+    )
   }
 
   async close(address) {
-    return await this.contractService.contractFn(this.contractService.unitListingContract, address, 'close')
+    return await this.contractService.contractFn(
+      this.contractService.unitListingContract,
+      address,
+      'close'
+    )
   }
 
   async purchasesLength(address) {
-    return Number(await this.contractService.contractFn(this.contractService.unitListingContract, address, 'purchasesLength'))
+    return Number(
+      await this.contractService.contractFn(
+        this.contractService.unitListingContract,
+        address,
+        'purchasesLength'
+      )
+    )
   }
 
   async purchaseAddressByIndex(address, index) {
-    return await this.contractService.contractFn(this.contractService.unitListingContract, address, 'getPurchase', [index])
+    return await this.contractService.contractFn(
+      this.contractService.unitListingContract,
+      address,
+      'getPurchase',
+      [index]
+    )
   }
 
   /*
