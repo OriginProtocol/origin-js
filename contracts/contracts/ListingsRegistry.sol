@@ -45,26 +45,14 @@ contract ListingsRegistry {
       return listingStorage.length();
   }
 
-  /// @dev getListing(): Return listing info for a given listing
-  /// @param _index the index of the listing we want info about
-  function getListing(uint _index)
+  /// @dev getListingAddress(): Return listing address
+  /// @param _index the index of the listing
+  function getListingAddress(uint _index)
     public
     constant
-    returns (UnitListing, address, bytes32, uint, uint)
+    returns (address)
   {
-    // Test in truffle deelop:
-    // ListingsRegistry.deployed().then(function(instance){ return instance.getListing.call(0) })
-
-    // TODO (Stan): Determine if less gas to do one array lookup into var, and
-    // return var struct parts
-    UnitListing listing = UnitListing(listingStorage.listings(_index));
-    return (
-      listing,
-      listing.owner(),
-      listing.ipfsHash(),
-      listing.price(),
-      listing.unitsAvailable()
-    );
+    return listingStorage.listings(_index);
   }
 
   /// @dev create(): Create a new listing
