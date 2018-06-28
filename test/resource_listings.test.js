@@ -49,7 +49,6 @@ describe('Listing Resource', function() {
     const listingIds = await listings.allIds()
     const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
     expect(listing.name).to.equal('Foo Bar')
-    expect(listing.index).to.equal(listingIds.length - 1)
   })
 
   it('should get a listing by address', async () => {
@@ -149,29 +148,7 @@ describe('Listing Resource', function() {
         '0x4E205e04A1A8f230702fe51f3AfdCC38aafB0f3C'
       )
       expect(first.name).to.equal("Taylor Swift's Reputation Tour")
-      expect(first.price).to.equal('0.30')
-    })
-  })
-
-  describe('getListing', () => {
-    // Skipped because of https://github.com/OriginProtocol/platform/issues/27
-    it('should reject when listing cannot be found', done => {
-      listings.getListing('foo').then(done.fail, error => {
-        expect(error).to.be.instanceof(Error)
-        done()
-      })
-    })
-
-    it('should get a listing object', async () => {
-      const listing = await listings.getListing(0)
-      expect(listing).to.have.keys(
-        'address',
-        'index',
-        'lister',
-        'ipfsHash',
-        'price',
-        'unitsAvailable'
-      )
+      expect(first.price).to.equal(0.3)
     })
   })
 
