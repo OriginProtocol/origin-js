@@ -41,7 +41,7 @@ function validate(validateFn, data, schema) {
 class Listings extends ResourceBase {
   constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
     super({ contractService, ipfsService })
-    this.contractDefinition = this.contractService.unitListingContract
+    this.contractDefinition = this.contractService.listingContract
     this.fetch = fetch
     this.indexingServerUrl = indexingServerUrl
   }
@@ -99,59 +99,35 @@ class Listings extends ResourceBase {
   }
 
   async get(address) {
-    const contractData = await this.contractFn(address, 'data')
-    const ipfsHash = this.contractService.getIpfsHashFromBytes32(
-      contractData[1]
+    const listing = await this.contractService.deployed(
+      this.contractService.listingContract,
+      address
     )
-    const ipfsData = await this.ipfsService.getFile(ipfsHash)
-    const hasIpfsData = ipfsData && ipfsData.data
+    const ipfsHashBytes32 = await listing.methods.ipfsHash().call()
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(
+      ipfsHashBytes32
+    )
+    const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+    const ipfsData = ipfsJson ? ipfsJson.data : {}
 
-    const listing = {
-      address: address,
-      ipfsHash: ipfsHash,
-      sellerAddress: contractData[0],
-      priceWei: contractData[2].toString(),
-      price: this.contractService.web3.utils.fromWei(contractData[2], 'ether'),
-      unitsAvailable: contractData[3],
-      created: contractData[4],
-      expiration: contractData[5],
+    ipfsData.listingType = ipfsData.listingType || unitListingType
 
-      name: hasIpfsData ? ipfsData.data.name : null,
-      category: hasIpfsData ? ipfsData.data.category : null,
-      description: hasIpfsData ? ipfsData.data.description : null,
-      location: hasIpfsData ? ipfsData.data.location : null,
-      pictures: hasIpfsData ? ipfsData.data.pictures : null,
-      listingType: hasIpfsData ? ipfsData.data.listingType : unitListingType
+    if (ipfsData.listingType === unitListingType) {
+      return await this.getUnitListing(address, ipfsData, ipfsHash)
+    } else if (ipfsData.listingType === fractionalListingType) {
+       return this.getFractionalListing(address, ipfsData, ipfsHash)
+    } else {
+      throw new Error('Invalid listing type:', ipfsData.listingType)
     }
-
-    return listing
   }
 
-  // This method is DEPRCIATED
+  // Deprecated
   async getByIndex(listingIndex) {
-    const contractData = await this.getListing(listingIndex)
-    const ipfsData = await this.ipfsService.getFile(contractData.ipfsHash)
-    // ipfsService should have already checked the contents match the hash,
-    // and that the signature validates
-
-    // We explicitly set these fields to white list the allowed fields.
-    const listing = {
-      name: ipfsData.data.name,
-      category: ipfsData.data.category,
-      description: ipfsData.data.description,
-      location: ipfsData.data.location,
-      pictures: ipfsData.data.pictures,
-      listingType: ipfsData.data.listingType || unitListingType,
-
-      address: contractData.address,
-      index: contractData.index,
-      ipfsHash: contractData.ipfsHash,
-      sellerAddress: contractData.lister,
-      price: Number(contractData.price),
-      unitsAvailable: Number(contractData.unitsAvailable)
-    }
-
-    return listing
+    const listingsRegistry = await this.contractService.deployed(
+      this.contractService.listingsRegistryContract
+    )
+    const listingAddress = await listingsRegistry.methods.getListingAddress(listingIndex).call()
+    return await this.get(listingAddress)
   }
 
   async create(data, schemaType) {
@@ -170,22 +146,22 @@ class Listings extends ResourceBase {
       String(ethToPay),
       'ether'
     )
-    return await this.contractFn(address, 'buyListing', [unitsToBuy], {
+    return await this.contractService.contractFn(this.contractService.unitListingContract, address, 'buyListing', [unitsToBuy], {
       value: value,
       gas: 850000
     })
   }
 
   async close(address) {
-    return await this.contractFn(address, 'close')
+    return await this.contractService.contractFn(this.contractService.unitListingContract, address, 'close')
   }
 
   async purchasesLength(address) {
-    return Number(await this.contractFn(address, 'purchasesLength'))
+    return Number(await this.contractService.contractFn(this.contractService.unitListingContract, address, 'purchasesLength'))
   }
 
   async purchaseAddressByIndex(address, index) {
-    return await this.contractFn(address, 'getPurchase', [index])
+    return await this.contractService.contractFn(this.contractService.unitListingContract, address, 'getPurchase', [index])
   }
 
   /*
@@ -356,6 +332,44 @@ class Listings extends ResourceBase {
         listingType: ipfsData ? ipfsData['listingType'] : unitListingType
       }
     })
+  }
+
+  async getUnitListing(listingAddress, ipfsData, ipfsHash) {
+    const listing = await this.contractService.deployed(
+      this.contractService.unitListingContract,
+      listingAddress
+    )
+    const contractData = await listing.methods.data().call()
+    return {
+      address: listingAddress,
+      ipfsHash: ipfsHash,
+      sellerAddress: contractData[0],
+      priceWei: contractData[2].toString(),
+      price: this.contractService.web3.utils.fromWei(contractData[2], 'ether'),
+      unitsAvailable: contractData[3],
+      created: contractData[4],
+      expiration: contractData[5],
+
+      name: ipfsData.name,
+      category: ipfsData.category,
+      description: ipfsData.description,
+      location: ipfsData.location,
+      pictures: ipfsData.pictures,
+      listingType: ipfsData.listingType
+    }
+  }
+
+  getFractionalListing(listingAddress, ipfsData, ipfsHash) {
+    return {
+      address: listingAddress,
+      ipfsHash: ipfsHash,
+      name: ipfsData.name,
+      category: ipfsData.category,
+      description: ipfsData.description,
+      location: ipfsData.location,
+      pictures: ipfsData.pictures,
+      listingType: ipfsData.listingType
+    }
   }
 }
 

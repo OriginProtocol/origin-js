@@ -3,6 +3,7 @@ import ClaimHolderPresignedContract from './../../contracts/build/contracts/Clai
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
+import ListingContract from './../../contracts/build/contracts/Listing.json'
 import UnitListingContract from './../../contracts/build/contracts/UnitListing.json'
 import FractionalListingContract from './../../contracts/build/contracts/FractionalListing.json'
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
@@ -22,6 +23,7 @@ class ContractService {
     this.web3 = new Web3(externalWeb3.currentProvider)
 
     const contracts = {
+      listingContract: ListingContract,
       listingsRegistryContract: ListingsRegistryContract,
       unitListingContract: UnitListingContract,
       fractionalListingContract: FractionalListingContract,
