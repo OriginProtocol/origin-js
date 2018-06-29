@@ -20,9 +20,16 @@ Edit the `conf-sample.json` configuration file or create a new one that looks li
 }
 ```
 
+The `newListingsRegistryAddress` can be found in truffle's output, where the line output will be like this:
+```
+  Replacing ListingsRegistry...
+  ... 0x9ddd3707329b6941c3f29e679a4a7c7a768a7de33b439c4f80c3371c3f7acdf0
+  ListingsRegistry: 0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f
+```
+
 ## Step 2: Store old ListingsRegistry in local file
 
-After filling out the configuration, execute the script in read mode, passing in the config file to use and a destination file.
+After filling out the configuration, execute the script in read mode, passing in the config file to use and a destination file. Note that `./` is _required_ before file names.
 
 ```
 $ node migrate_listings_registry_to_storage.js -c ./conf-test-ropsten-local.json -d ./ropsten-data.json -a read

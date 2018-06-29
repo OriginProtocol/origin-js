@@ -1,0 +1,11 @@
+{
+	"srcNetworkName": "Ropsten",
+	"dstNetworkName": "Local",
+	"srcGateway": "https://ropsten.infura.io",
+	"dstGateway": "http://localhost:8545",
+	"listingsRegistryAddress": "0xE66c9c6168d14bE4C3c145f91890740CbDf9EC8B",
+	"newListingsRegistryAddress":"0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f",
+	"mnemonic": "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+	"gasSafetyMarginMultiplier": 1.2,
+	"numConfirmations": 1
+}
