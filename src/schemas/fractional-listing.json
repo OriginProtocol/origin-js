@@ -7,6 +7,9 @@
     "with": {
       "required": ["name", "priceWei"],
       "properties": {
+        "timeIncrement": {
+            "type": "string"
+        },
         "slots": {
           "type": "array",
           "items": {
@@ -26,9 +29,6 @@
               },
               "priceWei": {
                 "type": "number"
-              },
-              "timeUnit": {
-                "type": "string"
               }
             }
           }
