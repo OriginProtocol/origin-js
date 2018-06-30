@@ -46,6 +46,7 @@ contract Purchase {
   uint public created;
   uint public buyerTimeout;
   uint public listingVersion;
+  bytes32 public ipfsHash;
 
   /*
   * Modifiers
@@ -73,6 +74,7 @@ contract Purchase {
   constructor(
     address _listingContractAddress,
     uint _listingVersion,
+    bytes32 _ipfsHash,
     address _buyer
   )
   public
@@ -80,6 +82,7 @@ contract Purchase {
     buyer = _buyer;
     listingContract = Listing(_listingContractAddress);
     listingVersion = _listingVersion;
+    ipfsHash = _ipfsHash;
     created = now;
     emit PurchaseChange(internalStage);
   }
