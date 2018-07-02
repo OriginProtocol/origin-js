@@ -59,7 +59,7 @@ contract('Purchase', accounts => {
       { from: seller }
     )
 
-    instance = await Purchase.new(listingInstance.address, 0, buyer, {
+    instance = await Purchase.new(listingInstance.address, 0, ipfsHash, buyer, {
       from: buyer
     })
   })
@@ -234,7 +234,7 @@ contract('Purchase', accounts => {
     })
 
     it('should create and link the new purchase', async () => {
-      const tx = await fractionalListing.request({
+      const tx = await fractionalListing.request(ipfsHash, {
         from: buyer,
         value: initialPayment
       })
