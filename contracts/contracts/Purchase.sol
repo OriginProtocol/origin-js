@@ -116,7 +116,7 @@ contract Purchase {
   isSeller
   atStage(Stages.AWAITING_SELLER_APPROVAL)
   {
-    setStage(Stages.IN_ESCROW);
+    setStage(Stages.BUYER_PENDING);
   }
 
   function sellerReject()

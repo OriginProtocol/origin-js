@@ -252,11 +252,6 @@ contract('Purchase', accounts => {
 
     it('should allow seller to approve', async () => {
       await purchase.sellerApprove({ from: seller })
-      assert.equal((await purchase.stage()).toNumber(), IN_ESCROW)
-    })
-
-    it('should allow seller to ship', async () => {
-      await purchase.sellerConfirmShipped({ from: seller })
       assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
     })
 
