@@ -44,6 +44,9 @@ NOTE: We will update this checklist from [RELEASE.md](https://github.com/OriginP
   - [ ] Migrate data from old contracts to new. (Once we get around to writing migrations!)
   - [ ] _origin-js_: Build origin.js (in `dist/origin.js`) -- **Not redundant:** This will bake in the new contract addresses into the contract's `.json` files. 
     - `npm run install:dev`
+  - [ ] Record block number the contracts were deployed at
+    - `https://rinkeby.etherscan.io/address/<contract address>`
+    - ex. `https://rinkeby.etherscan.io/address/0x29d260c47411a0b9eeeb087925afa759914b0d2f`
 - [ ] _origin-js_: Merge `develop` into `master` and push
 - [ ] _origin-js_: Create new [GitHub release](https://github.com/OriginProtocol/origin-js/releases) with origin.js code,
   - [ ] Version in form `v0.7.0` (This will add git tag on `master`)
