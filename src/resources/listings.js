@@ -158,6 +158,26 @@ class Listings extends ResourceBase {
     )
   }
 
+  async request(address, ifpsData, ethToPay) {
+    // TODO: ethToPay should really be replaced by something that takes Wei.
+    const value = this.contractService.web3.utils.toWei(
+      String(ethToPay),
+      'ether'
+    )
+    const ipfsHash = await this.ipfsService.submitFile(ifpsData)
+    const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    return await this.contractService.contractFn(
+      this.contractService.fractionalListingContract,
+      address,
+      'request',
+      [ipfsBytes32],
+      {
+        value: value,
+        gas: 850000
+      }
+    )
+  }
+
   async close(address) {
     return await this.contractService.contractFn(
       this.contractService.unitListingContract,
