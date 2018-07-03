@@ -31,6 +31,7 @@ const unitsAvailable = 42
 // Enum values
 const AWAITING_PAYMENT = 0 // Buyer hasn't paid full amount yet
 const AWAITING_SELLER_APPROVAL = 1
+// const SELLER_REJECTED = 2
 const IN_ESCROW = 3 // Buyer hasn't paid full amount yet
 const BUYER_PENDING = 4 // Waiting for buyer to confirm receipt
 const SELLER_PENDING = 5 // Waiting for seller to confirm all is good
