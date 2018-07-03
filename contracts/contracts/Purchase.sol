@@ -116,6 +116,11 @@ contract Purchase {
   isSeller
   atStage(Stages.AWAITING_SELLER_APPROVAL)
   {
+    /*
+      TODO: consider fractional usage timeout scenarios
+        We probably want to allow timeout period to be passed into constructor
+    */
+    buyerTimeout = now + 21 days;
     setStage(Stages.BUYER_PENDING);
   }
 
