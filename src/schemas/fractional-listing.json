@@ -5,13 +5,12 @@
   "$merge": {
     "source": { "$ref": "listing.json" },
     "with": {
-      "required": ["name", "priceWei"],
       "properties": {
         "slots": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["startDate", "isAvailable", "timeUnit"],
+            "required": ["startDate", "isAvailable"],
             "properties": {
               "startDate": {
                 "type": "string",
@@ -26,9 +25,6 @@
               },
               "priceWei": {
                 "type": "number"
-              },
-              "timeUnit": {
-                "type": "string"
               }
             }
           }
