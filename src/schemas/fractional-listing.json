@@ -6,6 +6,9 @@
     "source": { "$ref": "listing.json" },
     "with": {
       "properties": {
+        "timeIncrement": {
+            "type": "string"
+        },
         "slots": {
           "type": "array",
           "items": {

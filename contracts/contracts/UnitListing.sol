@@ -65,7 +65,7 @@ contract UnitListing is Listing {
     require(_unitsToBuy <= unitsAvailable);
 
     // Create purchase contract
-    Purchase purchaseContract = PurchaseLibrary.newPurchase(this, currentVersion(), msg.sender);
+    Purchase purchaseContract = PurchaseLibrary.newPurchase(this, currentVersion(), 0x0000000000000000000000000000000000000000000000000000000000000000, msg.sender);
 
     // Count units as sold
     unitsAvailable -= _unitsToBuy;

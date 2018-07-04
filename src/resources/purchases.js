@@ -2,7 +2,7 @@ import ResourceBase from './_resource-base'
 
 const _STAGES_TO_NUMBER = {
   awaiting_payment: 0,
-  awaiting_seller_approal: 1,
+  awaiting_seller_approval: 1,
   seller_rejected: 2,
   in_escrow: 3,
   buyer_pending: 4,
@@ -41,6 +41,18 @@ class Purchases extends ResourceBase {
 
   async pay(address, amountWei) {
     return await this.contractFn(address, 'pay', [], { value: amountWei })
+  }
+
+  async sellerApprove(address) {
+    return await this.contractFn(address, 'sellerApprove', [], {
+      gas: 80000
+    })
+  }
+
+  async sellerReject(address) {
+    return await this.contractFn(address, 'sellerReject', [], {
+      gas: 80000
+    })
   }
 
   async sellerConfirmShipped(address) {

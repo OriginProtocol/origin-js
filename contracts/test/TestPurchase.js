@@ -31,6 +31,7 @@ const unitsAvailable = 42
 // Enum values
 const AWAITING_PAYMENT = 0 // Buyer hasn't paid full amount yet
 const AWAITING_SELLER_APPROVAL = 1
+// const SELLER_REJECTED = 2
 const IN_ESCROW = 3 // Buyer hasn't paid full amount yet
 const BUYER_PENDING = 4 // Waiting for buyer to confirm receipt
 const SELLER_PENDING = 5 // Waiting for seller to confirm all is good
@@ -59,7 +60,7 @@ contract('Purchase', accounts => {
       { from: seller }
     )
 
-    instance = await Purchase.new(listingInstance.address, 0, buyer, {
+    instance = await Purchase.new(listingInstance.address, 0, ipfsHash, buyer, {
       from: buyer
     })
   })
@@ -234,7 +235,7 @@ contract('Purchase', accounts => {
     })
 
     it('should create and link the new purchase', async () => {
-      const tx = await fractionalListing.request({
+      const tx = await fractionalListing.request(ipfsHash, {
         from: buyer,
         value: initialPayment
       })
@@ -252,11 +253,6 @@ contract('Purchase', accounts => {
 
     it('should allow seller to approve', async () => {
       await purchase.sellerApprove({ from: seller })
-      assert.equal((await purchase.stage()).toNumber(), IN_ESCROW)
-    })
-
-    it('should allow seller to ship', async () => {
-      await purchase.sellerConfirmShipped({ from: seller })
       assert.equal((await purchase.stage()).toNumber(), BUYER_PENDING)
     })
 
