@@ -3,6 +3,7 @@ import Web3 from 'web3'
 import secp256k1 from 'secp256k1'
 import CryptoJS from 'crypto-js'
 import cryptoRandomString from 'crypto-random-string'
+import EventEmitter from 'events'
 
 const PROMPT_MESSAGE = "I wish to start messaging on origin protocol."
 const PROMPT_PUB_KEY = "My public messaging key is: "
@@ -11,17 +12,84 @@ const PUB_MESSAGING_SIG = "PMS_"
 const PUB_MESSAGING = "KEY_"
 const GLOBAL_KEYS = "global"
 const CONV_INIT_PREFIX = "convo-init-"
-const CONV_PREFIX = "convo-"
+const CONV = "conv"
+
+class InsertOnlyKeystore {
+  constructor(pubKey, privKey, verifier, signFunc) {
+    this._verifier = verifier
+    this._signFunc = signFunc
+    this._pubKey = pubKey
+    this._privKey = privKey
+  }
+
+  setPostVerify(postFunc) {
+    this._post_verify = postFunc
+  }
+
+  createKey(id) {
+    return ""
+  }
+
+  getKey(id) {
+    //for some reason Orbit requires a key for verify to be triggered
+    return {
+      getPublic:(type) => this._pubKey
+    }
+  }
+
+  async exportPublicKey(key) {
+    return this._pubKey
+  }
+
+  exportPrivateKey(key) {
+    //This function should never be called
+  }
+
+
+  async importPublicKey(key) {
+    return this._pubKey
+  }
+
+  async importPrivateKey(key) {
+    return this._privKey
+  }
+
+  async sign(key, data) {
+    return this._signFunc(key, data)
+  }
+
+  verify(signature, key, data) {
+    try {
+      let message = JSON.parse(data)
+      console.log("verifying:", message)
+      if (message.payload.op == "PUT" || message.payload.op == "ADD")
+      {
+        //verify all for now
+        if(this._verifier(signature, key, message, data))
+        {
+          if (this._post_verify){
+            this._post_verify(message)
+          }
+          return Promise.resolve(true)
+        }
+      }
+    } catch (error) {
+      console.log(error)
+    }
+    return Promise.reject(false)
+  }
+}
 
 class Messaging extends ResourceBase {
-  constructor({contractService, ipfsCreator, Y, ecies}) {
+  constructor({contractService, ipfsCreator, OrbitDB, ecies}) {
     super({contractService})
     this.web3 = this.contractService.web3
     this.ipfsCreator = ipfsCreator
-    this.Y = Y
-    this.sharedYs = {}
+    this.OrbitDB = OrbitDB
+    this.sharedRooms = {}
     this.convs = {}
     this.ecies = ecies
+    this.events = new EventEmitter()
   }
 
   onAccount(account_key)
@@ -34,6 +102,7 @@ class Messaging extends ResourceBase {
 
   async init(key) {
     this.account_key = key
+    this.events.emit("new", this.account_key)
     //just start it up here
     if(await this.initRemote())
     {
@@ -52,79 +121,91 @@ class Messaging extends ResourceBase {
     }
   }
 
-  repairAll() {
-    if (this.crdt && this.crdt.connector.isSynced)
-    {
-      //for some stupid reason I have to repair this, semi often
-      this.crdt.connector.repair()
-    }
-
-    Object.keys(this.sharedYs).forEach((key) => {
-      this.sharedYs[key].connector.repair()
-    })
-
-  }
-
   refreshPeerList () {
     this.ipfs.swarm.peers()
       .then((peers) => {
-          if (peers && !_.isEqual(peers, this.last_peers))
+          let peer_ids = peers.map( x => x.peer._idB58String )
+          if (peer_ids && !_.isEqual(peer_ids, this.last_peers))
           {
-            console.log("peers updated: ", peers)
-            this.last_peers = peers
+            console.log("peers updated: ", peer_ids)
+            this.last_peers = peer_ids
           }
         }
     )
-    //this.repairAll()
   }
 
+  initConvs(){
+      let initKeyStore = new InsertOnlyKeystore(this.account_key, "-", this.verifySignature("conv_init"), this.signInitPair.bind(this))
+      let convKeyStore = new InsertOnlyKeystore(this.account_key, "-", this.verifySignature("conv"), this.signMessaging.bind(this))
+
+      this.conv_init_db = new this.OrbitDB(this.ipfs, "conv_init", {keystore:initKeyStore})
+      this.conv_db = new this.OrbitDB(this.ipfs, "convs", {keystore:convKeyStore})
+
+      initKeyStore.setPostVerify(message => this.startConvoRoom(message.payload.key))
+
+      convKeyStore.setPostVerify( message => {
+        let writers = this.conv_db.stores[message.id].access.write
+        console.log("writers:", writers, " for room:", message.id)
+        let room_id = this.joinConversationKey(...writers)
+        console.log("message recieved for:", room_id, " message: ", message)
+        this.processMessage(room_id, message.payload)
+      })
+      this.watchMyConv()
+  }
 
 
   async initRemote() {
     this.ipfs = this.ipfsCreator(this.account_key)
 
-    this.ipfs.on('ready', () => {
-      console.log("ipfs starting...")
-      if (this.refreshIntervalId)
-      {
-        clearInterval(this.refreshIntervalId)
-      }
-      this.refreshIntervalId = setInterval(this.refreshPeerList.bind(this), 5000)
-    })
-
-    // took a hint from peerpad
-    let crdt = await this.Y(
-      {
-        db: {
-          name: 'memory'
-        },
-        connector: {
-          name: 'ipfs', // use the IPFS connector
-          ipfs: this.ipfs, // inject the IPFS object
-          room: GLOBAL_KEYS,
-          verifySignature: this.verifySignature(GLOBAL_KEYS)
-        },
-        sourceDir: '/node_modules',
-        share: {
-          ethMessagingKeys:'Map'
+    return new Promise((resolve, reject) => {
+      this.ipfs.on('ready', async () => {
+        console.log("ipfs starting...")
+        if (this.refreshIntervalId)
+        {
+          clearInterval(this.refreshIntervalId)
         }
-      }
-    )
-    this.crdt = crdt
-    return crdt
+        
+        this.refreshIntervalId = setInterval(this.refreshPeerList.bind(this), 5000)
+
+        let keystore_global = new InsertOnlyKeystore("-", "-", this.verifySignature(GLOBAL_KEYS), this.signRegistry.bind(this))
+        let orbitGlobal = new this.OrbitDB(this.ipfs, "globalNames", {keystore:keystore_global})
+
+        // took a hint from peerpad
+        this.global_keys = await orbitGlobal.kvstore(GLOBAL_KEYS, { write: ['*'] })
+        await this.global_keys.load()
+        console.log("Store:", this.global_keys)
+
+        resolve(this.global_keys)
+      }).on('error', reject)
+    })
   }
 
+  signRegistry(key, data) {
+    console.log("Signing registry:", JSON.parse(data), " key: ", key)
+    return this.pub_sig
+  }
+
+  signMessaging(key, data) {
+    console.log("Signing message:", JSON.parse(data), " key: ", key)
+    return this.account.sign(data).signature
+  }
+
+
+  signInitPair(key, data) {
+    console.log("Signing message:", JSON.parse(data), " key: ", key)
+    return this.account.sign(data).signature
+  }
 
   verifySignature(room)
   {
-    return (peer, message, signature, callback) => {
-      console.log("verify[" , room, "] peer:", peer, " message:", JSON.parse(message), " signature:", signature)
+    return (signature, key, data) => {
+      console.log("verify[" , room, "] sig:", signature, " message:", data, " key:", key)
       // pass through for now
-      callback(0, true)
+      return true
     }
   }
 
-  initMessaging() {
+  async initMessaging() {
       let entry = this.getRemoteMessagingSig()
 
       if (!(this.pub_sig && this.pub_msg))
@@ -136,17 +217,20 @@ class Messaging extends ResourceBase {
         }
         else
         {
-          this.promptForSignature()
+          await this.promptForSignature()
         }
       }
       else if (!entry)
       {
+        console.log("We are not prompting for anything...")
         this.setRemoteMessagingSig()
       }
+
+      this.initConvs()
   }
 
   getRemoteMessagingSig() {
-    let entry = this.crdt.share.ethMessagingKeys.get(this.account_key)
+    let entry = this.global_keys.get(this.account_key)
     if (entry && entry.address == this.account.address)
     {
       console.log("Got key from remote...", entry)
@@ -156,12 +240,10 @@ class Messaging extends ResourceBase {
 
   setRemoteMessagingSig() {
     console.log("set remote key...")
-    this.crdt.share.ethMessagingKeys.set(this.account_key, {address:this.account.address, 
+    this.global_keys.set(this.account_key, {address:this.account.address, 
       msg: this.pub_msg,
-      sig: this.pub_sig,
       pub_key: this.account.publicKey})
 
-    this.watchMyConv()
   }
 
   setAccount(key_str) {
@@ -189,30 +271,27 @@ class Messaging extends ResourceBase {
     this.setRemoteMessagingSig()
   }
 
-  async getShareY(room_id, verify_func, shareObj){
-    if (this.sharedYs[room_id])
+  async getShareRoom(db, room_id, db_type, writers, onWrite){
+    let key = room_id
+    if (writers.lenght == 1 && writers[0] == "*")
     {
-      return this.sharedYs[room_id]
+      key = room_id + "-" +  writers.join("-")
+    }
+    if (this.sharedRooms[key])
+    {
+      return this.sharedRooms[key]
     }
     else
     {
       console.log("Starting db[", room_id, "]")
-      let y = await this.Y(
-        {
-          db: {
-            name: 'memory'
-          },
-          connector: {
-            name: 'ipfs', // use the IPFS connector
-            ipfs: this.ipfs, // inject the IPFS object
-            room: room_id,
-            verifySignature: verify_func
-          },
-          sourceDir: '/node_modules',
-          share:shareObj
-        })
-      this.sharedYs[room_id] = y
-      return y
+      let r = await db[db_type](room_id, {write:writers})
+      this.sharedRooms[key] = r
+
+      if (onWrite){
+        r.events.on("write", onWrite)
+      }
+      await r.load()
+      return r
     }
 
   }
@@ -227,61 +306,76 @@ class Messaging extends ResourceBase {
 
   getConvo(eth_address) {
     let room = CONV_INIT_PREFIX + eth_address
-    return this.getShareY(room, this.verifySignature(room), {conversers:'Map'})
+    return this.getShareRoom(this.conv_init_db, room, "kvstore", ["*"])
   }
 
-  processMessage(room_id) {
+  processMessage(room_id, payload) {
     if (!this.convs[room_id])
     {
       this.convs[room_id] = {}
     }
-
-    return event => {
-      if(event.type == "insert")
+    for (let v of payload.value)
+    {
+      if(v.type == "key")
       {
-        for (let v of event.values)
+        if(v.address == this.account_key)
         {
-          if(v.type == "key")
+          console.log("v:", v)
+          let key = this.ec_decrypt(v.ekey)
+          this.convs[room_id].key = key
+          console.log("Extrtacted key is:", key, " for:",room_id)
+          let buffer = this.convs[room_id].buffer
+          while(buffer && buffer.length)
           {
-            if(v.address == this.account_key)
-            {
-              console.log("v:", v)
-              this.convs[room_id].key = this.ec_decrypt(v.ekey)
-              console.log("Extrtacted key is:", this.convs[room_id].key, " on behalf of:", v.address)
-            }
-          }
-          else if (v.type == "msg")
-          {
-
-            let key = this.convs[room_id].key
-            let msg = CryptoJS.AES.decrypt(v.emsg, key).toString(CryptoJS.enc.Utf8)
+            let emsg = buffer.pop()
+            let msg = CryptoJS.AES.decrypt(emsg, key).toString(CryptoJS.enc.Utf8)
             console.log("We got a message:", msg)
+            this.events.emit("msg", msg)
           }
 
+        }
+      }
+      else if (v.type == "msg")
+      {
+        let key = this.convs[room_id].key
+        if (key)
+        {
+          let msg = CryptoJS.AES.decrypt(v.emsg, key).toString(CryptoJS.enc.Utf8)
+          console.log("We got a message:", msg)
+          this.events.emit("msg", msg)
+        }
+        else
+        {
+          let obj = this.convs[room_id]
+          if (obj.buffer)
+          {
+            obj.buffer.push(v.emsg)
+          }
+          else
+          {
+            obj.buffer = [v.emsg]
+          }
+          console.log("We haven't got keys yet")
         }
       }
     }
   }
 
   async startConvoRoom(remote_eth_address) {
-    let room_id = CONV_PREFIX + this.joinConversationKey(this.account_key, remote_eth_address)
-    let room = await this.getShareY(room_id, this.verifySignature(room_id), {conversation:'Array'})
-
-    room.share.conversation.observe(this.processMessage(room_id))
+    let writers = [this.account_key, remote_eth_address].sort()
+    let room_id = this.joinConversationKey(...writers)
+    let room = await this.getShareRoom(this.conv_db, CONV, "eventlog", writers,
+        (dbname, entry, heads) => {
+          console.log("conv write:", room_id, " entry:", entry)
+          this.processMessage(room_id, entry.payload)
+        })
     return room
   }
 
   async watchMyConv(){
-    let watchConv_y = await this.getConvo(this.account_key)
+    let watchConv = await this.getConvo(this.account_key)
     console.log("ready for conversations...")
-    watchConv_y.share.conversers.observe(event => {
-        console.log("new event:", event.name, " type:", event.type)
-        if (event.type == "add" || event.type == "update")
-        {
-          console.log("conversation started with:", event.name)
-          this.startConvoRoom(event.name)
-        }
-    })
+    this.events.emit("ready", this.account_key)
   }
 
   ec_encrypt(text, pub_key) {
@@ -298,51 +392,59 @@ class Messaging extends ResourceBase {
   }
 
   async startConv(remote_eth_address) {
-    let entry = this.crdt.share.ethMessagingKeys.get(remote_eth_address)
+    let entry = this.global_keys.get(remote_eth_address)
 
     if(!entry) {
       console.log("Remote account does not have messaging enabled")
       return
     }
 
-    let self_y = await this.getConvo(this.account_key)
-    let remote_y = await this.getConvo(remote_eth_address)
-
+    let self_init_conv = await this.getConvo(this.account_key)
+    let remote_init_conv = await this.getConvo(remote_eth_address)
     let ts = Date.now()
-    let msg = this.joinConversationKey(this.account_key, remote_eth_address) + JSON.stringify(ts) 
 
-    let sig_entry = await this.account.sign(msg)
-    let sig = sig_entry.signature
-    self_y.share.conversers.set(remote_eth_address, {
-      ts:ts,
-      sig:sig
-    })
-    remote_y.share.conversers.set(this.account_key, {
-      ts:ts,
-      sig:sig
-    })
+    remote_init_conv.set(this.account_key, ts) 
+    self_init_conv.set(remote_eth_address, ts)
 
     let room = await this.startConvoRoom(remote_eth_address)
-    let encrypt_key = cryptoRandomString(32).toString("hex")
 
-    console.log("the Encrypt key is:", encrypt_key)
-
-    room.share.conversation.push([{type:"key", ekey:this.ec_encrypt(encrypt_key), address: this.account_key}])
-    room.share.conversation.push([{type:"key", ekey:this.ec_encrypt(encrypt_key, entry.pub_key), address: remote_eth_address}])
-  }
-
-  async sendConvMessage(remote_eth_address, message) {
-    let room = await this.startConvoRoom(remote_eth_address)
-    let room_id = CONV_PREFIX + this.joinConversationKey(this.account_key, remote_eth_address)
-
-    if (this.convs[room_id])
+    //we haven't put any keys here yet
+    if (room.iterator({ limit: 2 }).collect().length < 2)
     {
-      let key = this.convs[room_id].key
-      let encmsg = CryptoJS.AES.encrypt(message, key).toString()
-      room.share.conversation.push([{type:"msg", emsg:encmsg, address: this.account_key}])
+      let encrypt_key = cryptoRandomString(32).toString("hex")
+      console.log("the Encrypt key is:", encrypt_key)
+
+      await room.add([{type:"key", ekey:this.ec_encrypt(encrypt_key), address: this.account_key},
+        {type:"key", ekey:this.ec_encrypt(encrypt_key, entry.pub_key), address: remote_eth_address}])
+      return room
     }
   }
 
+  async sendConvMessage(remote_eth_address, message) {
+    if (this._sending_message)
+    {
+      console.log("There's a Message being sent!")
+      return false
+    }
+    let room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    let room
+    console.log("sending to:", room_id)
+    if (this.convs[room_id].key)
+    {
+      room = await this.startConvoRoom(remote_eth_address)
+    }
+    else
+    {
+      room = await this.startConv(remote_eth_address)
+    }
+
+    let key = this.convs[room_id].key
+    let encmsg = CryptoJS.AES.encrypt(message, key).toString()
+    this._sending_message = true
+    await room.add([{type:"msg", emsg:encmsg, address: this.account_key}])
+    this._sending_message = false
+    return true
+  }
 }
 
 export default Messaging
