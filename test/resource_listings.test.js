@@ -148,7 +148,14 @@ describe('Listing Resource', function() {
         '0x4E205e04A1A8f230702fe51f3AfdCC38aafB0f3C'
       )
       expect(first.name).to.equal("Taylor Swift's Reputation Tour")
-      expect(first.price).to.equal(0.3)
+      expect(first.price).to.equal('0.30')
+    })
+
+    it('should get all listings directly from the blockchain', async () => {
+      const all = await listings.all({ noIndex: true })
+      expect(all.length).to.be.greaterThan(1)
+      expect(all[0]).to.be.an('object').with.property('price')
+      expect(all[1]).to.be.an('object').with.property('price')
     })
   })
 

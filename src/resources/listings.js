@@ -50,10 +50,18 @@ class Listings extends ResourceBase {
 
   // fetches all listings (all data included)
   async all({ noIndex = false } = {}) {
-    if (noIndex) {
-      // TODO: fetch directly from blockchain when noIndex is true
-    } else {
-      return await this.allIndexed()
+    try {
+      if (noIndex) {
+        const ids = await this.allIds()
+
+        return await Promise.all(ids.map(this.getByIndex.bind(this)))
+      } else {
+        return await this.allIndexed()
+      }
+    } catch (error) {
+      console.error(error)
+      console.log('Cannot get all listings')
+      throw error
     }
   }
 
@@ -77,7 +85,7 @@ class Listings extends ResourceBase {
       listingsLength = await instance.methods.listingsLength().call()
     } catch (error) {
       console.log(error)
-      console.log("Can't get number of listings.")
+      console.log('Cannot get number of listings')
       throw error
     }
 
@@ -119,7 +127,7 @@ class Listings extends ResourceBase {
     }
   }
 
-  // Deprecated
+  // This method is DEPRECATED
   async getByIndex(listingIndex) {
     const listingsRegistry = await this.contractService.deployed(
       this.contractService.listingsRegistryContract
