@@ -183,6 +183,7 @@ describe('Listing Resource', function() {
       })
       const listingAddress = tx.events.NewListing.returnValues._address
       const initialListing = await listings.get(listingAddress)
+      expect(initialListing.name).to.equal('Sample Listing 1')
 
       await listings.update(listingAddress, {
         name: 'foo bar',
