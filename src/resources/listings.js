@@ -434,7 +434,8 @@ class Listings extends ResourceBase {
       description: ipfsData.description,
       location: ipfsData.location,
       pictures: ipfsData.pictures,
-      listingType: ipfsData.listingType
+      listingType: ipfsData.listingType,
+      slots: ipfsData.slots
     }
   }
 }
