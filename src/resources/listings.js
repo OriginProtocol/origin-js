@@ -142,7 +142,9 @@ class Listings extends ResourceBase {
 
   async update(address, data = {}) {
     if (data.listingType !== fractionalListingType) {
-      throw new Error(`This listing type (${data.listingType}) cannot be updated.`)
+      throw new Error(
+        `This listing type (${data.listingType}) cannot be updated.`
+      )
     }
     return await this.updateFractional(address, data)
   }
