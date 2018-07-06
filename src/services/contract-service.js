@@ -203,7 +203,7 @@ class ContractService {
     opts.gas = options.gas || 50000 // Default gas
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
-    contract.options.address = address
+    contract.options.address = address || contract.options.address
 
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {

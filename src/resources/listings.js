@@ -50,10 +50,18 @@ class Listings extends ResourceBase {
 
   // fetches all listings (all data included)
   async all({ noIndex = false } = {}) {
-    if (noIndex) {
-      // TODO: fetch directly from blockchain when noIndex is true
-    } else {
-      return await this.allIndexed()
+    try {
+      if (noIndex) {
+        const ids = await this.allIds()
+
+        return await Promise.all(ids.map(this.getByIndex.bind(this)))
+      } else {
+        return await this.allIndexed()
+      }
+    } catch (error) {
+      console.error(error)
+      console.log('Cannot get all listings')
+      throw error
     }
   }
 
@@ -77,7 +85,7 @@ class Listings extends ResourceBase {
       listingsLength = await instance.methods.listingsLength().call()
     } catch (error) {
       console.log(error)
-      console.log("Can't get number of listings.")
+      console.log('Cannot get number of listings')
       throw error
     }
 
@@ -119,7 +127,7 @@ class Listings extends ResourceBase {
     }
   }
 
-  // Deprecated
+  // This method is DEPRECATED
   async getByIndex(listingIndex) {
     const listingsRegistry = await this.contractService.deployed(
       this.contractService.listingsRegistryContract
@@ -138,6 +146,15 @@ class Listings extends ResourceBase {
     } else if (listingType === fractionalListingType) {
       return await this.createFractional(data)
     }
+  }
+
+  async update(address, data = {}) {
+    if (data.listingType !== fractionalListingType) {
+      throw new Error(
+        `This listing type (${data.listingType}) cannot be updated.`
+      )
+    }
+    return await this.updateFractional(address, data)
   }
 
   async buy(address, unitsToBuy, ethToPay) {
@@ -278,6 +295,44 @@ class Listings extends ResourceBase {
     return transactionReceipt
   }
 
+  async updateFractional(address, data) {
+    validate(validateFractionalListing, data, fractionalListingSchema)
+    const json = { data }
+
+    // Submit to IPFS
+    let ipfsHash
+    try {
+      ipfsHash = await this.ipfsService.submitFile(json)
+    } catch (error) {
+      throw new Error(`IPFS Failure: ${error}`)
+    }
+
+    // Submit to ETH contract
+    let transactionReceipt
+    try {
+      const account = await this.contractService.currentAccount()
+      const instance = await this.contractService.deployed(
+        this.contractService.fractionalListingContract,
+        address
+      )
+      const version = await instance.methods.currentVersion().call()
+      const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+
+      transactionReceipt = await this.contractService.contractFn(
+        this.contractService.fractionalListingContract,
+        address,
+        'update',
+        [version, ipfsBytes32],
+        { from: account, gas: 4476768 }
+      )
+    } catch (error) {
+      console.error('Error submitting to the Ethereum blockchain: ' + error)
+      throw error
+    }
+
+    return transactionReceipt
+  }
+
   async submitUnitListing(ipfsListing, ethPrice, units) {
     try {
       const account = await this.contractService.currentAccount()
@@ -307,15 +362,13 @@ class Listings extends ResourceBase {
   async submitFractionalListing(ipfsListing) {
     try {
       const account = await this.contractService.currentAccount()
-      const instance = await this.contractService.deployed(
-        this.contractService.listingsRegistryContract
+      return await this.contractService.contractFn(
+        this.contractService.listingsRegistryContract,
+        null,
+        'createFractional',
+        [this.contractService.getBytes32FromIpfsHash(ipfsListing)],
+        { from: account, gas: 4476768 }
       )
-
-      return instance.methods
-        .createFractional(
-          this.contractService.getBytes32FromIpfsHash(ipfsListing)
-        )
-        .send({ from: account, gas: 4476768 })
     } catch (error) {
       console.error('Error submitting to the Ethereum blockchain: ' + error)
       throw error
