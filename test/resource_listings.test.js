@@ -173,4 +173,24 @@ describe('Listing Resource', function() {
       expect(address.slice(0, 2)).to.equal('0x')
     })
   })
+
+  describe('update', () => {
+    it('should be able to update a fractional listing', async () => {
+      const tx = await listings.create({
+        name: 'Sample Listing 1',
+        priceWei: 1000,
+        listingType: 'fractional'
+      })
+      const listingAddress = tx.events.NewListing.returnValues._address
+      const initialListing = await listings.get(listingAddress)
+
+      await listings.update(listingAddress, {
+        name: 'foo bar',
+        priceWei: 1000,
+        listingType: 'fractional'
+      })
+      const updatedListing = await listings.get(listingAddress)
+      expect(updatedListing.name).to.equal('foo bar')
+    })
+  })
 })

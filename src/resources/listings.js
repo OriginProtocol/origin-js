@@ -140,6 +140,13 @@ class Listings extends ResourceBase {
     }
   }
 
+  async update(address, data = {}) {
+    if (data.listingType !== fractionalListingType) {
+      throw new Error(`This listing type (${data.listingType}) cannot be updated.`)
+    }
+    return await this.updateFractional(address, data)
+  }
+
   async buy(address, unitsToBuy, ethToPay) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
     const value = this.contractService.web3.utils.toWei(
@@ -278,6 +285,44 @@ class Listings extends ResourceBase {
     return transactionReceipt
   }
 
+  async updateFractional(address, data) {
+    validate(validateFractionalListing, data, fractionalListingSchema)
+    const json = { data }
+
+    // Submit to IPFS
+    let ipfsHash
+    try {
+      ipfsHash = await this.ipfsService.submitFile(json)
+    } catch (error) {
+      throw new Error(`IPFS Failure: ${error}`)
+    }
+
+    // Submit to ETH contract
+    let transactionReceipt
+    try {
+      const account = await this.contractService.currentAccount()
+      const instance = await this.contractService.deployed(
+        this.contractService.fractionalListingContract,
+        address
+      )
+      const version = await instance.methods.currentVersion().call()
+      const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+
+      transactionReceipt = await this.contractService.contractFn(
+        this.contractService.fractionalListingContract,
+        address,
+        'update',
+        [version, ipfsBytes32],
+        { from: account, gas: 4476768 }
+      )
+    } catch (error) {
+      console.error('Error submitting to the Ethereum blockchain: ' + error)
+      throw error
+    }
+
+    return transactionReceipt
+  }
+
   async submitUnitListing(ipfsListing, ethPrice, units) {
     try {
       const account = await this.contractService.currentAccount()
@@ -307,15 +352,13 @@ class Listings extends ResourceBase {
   async submitFractionalListing(ipfsListing) {
     try {
       const account = await this.contractService.currentAccount()
-      const instance = await this.contractService.deployed(
-        this.contractService.listingsRegistryContract
+      return await this.contractService.contractFn(
+        this.contractService.listingsRegistryContract,
+        null,
+        'createFractional',
+        [this.contractService.getBytes32FromIpfsHash(ipfsListing)],
+        { from: account, gas: 4476768 }
       )
-
-      return instance.methods
-        .createFractional(
-          this.contractService.getBytes32FromIpfsHash(ipfsListing)
-        )
-        .send({ from: account, gas: 4476768 })
     } catch (error) {
       console.error('Error submitting to the Ethereum blockchain: ' + error)
       throw error
