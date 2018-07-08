@@ -1,79 +1,113 @@
-import ResourceBase from "./_resource-base"
+import ResourceBase from './_resource-base'
+
+const appendSlash = url => {
+  return url.substr(-1) === '/' ? url : url + '/'
+}
 
 const _STAGES_TO_NUMBER = {
   awaiting_payment: 0,
-  shipping_pending: 1,
-  buyer_pending: 2,
-  seller_pending: 3,
-  in_dispute: 4,
-  review_period: 5,
-  complete: 6
+  awaiting_seller_approval: 1,
+  seller_rejected: 2,
+  in_escrow: 3,
+  buyer_pending: 4,
+  seller_pending: 5,
+  in_dispute: 6,
+  review_period: 7,
+  complete: 8
 }
 const _NUMBERS_TO_STAGE = {}
 
-const EMPTY_IPFS = "0x0000000000000000000000000000000000000000000000000000000000000000"
+const EMPTY_IPFS =
+  '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 class Purchases extends ResourceBase {
-  constructor({ contractService, ipfsService }) {
+  constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
     super({ contractService, ipfsService })
 
     this.contractDefinition = this.contractService.purchaseContract
+    this.fetch = fetch
+    this.indexingServerUrl = indexingServerUrl
 
     Object.entries(_STAGES_TO_NUMBER).forEach(([k, v]) => {
       _NUMBERS_TO_STAGE[v] = k
     })
   }
 
+  // fetches all purchases (all data included)
+  async all() {
+    try {
+      return await this.allIndexed()
+    } catch (error) {
+      console.error(error)
+      console.log('Cannot get all purchases')
+      throw error
+    }
+  }
+
   async get(address) {
-    const contractData = await this.contractFn(address, "data")
+    const contractData = await this.contractFn(address, 'data')
     return {
       address: address,
       stage: _NUMBERS_TO_STAGE[contractData[0]],
       listingAddress: contractData[1],
       buyerAddress: contractData[2],
       created: Number(contractData[3]),
-      buyerTimout: Number(contractData[4])
+      buyerTimeout: Number(contractData[4])
     }
   }
 
   async pay(address, amountWei) {
-    return await this.contractFn(address, "pay", [], { value: amountWei })
+    return await this.contractFn(address, 'pay', [], { value: amountWei })
   }
 
-  async sellerConfirmShipped(address) {
-    return await this.contractFn(address, "sellerConfirmShipped", [], {
+  async sellerApprove(address) {
+    return await this.contractFn(address, 'sellerApprove', [], {
       gas: 80000
     })
   }
 
-  async buyerConfirmReceipt(address, data={}) {
-    const review = await this._buildReview(data)
-    const args = [review.rating, review.ipfsHashBytes]
-    return await this.contractFn(address, "buyerConfirmReceipt", args)
+  async sellerReject(address) {
+    return await this.contractFn(address, 'sellerReject', [], {
+      gas: 80000
+    })
   }
 
-  async sellerGetPayout(address, data={}) {
-    const review = await this._buildReview(data)
-    const args = [review.rating, review.ipfsHashBytes]
-    return await this.contractFn(address, "sellerCollectPayout", args, {gas: 100000})
+  async sellerConfirmShipped(address) {
+    return await this.contractFn(address, 'sellerConfirmShipped', [], {
+      gas: 80000
+    })
   }
 
-  async _buildReview(data={}){
+  async buyerConfirmReceipt(address, data = {}) {
+    const review = await this._buildReview(data)
+    const args = [review.rating, review.ipfsHashBytes]
+    return await this.contractFn(address, 'buyerConfirmReceipt', args)
+  }
+
+  async sellerGetPayout(address, data = {}) {
+    const review = await this._buildReview(data)
+    const args = [review.rating, review.ipfsHashBytes]
+    return await this.contractFn(address, 'sellerCollectPayout', args, {
+      gas: 100000
+    })
+  }
+
+  async _buildReview(data = {}) {
     // Check Rating
     const rating = data.rating || 5
-    if(!(rating >= 1 && rating <= 5)){
-      throw new Error("You must set a rating between 1 and 5")
+    if (!(rating >= 1 && rating <= 5)) {
+      throw new Error('You must set a rating between 1 and 5')
     }
     // IPFS for review text, if needed
     let ipfsHashBytes = EMPTY_IPFS
     const reviewText = data.reviewText
-    if(reviewText && typeof reviewText == "string" && reviewText.length > 2){
-      const ipfsData = {version:1, reviewText:reviewText}
+    if (reviewText && typeof reviewText == 'string' && reviewText.length > 2) {
+      const ipfsData = { version: 1, reviewText: reviewText }
       const ipfsHash = await this.ipfsService.submitFile(ipfsData)
       ipfsHashBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     }
     // Return review data
-    return {rating: rating, ipfsHashBytes: ipfsHashBytes} 
+    return { rating: rating, ipfsHashBytes: ipfsHashBytes }
   }
 
   async getLogs(address) {
@@ -82,44 +116,67 @@ class Purchases extends ResourceBase {
     const contract = new web3.eth.Contract(this.contractDefinition.abi, address)
     return new Promise((resolve, reject) => {
       // Get all logs on this contract
-      contract.getPastEvents('allEvents', { fromBlock: 0 }, function(error, rawLogs) {
-        if (error) {
-          return reject(error)
-        }
-        // Format logs we receive
-        let logs = rawLogs
-        .filter((x)=> x.event == "PurchaseChange")
-        .map(log => {
-          const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]
-          return {
-            transactionHash: log.transactionHash,
-            stage: stage,
-            blockNumber: log.blockNumber,
-            blockHash: log.blockHash,
-            event: log.event
+      contract.getPastEvents(
+        'PurchaseChange',
+        { fromBlock: 0, toBlock: 'latest' },
+        function(error, rawLogs) {
+          if (error) {
+            return reject(error)
           }
-        })
-        // Fetch user and timestamp information for all logs, in parallel
-        const addUserAddressFn = async event => {
-          event.from = (await self.contractService.getTransaction(
-            event.transactionHash
-          )).from
-        }
-        const addTimestampFn = async event => {
-          event.timestamp = (await self.contractService.getBlock(
-            event.blockHash
-          )).timestamp
-        }
-        const fetchPromises = [].concat(
-          logs.map(addUserAddressFn),
-          logs.map(addTimestampFn)
-        )
-        Promise.all(fetchPromises)
-          .then(() => {
-            resolve(logs)
+          // Format logs we receive
+          const logs = rawLogs.map(log => {
+            const stage = _NUMBERS_TO_STAGE[log.returnValues.stage]
+            return {
+              transactionHash: log.transactionHash,
+              stage: stage,
+              blockNumber: log.blockNumber,
+              blockHash: log.blockHash,
+              event: log.event
+            }
           })
-          .catch(error => reject(error))
-      })
+          // Fetch user and timestamp information for all logs, in parallel
+          const addUserAddressFn = async event => {
+            event.from = (await self.contractService.getTransaction(
+              event.transactionHash
+            )).from
+          }
+          const addTimestampFn = async event => {
+            event.timestamp = (await self.contractService.getBlock(
+              event.blockHash
+            )).timestamp
+          }
+          const fetchPromises = [].concat(
+            logs.map(addUserAddressFn),
+            logs.map(addTimestampFn)
+          )
+          Promise.all(fetchPromises)
+            .then(() => {
+              resolve(logs)
+            })
+            .catch(error => reject(error))
+        }
+      )
+    })
+  }
+
+  /*
+      private
+  */
+
+  async allIndexed() {
+    const url = appendSlash(this.indexingServerUrl) + 'purchase'
+    const response = await this.fetch(url, { method: 'GET' })
+    const json = await response.json()
+    return json.objects.map(obj => {
+      return {
+        address: obj['contract_address'],
+        buyerAddress: obj['buyer_address'],
+        // https://github.com/OriginProtocol/origin-bridge/issues/102
+        buyerTimeout: +new Date(obj['buyer_timeout']),
+        created: +new Date(obj['created_at']),
+        listingAddress: obj['listing_address'],
+        stage: obj['stage']
+      }
     })
   }
 }
