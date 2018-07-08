@@ -12,7 +12,7 @@ import OriginIdentityContract from './../../contracts/build/contracts/OriginIden
 import bs58 from 'bs58'
 import Web3 from 'web3'
 
-import WalletLinker from "./../resources/wallet-linker"
+import WalletLinker from './../resources/wallet-linker'
 
 class ContractService {
   constructor(options = {}) {
@@ -59,16 +59,14 @@ class ContractService {
   }
 
   initWalletLinker() {
-      // if there's no given provider
-      // we do it the funny wallet way
-      if (!Web3.givenProvider && this.opts.walletLinkerUrl)
-      {
-        if(!this.walletLinker)
-        {
-          this.walletLinker = new WalletLinker({linkerServerUrl:this.opts.walletLinkerUrl, fetch:this.opts.fetch, networkChangeCb:this.newWalletNetwork.bind(this), web3:this.web3})
-          this.walletLinker.initSession()
-        }
+    // if there's no given provider
+    // we do it the funny wallet way
+    if (!Web3.givenProvider && this.opts.walletLinkerUrl) {
+      if(!this.walletLinker) {
+        this.walletLinker = new WalletLinker({linkerServerUrl:this.opts.walletLinkerUrl, fetch:this.opts.fetch, networkChangeCb:this.newWalletNetwork.bind(this), web3:this.web3})
+        this.walletLinker.initSession()
       }
+    }
   }
   
   hasWalletLinker() {
@@ -83,7 +81,7 @@ class ContractService {
   }
 
   getMobileWalletLink() {
-      return this.walletLinker.getLinkCode()
+    return this.walletLinker.getLinkCode()
   }
 
   // Return bytes32 hex string from base58 encoded ipfs hash,
