@@ -126,16 +126,13 @@ class Messaging extends ResourceBase {
     }
   }
 
-  async init(key) {
-    this.account_key = key
-    this.events.emit("new", this.account_key)
-    //just start it up here
-    if(await this.initRemote())
-    {
-      const sig_key = localStorage.getItem(MESSAGING_KEY+this.account_key)
-      this.pub_sig = localStorage.getItem(PUB_MESSAGING_SIG+this.account_key)
-      this.pub_msg = localStorage.getItem(PUB_MESSAGING+this.account_key)
+  getMessagingKey()
+  {
+    return localStorage.getItem(MESSAGING_KEY+this.account_key)
+  }
 
+  initKeys() {
+      const sig_key = this.getMessagingKey()
       if (sig_key)
       {
         this.setAccount(sig_key)
@@ -143,6 +140,37 @@ class Messaging extends ResourceBase {
       else
       {
         this.promptInit()
+      }
+  }
+
+
+  startConversing() {
+    if (this.ipfs_bound_account == this.account_key && !this.account)
+    {
+      //remote has been initialized
+      this.initKeys()
+    }
+    else
+    {
+      this.convs_enabled = false
+    }
+  }
+
+  async init(key) {
+    this.account_key = key
+    this.account = undefined
+    this.events.emit("new", this.account_key)
+    //just start it up here
+    if(await this.initRemote())
+    {
+      this.pub_sig = localStorage.getItem(PUB_MESSAGING_SIG+this.account_key)
+      this.pub_msg = localStorage.getItem(PUB_MESSAGING+this.account_key)
+
+      this.initConvs()
+      if(this.convs_enabled || this.getMessagingKey())
+      {
+        console.log("setting the initiate keys...")
+        this.initKeys()
       }
     }
   }
@@ -162,7 +190,15 @@ class Messaging extends ResourceBase {
 
   initConvs(){
       this.main_orbit.keystore.registerSignVerify(CONV_INIT_PREFIX, this.signInitPair.bind(this), this.verifySignature("conv_init"),
-        message => this.startConvoRoom(message.payload.key)
+        message => {
+          console.log("pending conversations...", message.payload.key)
+          this.events.emit("pending_conv", message.payload.key)
+
+          if (this.account)
+          {
+            this.startConvoRoom(message.payload.key)
+          }
+        }
       )
       this.main_orbit.keystore.registerSignVerify(CONV, this.signInitPair.bind(this), this.verifySignature("conv_init"))
 
@@ -195,10 +231,10 @@ class Messaging extends ResourceBase {
         // took a hint from peerpad
         this.global_keys = await this.main_orbit.kvstore(GLOBAL_KEYS, this.orbitStoreOptions({ write: ['*'] }))
 
-
         await this.global_keys.load()
         console.log("Store:", this.global_keys)
 
+        this.ipfs_bound_account = this.account_key
         resolve(this.global_keys)
       }).on('error', reject)
     })
@@ -249,15 +285,16 @@ class Messaging extends ResourceBase {
         console.log("We are not prompting for anything...")
         this.setRemoteMessagingSig()
       }
-
-      this.initConvs()
+      console.log("ready for conversations...")
+      this.events.emit("ready", this.account_key)
+      this.loadMyConvs()
   }
 
   getRemoteMessagingSig() {
     let entry = this.global_keys.get(this.account_key)
+    console.log("Got key from remote...", entry, " vs address:", this.account.address)
     if (entry && entry.address == this.account.address)
     {
-      console.log("Got key from remote...", entry)
       return entry
     }
   }
@@ -473,8 +510,20 @@ class Messaging extends ResourceBase {
 
   async watchMyConv(){
     let watchConv = await this.getConvo(this.account_key)
-    console.log("ready for conversations...")
-    this.events.emit("ready", this.account_key)
+    console.log("watching convs...")
+  }
+
+  async getMyConvs() {
+    let watchConv = await this.getConvo(this.account_key)
+    return watchConv.all()
+  }
+
+  async loadMyConvs(){
+    for (const k of Object.keys(await this.getMyConvs()))
+    {
+      console.log("Starting conv with:", k)
+      this.startConvoRoom(k)
+    }
   }
 
   ec_encrypt(text, pub_key) {
@@ -488,6 +537,17 @@ class Messaging extends ResourceBase {
 
   ec_decrypt(buffer) {
     return this.ecies.decrypt(new Buffer(this.account.privateKey.substring(2), "hex"), new Buffer(buffer, "hex")).toString("utf8")
+  }
+
+  canConverse(remote_eth_address) {
+    if (remote_eth_address != this.account_key)
+    {
+      let entry = this.global_keys.get(remote_eth_address)
+      if(entry) {
+        return true
+      }
+    }
+    return false
   }
 
   async startConv(remote_eth_address) {
