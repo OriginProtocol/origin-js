@@ -64,7 +64,7 @@ class InsertOnlyKeystore {
 
 
   async importPublicKey(key) {
-    return this._pubKey
+    return key
   }
 
   async importPrivateKey(key) {
@@ -152,7 +152,7 @@ class Messaging extends ResourceBase {
     }
     else
     {
-      this.convs_enabled = false
+      this.convs_enabled = true
     }
   }
 
@@ -189,7 +189,7 @@ class Messaging extends ResourceBase {
   }
 
   initConvs(){
-      this.main_orbit.keystore.registerSignVerify(CONV_INIT_PREFIX, this.signInitPair.bind(this), this.verifySignature("conv_init"),
+      this.main_orbit.keystore.registerSignVerify(CONV_INIT_PREFIX, this.signInitPair.bind(this), this.verifyConversationSignature.bind(this),
         message => {
           console.log("pending conversations...", message.payload.key)
           this.events.emit("pending_conv", message.payload.key)
@@ -200,7 +200,7 @@ class Messaging extends ResourceBase {
           }
         }
       )
-      this.main_orbit.keystore.registerSignVerify(CONV, this.signInitPair.bind(this), this.verifySignature("conv_init"))
+      this.main_orbit.keystore.registerSignVerify(CONV, this.signInitPair.bind(this), this.verifyMessageSignature.bind(this))
 
       this.watchMyConv()
   }
@@ -226,12 +226,17 @@ class Messaging extends ResourceBase {
         let main_keystore = new InsertOnlyKeystore(this.account_key, "-")
         this.main_orbit = new this.OrbitDB(this.ipfs, "main_orbit", {keystore:main_keystore})
 
-        main_keystore.registerSignVerify(GLOBAL_KEYS, this.signRegistry.bind(this), this.verifySignature(GLOBAL_KEYS))
+        main_keystore.registerSignVerify(GLOBAL_KEYS, this.signRegistry.bind(this), this.verifyRegistrySignature.bind(this))
 
         // took a hint from peerpad
         this.global_keys = await this.main_orbit.kvstore(GLOBAL_KEYS, this.orbitStoreOptions({ write: ['*'] }))
 
-        await this.global_keys.load()
+        try {
+          await this.global_keys.load()
+        } catch(error)
+        {
+          console.log(error)
+        }
         console.log("Store:", this.global_keys)
 
         this.ipfs_bound_account = this.account_key
@@ -263,6 +268,56 @@ class Messaging extends ResourceBase {
       // pass through for now
       return true
     }
+  }
+
+  verifyRegistrySignature(signature, key, message)
+  {
+    let value = message.payload.value
+    let set_key = message.payload.key
+    let verify_address = web3.eth.accounts.recover(value.msg, signature)
+    if (verify_address == set_key && value.msg.includes(value.address))
+    {
+      let extracted_address = "0x" + web3.utils.sha3(value.pub_key).substr(-40)
+      if (extracted_address == value.address.toLowerCase())
+      {
+        let verify_ph_address = web3.eth.accounts.recover(value.ph, value.phs)
+        if (verify_ph_address == value.address)
+        {
+          console.log("Key Verified: ", value.msg, " Signature: ", signature,  " Signed with: ", verify_address)
+          return true
+        }
+      }
+    }
+    console.log("Verify failed...")
+    return false
+  }
+
+  verifyMessageSignature(signature, key, message, buffer)
+  {
+    let verify_address = web3.eth.accounts.recover(buffer.toString("utf8"), signature)
+    let entry = this.global_keys.get(key)
+    console.log("key:", key, "Verifying address: ", verify_address, " entry:", entry)
+    //only two addresses should have write access to here
+    if (entry && entry.address == verify_address)
+    {
+      return true
+    }
+    return false
+  }
+
+  verifyConversationSignature(signature, key, message, buffer)
+  {
+    let verify_address = web3.eth.accounts.recover(buffer.toString("utf8"), signature)
+    let eth_address = message.id.substr(-42) //hopefully the last 42 is the eth address
+    if(key == message.payload.key || key == eth_address) //only one of the two conversers can set this parameter
+    {
+      let entry = this.global_keys.get(key)
+      if (entry.address == verify_address)
+      {
+        return true
+      }
+    }
+    return false
   }
 
   async initMessaging() {
@@ -301,9 +356,12 @@ class Messaging extends ResourceBase {
 
   setRemoteMessagingSig() {
     console.log("set remote key...")
+    let msg = PROMPT_MESSAGE
     this.global_keys.set(this.account_key, {address:this.account.address, 
       msg: this.pub_msg,
-      pub_key: this.account.publicKey})
+      pub_key: this.account.publicKey,
+      ph:msg,
+      phs: this.account.sign(msg).signature})
 
   }
 
