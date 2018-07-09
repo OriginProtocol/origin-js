@@ -7,7 +7,6 @@ import Purchases from './resources/purchases'
 import Reviews from './resources/reviews'
 import Users from './resources/users'
 import fetch from 'cross-fetch'
-import store from 'store'
 
 const defaultBridgeServer = 'https://bridge.originprotocol.com'
 const defaultIpfsDomain = 'gateway.originprotocol.com'
@@ -28,6 +27,7 @@ class Origin {
     indexingServerUrl = defaultIndexingServerUrl,
     walletLinkerUrl = defaultWalletLinkerUrl,
     contractAddresses,
+    disableNotifications,
     web3
   } = {}) {
     this.contractService = new ContractService({contractAddresses, web3, walletLinkerUrl, fetch})
@@ -58,12 +58,16 @@ class Origin {
       fetch
     })
 
-    this.notifications = new Notifications({
-      listings: this.listings,
-      purchases: this.purchases,
-      contractService: this.contractService,
-      store
-    })
+    if (!disableNotifications) {
+      const store = require('store')
+      
+      this.notifications = new Notifications({
+        listings: this.listings,
+        purchases: this.purchases,
+        contractService: this.contractService,
+        store
+      })
+    }
 
     this.reviews = new Reviews({
       contractService: this.contractService,
