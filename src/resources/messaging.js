@@ -167,6 +167,7 @@ class Messaging extends ResourceBase {
       this.pub_msg = localStorage.getItem(PUB_MESSAGING+this.account_key)
 
       this.initConvs()
+      this.events.emit("initialized", this.account_key)
       if(this.convs_enabled || this.getMessagingKey())
       {
         console.log("setting the initiate keys...")
@@ -449,7 +450,7 @@ class Messaging extends ResourceBase {
     }
   }
 
-  processEntry(entry, conv_obj, onMessage)
+  processEntry(entry, conv_obj, onMessage, onEncrypted)
   {
     for (let v of entry.payload.value)
     {
@@ -467,6 +468,7 @@ class Messaging extends ResourceBase {
       }
       else if (v.type == "msg")
       {
+        let decrypted = false
         for(const key of conv_obj.keys)
         {
           const buffer = this.decryptMsg(v.i, v.emsg, key)
@@ -475,11 +477,22 @@ class Messaging extends ResourceBase {
             let obj = buffer
             try{
               obj = JSON.parse(buffer)
+              
             }catch(error){
               //pass
             }
+            if (typeof(obj) != "object")
+            {
+              //force it to be an object
+              continue
+            }
             onMessage(obj, v.address)
+            decrypted = true
             break
+          }
+          if(!decrypted && onEncrypted)
+          {
+            onEncrypted(v.emsg, v.address)
           }
         }
       }
@@ -505,6 +518,9 @@ class Messaging extends ResourceBase {
       this.processEntry(entry, conv_obj, (message, address) => {
         console.log("We got a message:", message, "on index", index)
         this.events.emit("msg", message, index, address, entry.hash)
+      },  (emessage, address) => {
+        console.log("We got a encrypted message:", emessage, "on index", index)
+        this.events.emit("emsg", emessage, index, address, entry.hash)
       })
     })
 
@@ -541,7 +557,7 @@ class Messaging extends ResourceBase {
       let ops = room._index.get()
       let messages = []
       ops.forEach((entry, index) => {
-        for (let v of entry.payload.value)
+        for (const v of entry.payload.value)
         {
           messages.push(v)
         }
@@ -549,6 +565,29 @@ class Messaging extends ResourceBase {
       return messages
     }
   }
+
+  getMessagesCount(remote_eth_address)
+  {
+    let room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    let conv_obj = this.convs[room_id]
+
+    if (conv_obj){
+      const room = this.sharedRooms[CONV + "-" + room_id]
+      const ops = room._index.get()
+      let messages_count = 0
+      ops.forEach((entry, index) => {
+        for (const v of entry.payload.value)
+        {
+          if (v.type == "msg")
+          {
+            messages_count += 1
+          }
+        }
+      })
+      return messages_count
+    }
+  }
+
 
   async startConvoRoom(remote_eth_address) {
     let writers = [this.account_key, remote_eth_address].sort()
