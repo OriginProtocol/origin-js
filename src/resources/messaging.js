@@ -472,7 +472,13 @@ class Messaging extends ResourceBase {
           const buffer = this.decryptMsg(v.i, v.emsg, key)
           if (buffer != undefined)
           {
-            onMessage(buffer)
+            let obj = buffer
+            try{
+              obj = JSON.parse(buffer)
+            }catch(error){
+              //pass
+            }
+            onMessage(obj, v.address)
             break
           }
         }
@@ -496,9 +502,9 @@ class Messaging extends ResourceBase {
         //we seen this already
         return
       }
-      this.processEntry(entry, conv_obj, (message) => {
+      this.processEntry(entry, conv_obj, (message, address) => {
         console.log("We got a message:", message, "on index", index)
-        this.events.emit("msg", message, index, entry.hash)
+        this.events.emit("msg", message, index, address, entry.hash)
       })
     })
 
@@ -517,8 +523,8 @@ class Messaging extends ResourceBase {
       let ops = room._index.get()
       let messages = []
       ops.forEach((entry, index) => {
-        this.processEntry(entry, conv_obj, (message) => {
-          messages.push({msg:message, index})
+        this.processEntry(entry, conv_obj, (message, address) => {
+          messages.push({msg:message, index, address, hash:entry.hash})
         })
       })
       return messages
@@ -656,8 +662,9 @@ class Messaging extends ResourceBase {
     }
     let key = this.convs[room_id].keys[0]
     const iv = CryptoJS.lib.WordArray.random(16)
-    const sha_sub = CryptoJS.enc.Base64.stringify(CryptoJS.SHA1(message)).substr(0, 6)
-    const encmsg = CryptoJS.AES.encrypt(message + sha_sub, key, {iv:iv}).toString()
+    const message_str = JSON.stringify(message)
+    const sha_sub = CryptoJS.enc.Base64.stringify(CryptoJS.SHA1(message_str)).substr(0, 6)
+    const encmsg = CryptoJS.AES.encrypt(message_str + sha_sub, key, {iv:iv}).toString()
     const iv_str = CryptoJS.enc.Base64.stringify(iv)
     this._sending_message = true
     //include a random iv str so that people can't match strings of the same message
