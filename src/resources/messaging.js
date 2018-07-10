@@ -4,6 +4,7 @@ import secp256k1 from 'secp256k1'
 import CryptoJS from 'crypto-js'
 import cryptoRandomString from 'crypto-random-string'
 import EventEmitter from 'events'
+import Ajv from 'ajv'
 
 const PROMPT_MESSAGE = "I wish to start messaging on origin protocol."
 const PROMPT_PUB_KEY = "My public messaging key is: "
@@ -13,6 +14,17 @@ const PUB_MESSAGING = "KEY_"
 const GLOBAL_KEYS = "global"
 const CONV_INIT_PREFIX = "convo-init-"
 const CONV = "conv"
+
+const MESSAGE_FORMAT = {
+  type:'object',
+  required:["created", "content"],
+  properties:{
+    content: {type:'string'},
+    created: {type:'number'}
+  }
+}
+const validator = new Ajv()
+const validateMessage = validator.compile(MESSAGE_FORMAT)
 
 const DEFAULT_ORBIT_OPTIONS = {referenceCount: 0}
 
@@ -477,11 +489,10 @@ class Messaging extends ResourceBase {
             let obj = buffer
             try{
               obj = JSON.parse(buffer)
-              
             }catch(error){
               //pass
             }
-            if (typeof(obj) != "object")
+            if (!validateMessage(obj))
             {
               //force it to be an object
               continue
@@ -682,7 +693,7 @@ class Messaging extends ResourceBase {
     return room
   }
 
-  async sendConvMessage(remote_eth_address, message) {
+  async sendConvMessage(remote_eth_address, message_obj) {
     if (this._sending_message)
     {
       console.log("There's a Message being sent!")
@@ -699,7 +710,21 @@ class Messaging extends ResourceBase {
     {
       room = await this.startConv(remote_eth_address)
     }
-    let key = this.convs[room_id].keys[0]
+
+    if (typeof(message_obj) == "string")
+    {
+      message_obj = {content:message_obj}
+    }
+    const message = Object.assign({}, message_obj)
+    //set timestamp
+    message.created = Date.now()
+
+    if (!validateMessage(message))
+    {
+      console.log("Errors validating:", message, " errors: ", validator.errors)
+      return false
+    }
+    const key = this.convs[room_id].keys[0]
     const iv = CryptoJS.lib.WordArray.random(16)
     const message_str = JSON.stringify(message)
     const sha_sub = CryptoJS.enc.Base64.stringify(CryptoJS.SHA1(message_str)).substr(0, 6)
