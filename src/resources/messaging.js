@@ -204,12 +204,15 @@ class Messaging extends ResourceBase {
   initConvs(){
       this.main_orbit.keystore.registerSignVerify(CONV_INIT_PREFIX, this.signInitPair.bind(this), this.verifyConversationSignature.bind(this),
         message => {
-          console.log("pending conversations...", message.payload.key)
-          this.events.emit("pending_conv", message.payload.key)
-
-          if (this.account)
+          let eth_address = message.id.substr(-42) //hopefully the last 42 is the eth address
+          console.log("verifying conv-init", eth_address, " vs ", this.account_key)
+          if (eth_address == this.account_key)
           {
-            this.startConvoRoom(message.payload.key)
+            console.log("pending conversations...", message.payload.key)
+            this.events.emit("pending_conv", message.payload.key)
+            const remote_address = message.payload.key
+            this.startConvoRoom(remote_address)
+            this.getConvo(remote_address)
           }
         }
       )
@@ -471,11 +474,11 @@ class Messaging extends ResourceBase {
         if(v.address == this.account_key)
         {
           let key = this.ec_decrypt(v.ekey)
-          if (!conv_obj.keys.includes(key))
+          if (key && !conv_obj.keys.includes(key))
           {
             conv_obj.keys.push(key)
+            console.log("Extrtacted key is:", key)
           }
-          console.log("Extrtacted key is:", key)
         }
       }
       else if (v.type == "msg")
@@ -501,10 +504,10 @@ class Messaging extends ResourceBase {
             decrypted = true
             break
           }
-          if(!decrypted && onEncrypted)
-          {
-            onEncrypted(v.emsg, v.address)
-          }
+        }
+        if(!decrypted && onEncrypted)
+        {
+          onEncrypted(v.emsg, v.address)
         }
       }
     }
@@ -650,7 +653,10 @@ class Messaging extends ResourceBase {
   }
 
   ec_decrypt(buffer) {
-    return this.ecies.decrypt(new Buffer(this.account.privateKey.substring(2), "hex"), new Buffer(buffer, "hex")).toString("utf8")
+    if (this.account)
+    {
+      return this.ecies.decrypt(new Buffer(this.account.privateKey.substring(2), "hex"), new Buffer(buffer, "hex")).toString("utf8")
+    }
   }
 
   canConverse(remote_eth_address) {
