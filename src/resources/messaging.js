@@ -240,7 +240,8 @@ class Messaging extends ResourceBase {
         this.refreshIntervalId = setInterval(this.refreshPeerList.bind(this), 5000)
 
         let main_keystore = new InsertOnlyKeystore(this.account_key, "-")
-        this.main_orbit = new this.OrbitDB(this.ipfs, "main_orbit", {keystore:main_keystore})
+        this.main_orbit = new this.OrbitDB(this.ipfs, "main_orbit"+this.account_key, {keystore:main_keystore})
+
 
         main_keystore.registerSignVerify(GLOBAL_KEYS, this.signRegistry.bind(this), this.verifyRegistrySignature.bind(this))
 
@@ -439,6 +440,10 @@ class Messaging extends ResourceBase {
     return keys.join('-')
   }
 
+  getRecipients(key) {
+    return key.split('-')
+  }
+
   getConvo(eth_address) {
     let room = CONV_INIT_PREFIX + eth_address
     return this.getShareRoom(room, "kvstore", ["*"])
@@ -522,6 +527,7 @@ class Messaging extends ResourceBase {
     let last_hashes = ignore_current_hash ? [] : conv_obj.last_hashes || []
     let ops = room._index.get()
     let hashes = ops.map((e) => e.hash)
+    const recipients = this.getRecipients(room_id)
   
     ops.forEach((entry, index) => {
       if (index == last_hashes.indexOf(entry.hash))
@@ -529,12 +535,26 @@ class Messaging extends ResourceBase {
         //we seen this already
         return
       }
-      this.processEntry(entry, conv_obj, (message, address) => {
+      this.processEntry(entry, conv_obj, (message, senderAddress) => {
         console.log("We got a message:", message, "on index", index)
-        this.events.emit("msg", message, index, address, entry.hash)
+        const obj = Object.assign({}, message, {
+          roomId: room_id,
+          index,
+          recipients,
+          senderAddress,
+          hash: entry.hash
+        })
+        this.events.emit("msg", obj)
       },  (emessage, address) => {
         console.log("We got a encrypted message:", emessage, "on index", index)
-        this.events.emit("emsg", emessage, index, address, entry.hash)
+        const obj = Object.assign({}, emessage, {
+          roomId: room_id,
+          index,
+          recipients,
+          senderAddress,
+          hash: entry.hash
+        })
+        this.events.emit("emsg", obj)
       })
     })
 
