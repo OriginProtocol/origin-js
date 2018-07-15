@@ -158,40 +158,49 @@ class ContractService {
 
   async waitTransactionFinished(
     transactionHash,
+    maxConfirmations = 0,
+    confirmationCallback,
     pollIntervalMilliseconds = 1000
   ) {
     console.log('Waiting for transaction')
     console.log(transactionHash)
-    const blockNumber = await new Promise((resolve, reject) => {
+    const receipt = await new Promise((resolve, reject) => {
       if (!transactionHash) {
         reject(`Invalid transactionHash passed: ${transactionHash}`)
         return
       }
       let txCheckTimer = null
       const txCheckTimerCallback = () => {
-        this.web3.eth.getTransaction(transactionHash, (error, transaction) => {
-          if (transaction.blockNumber != null) {
-            console.log(`Transaction mined at block ${transaction.blockNumber}`)
-            // TODO: Wait maximum number of blocks
-            // TODO (Stan): Confirm transaction *sucessful* with getTransactionReceipt()
-
-            // // TODO (Stan): Metamask web3 doesn't have this method. Probably could fix by
-            // // by doing the "copy local web3 over metamask's" technique.
-            // this.web3.eth.getTransactionReceipt(this.props.transactionHash, (error, transactionHash) => {
-            //   console.log(transactionHash)
-            // })
-
+        this.web3.eth.getTransactionReceipt(transactionHash, async (error, transactionReceipt) => {
+          // throw error
+          if (error) {
+            reject(error)
+            return
+          }
+          // log reversion and stop polling
+          if (!transactionReceipt.status) {
+            console.error(`Transaction reverted: ${transactionHash}`)
             clearInterval(txCheckTimer)
-            // Hack to wait two seconds, as results don't seem to be
-            // immediately available.
-            setTimeout(() => resolve(transaction.blockNumber), 2000)
+            return
+          }
+
+          const currentBlockNumber = await this.web3.eth.getBlockNumber()
+          const confirmationCount = currentBlockNumber - transactionReceipt.blockNumber
+          // resolve if confirmation threshold has been met
+          if (confirmationCount >= maxConfirmations) {
+            clearInterval(txCheckTimer)
+            resolve(transactionReceipt)
+          }
+
+          if (typeof confirmationCallback === 'function') {
+            confirmationCallback(transactionHash, confirmationCount)
           }
         })
       }
 
       txCheckTimer = setInterval(txCheckTimerCallback, pollIntervalMilliseconds)
     })
-    return blockNumber
+    return receipt
   }
 
   async contractFn(
@@ -225,8 +234,8 @@ class ContractService {
     transaction.tx = transaction.transactionHash
     // Decorate transaction with whenFinished promise
     if (transaction.tx !== undefined) {
-      transaction.whenFinished = async () => {
-        await this.waitTransactionFinished(transaction.tx)
+      transaction.whenFinished = async (maxConfirmations, confirmationCallback) => {
+        await this.waitTransactionFinished(transaction.tx, maxConfirmations, confirmationCallback)
       }
     }
     return transaction

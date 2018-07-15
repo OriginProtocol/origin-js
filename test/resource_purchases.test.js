@@ -231,7 +231,7 @@ describe('Purchase Resource', function() {
     })
   })
 
-  describe('transactions have a whenMined promise', async () => {
+  describe('transactions have a whenFinished promise', async () => {
     before(async () => {
       await resetUnitListingAndPurchase()
     })
