@@ -1,6 +1,66 @@
 pragma solidity 0.4.24;
 
-import "./Ownable.sol";
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
 
 contract EvolvingRegistry is Ownable {
   struct ItemType {
@@ -83,24 +143,20 @@ contract UnitListing {
     address seller;
     uint256 created;
     uint256 expiration;
-    bool needsSellerApproval;
     uint256 price;
     uint256 unitsAvailable;
-    bytes32 ipfsHash;
   }
 
   struct Purchase {
     Stages internalStage;
-    uint256 listingIndex;
     address buyer;
     uint256 created;
     uint256 buyerTimeout;
-    uint256 listingVersion;
-    bytes32 ipfsHash;
   }
 
   Listing[] public listings;
-  mapping(uint256 => Purchase[]) public listingPurchases;
+  Purchase[] public purchases;
+  mapping(uint256 => uint256[]) public listingPurchases;
 
   constructor(EvolvingRegistry _listingRegistry) public {
     listingRegistry = _listingRegistry;
@@ -113,19 +169,16 @@ contract UnitListing {
   function getPurchase(uint256 _listingIndex, uint256 _purchaseIndex)
     public
     constant
-    returns (Stages, address, uint256, uint256, uint256, bytes32) {
+    returns (Stages, address, uint256, uint256) {
     return (
-      listingPurchases[_listingIndex][_purchaseIndex].internalStage,
-      listingPurchases[_listingIndex][_purchaseIndex].buyer,
-      listingPurchases[_listingIndex][_purchaseIndex].created,
-      listingPurchases[_listingIndex][_purchaseIndex].buyerTimeout,
-      listingPurchases[_listingIndex][_purchaseIndex].listingVersion,
-      listingPurchases[_listingIndex][_purchaseIndex].ipfsHash
+      purchases[listingPurchases[_listingIndex][_purchaseIndex]].internalStage,
+      purchases[listingPurchases[_listingIndex][_purchaseIndex]].buyer,
+      purchases[listingPurchases[_listingIndex][_purchaseIndex]].created,
+      purchases[listingPurchases[_listingIndex][_purchaseIndex]].buyerTimeout
     );
   }
 
   function createListing (
-    bytes32 _ipfsHash,
     uint256 _price,
     uint256 _unitsAvailable
   ) public {
@@ -133,11 +186,54 @@ contract UnitListing {
       msg.sender,
       now,
       now + 60 days,
-      false,
       _price,
-      _unitsAvailable,
-      _ipfsHash
+      _unitsAvailable
     ));
     listingRegistry.addEntry(listings.length - 1);
+  }
+
+  function getListing (uint256 _index)
+    public
+    view
+    returns (address _seller, uint _created, uint _expiration, uint _price, uint _unitsAvailable)
+  {
+    return (
+      listings[_index].seller,
+      listings[_index].created,
+      listings[_index].expiration,
+      listings[_index].price,
+      listings[_index].unitsAvailable
+    );
+  }
+
+  function buyListing (uint256 _index, uint256 _unitsToBuy)
+    public
+    payable
+    isNotSeller(_index)
+    hasNotExpired(_index)
+  {
+    require(_unitsToBuy <= listings[_index].unitsAvailable);
+    purchases.push(Purchase(
+      Stages.AWAITING_PAYMENT,
+      msg.sender,
+      now,
+      now + 21 days
+    ));
+    listingPurchases[_index].push(purchases.length - 1);
+  }
+
+  function close(uint256 _index)
+    public
+    isSeller(_index)
+  {
+    listings[_index].unitsAvailable = 0;
+  }
+
+  function listingsLength()
+    public
+    constant
+    returns (uint256)
+  {
+      return listings.length;
   }
 }
