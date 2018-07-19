@@ -14,6 +14,13 @@ const PUB_MESSAGING = "KEY_"
 const GLOBAL_KEYS = "global"
 const CONV_INIT_PREFIX = "convo-init-"
 const CONV = "conv"
+const UNREAD_STATUS = 'unread'
+const READ_STATUS = 'read'
+
+const storeKeys = {
+  messageSubscriptionStart: 'message_subscription_start',
+  messageStatuses: 'message_statuses'
+}
 
 const MESSAGE_FORMAT = {
   type:'object',
@@ -128,6 +135,13 @@ class Messaging extends ResourceBase {
     this.convs = {}
     this.ecies = ecies
     this.events = new EventEmitter()
+
+    if (!localStorage.getItem(storeKeys.messageSubscriptionStart)) {
+      localStorage.setItem(storeKeys.messageSubscriptionStart, JSON.stringify(Date.now()))
+    }
+    if (!localStorage.getItem(storeKeys.messageStatuses)) {
+      localStorage.setItem(storeKeys.messageStatuses, JSON.stringify({}))
+    }
   }
 
   onAccount(account_key)
@@ -202,23 +216,23 @@ class Messaging extends ResourceBase {
   }
 
   initConvs(){
-      this.main_orbit.keystore.registerSignVerify(CONV_INIT_PREFIX, this.signInitPair.bind(this), this.verifyConversationSignature.bind(this),
-        message => {
-          let eth_address = message.id.substr(-42) //hopefully the last 42 is the eth address
-          console.log("verifying conv-init", eth_address, " vs ", this.account_key)
-          if (eth_address == this.account_key)
-          {
-            console.log("pending conversations...", message.payload.key)
-            this.events.emit("pending_conv", message.payload.key)
-            const remote_address = message.payload.key
-            this.startConvoRoom(remote_address)
-            this.getConvo(remote_address)
-          }
+    this.main_orbit.keystore.registerSignVerify(CONV_INIT_PREFIX, this.signInitPair.bind(this), this.verifyConversationSignature.bind(this),
+      message => {
+        let eth_address = message.id.substr(-42) //hopefully the last 42 is the eth address
+        console.log("verifying conv-init", eth_address, " vs ", this.account_key)
+        if (eth_address == this.account_key)
+        {
+          console.log("pending conversations...", message.payload.key)
+          this.events.emit("pending_conv", message.payload.key)
+          const remote_address = message.payload.key
+          this.startConvoRoom(remote_address)
+          this.getConvo(remote_address)
         }
-      )
-      this.main_orbit.keystore.registerSignVerify(CONV, this.signInitPair.bind(this), this.verifyMessageSignature.bind(this))
+      }
+    )
+    this.main_orbit.keystore.registerSignVerify(CONV, this.signInitPair.bind(this), this.verifyMessageSignature.bind(this))
 
-      this.watchMyConv()
+    this.watchMyConv()
   }
 
   orbitStoreOptions(options) {
@@ -338,28 +352,28 @@ class Messaging extends ResourceBase {
   }
 
   async initMessaging() {
-      let entry = this.getRemoteMessagingSig()
+    let entry = this.getRemoteMessagingSig()
 
-      if (!(this.pub_sig && this.pub_msg))
+    if (!(this.pub_sig && this.pub_msg))
+    {
+      if (entry)
       {
-        if (entry)
-        {
-          this.pub_sig = entry.sig
-          this.pub_msg = entry.msg
-        }
-        else
-        {
-          await this.promptForSignature()
-        }
+        this.pub_sig = entry.sig
+        this.pub_msg = entry.msg
       }
-      else if (!entry)
+      else
       {
-        console.log("We are not prompting for anything...")
-        this.setRemoteMessagingSig()
+        await this.promptForSignature()
       }
-      console.log("ready for conversations...")
-      this.events.emit("ready", this.account_key)
-      this.loadMyConvs()
+    }
+    else if (!entry)
+    {
+      console.log("We are not prompting for anything...")
+      this.setRemoteMessagingSig()
+    }
+    console.log("ready for conversations...")
+    this.events.emit("ready", this.account_key)
+    this.loadMyConvs()
   }
 
   getRemoteMessagingSig() {
@@ -430,6 +444,11 @@ class Messaging extends ResourceBase {
       return r
     }
 
+  }
+
+  isRoomId(str)
+  {
+    return str.includes('-')
   }
 
   joinConversationKey(converser1, converser2)
@@ -528,33 +547,48 @@ class Messaging extends ResourceBase {
     let ops = room._index.get()
     let hashes = ops.map((e) => e.hash)
     const recipients = this.getRecipients(room_id)
-  
+    const messageStatuses = JSON.parse(
+      localStorage.getItem(
+        storeKeys.messageStatuses
+      )
+    )
+    //convert stored timestamp string to date
+    const subscriptionStart = new Date(+
+      localStorage.getItem(
+        storeKeys.messageSubscriptionStart
+      )
+    )
+
     ops.forEach((entry, index) => {
       if (index == last_hashes.indexOf(entry.hash))
       {
         //we seen this already
         return
       }
-      this.processEntry(entry, conv_obj, (message, senderAddress) => {
-        console.log("We got a message:", message, "on index", index)
-        const obj = Object.assign({}, message, {
+
+      const withStatus = (obj, senderAddress) => {
+        const isWatched = obj.created > subscriptionStart
+        const status =
+          isWatched && messageStatuses[entry.hash] !== READ_STATUS
+            ? UNREAD_STATUS
+            : READ_STATUS
+
+        return Object.assign({}, obj, {
+          hash: entry.hash,
           roomId: room_id,
           index,
           recipients,
           senderAddress,
-          hash: entry.hash
+          status
         })
-        this.events.emit("msg", obj)
+      }
+
+      this.processEntry(entry, conv_obj, (message, address) => {
+        console.log("We got a message:", message, "on index", index)
+        this.events.emit("msg", withStatus(message, address))
       },  (emessage, address) => {
         console.log("We got a encrypted message:", emessage, "on index", index)
-        const obj = Object.assign({}, emessage, {
-          roomId: room_id,
-          index,
-          recipients,
-          senderAddress,
-          hash: entry.hash
-        })
-        this.events.emit("emsg", obj)
+        this.events.emit("emsg", withStatus(emessage, address))
       })
     })
 
@@ -719,13 +753,20 @@ class Messaging extends ResourceBase {
     return room
   }
 
-  async sendConvMessage(remote_eth_address, message_obj) {
+  async sendConvMessage(room_id_or_address, message_obj) {
     if (this._sending_message)
     {
       console.log("There's a Message being sent!")
       return false
     }
-    let room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    let remote_eth_address, room_id
+    if (this.isRoomId(room_id_or_address)) {
+      room_id = room_id_or_address
+      remote_eth_address = this.getRecipients(room_id).find(addr => addr !== this.account_key)
+    } else {
+      remote_eth_address = room_id_or_address
+      room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    }
     let room
     console.log("sending to:", room_id)
     if (this.convs[room_id] && this.convs[room_id].keys.length)
@@ -736,7 +777,10 @@ class Messaging extends ResourceBase {
     {
       room = await this.startConv(remote_eth_address)
     }
-
+    if (!room)
+    {
+      return
+    }
     if (typeof(message_obj) == "string")
     {
       message_obj = {content:message_obj}
@@ -761,6 +805,18 @@ class Messaging extends ResourceBase {
     await room.add([{type:"msg", emsg:encmsg, i:iv_str, address: this.account_key}])
     this._sending_message = false
     return true
+  }
+
+  // we allow the entire message to be passed in (for consistency with other resources + convenience)
+  // however all we are updating is the status
+  set({ hash, status }) {
+    const messageStatuses = JSON.parse(
+      localStorage.getItem(
+        storeKeys.messageStatuses
+      )
+    )
+    messageStatuses[hash] = status
+    localStorage.setItem(storeKeys.messageStatuses, JSON.stringify(messageStatuses))
   }
 }
 
