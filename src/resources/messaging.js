@@ -158,15 +158,15 @@ class Messaging extends ResourceBase {
   }
 
   initKeys() {
-      const sig_key = this.getMessagingKey()
-      if (sig_key)
-      {
-        this.setAccount(sig_key)
-      }
-      else
-      {
-        this.promptInit()
-      }
+    const sig_key = this.getMessagingKey()
+    if (sig_key)
+    {
+      this.setAccount(sig_key)
+    }
+    else
+    {
+      this.promptInit()
+    }
   }
 
 
@@ -716,10 +716,7 @@ class Messaging extends ResourceBase {
   canConverse(remote_eth_address) {
     if (remote_eth_address != this.account_key)
     {
-      let entry = this.global_keys.get(remote_eth_address)
-      if(entry) {
-        return true
-      }
+      return this.global_keys && this.global_keys.get(remote_eth_address)
     }
     return false
   }
