@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 import "../EvolvingRegistry.sol";
 
-contract UnitListingType {
+contract ListingsV01 {
   EvolvingRegistry listingRegistry;
 
   modifier isSeller(uint256 _listingIndex) {
