@@ -47,7 +47,7 @@ contract UnitListingType {
     uint256 buyerTimeout;
   }
 
-  Listing[] public listings;
+  mapping(uint256 => Listing) public listings;
   Purchase[] public purchases;
   mapping(uint256 => uint256[]) public listingPurchases;
 
@@ -75,58 +75,50 @@ contract UnitListingType {
     uint256 _price,
     uint256 _unitsAvailable
   ) public {
-    listings.push(Listing(
+    uint256 entryId = listingRegistry.addEntry();
+    listings[entryId] = Listing(
       msg.sender,
       now,
       now + 60 days,
       _price,
       _unitsAvailable
-    ));
-    listingRegistry.addEntry(listings.length - 1);
+    );
   }
 
-  function getListing (uint256 _index)
+  function getListing (uint256 _listingIndex)
     public
     view
     returns (address _seller, uint _created, uint _expiration, uint _price, uint _unitsAvailable)
   {
     return (
-      listings[_index].seller,
-      listings[_index].created,
-      listings[_index].expiration,
-      listings[_index].price,
-      listings[_index].unitsAvailable
+      listings[_listingIndex].seller,
+      listings[_listingIndex].created,
+      listings[_listingIndex].expiration,
+      listings[_listingIndex].price,
+      listings[_listingIndex].unitsAvailable
     );
   }
 
-  function buyListing (uint256 _index, uint256 _unitsToBuy)
+  function buyListing (uint256 _listingIndex, uint256 _unitsToBuy)
     public
     payable
-    isNotSeller(_index)
-    hasNotExpired(_index)
+    isNotSeller(_listingIndex)
+    hasNotExpired(_listingIndex)
   {
-    require(_unitsToBuy <= listings[_index].unitsAvailable);
+    require(_unitsToBuy <= listings[_listingIndex].unitsAvailable);
     purchases.push(Purchase(
       Stages.AWAITING_PAYMENT,
       msg.sender,
       now,
       now + 21 days
     ));
-    listingPurchases[_index].push(purchases.length - 1);
+    listingPurchases[_listingIndex].push(purchases.length - 1);
   }
 
-  function close(uint256 _index)
+  function close(uint256 _listingIndex)
     public
-    isSeller(_index)
+    isSeller(_listingIndex)
   {
-    listings[_index].unitsAvailable = 0;
-  }
-
-  function listingsLength()
-    public
-    constant
-    returns (uint256)
-  {
-      return listings.length;
+    listings[_listingIndex].unitsAvailable = 0;
   }
 }
