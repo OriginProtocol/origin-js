@@ -24,7 +24,7 @@ contract EvolvingRegistry is Ownable {
   uint16[] public entries;
 
   function addEntryType(address _contractAddress, bytes31 _name) public onlyOwner() {
-    uint16 entryTypeIndex = entryTypeLength - 1;
+    uint16 entryTypeIndex = entryTypeLength;
     entryTypes[entryTypeIndex] = EntryType(_contractAddress, _name, true);
     entryTypesByAddress[_contractAddress] = entryTypeIndex;
     entryTypeLength++;
