@@ -443,20 +443,19 @@ class Messaging extends ResourceBase {
       await r.load()
       return r
     }
-
   }
 
-  isRoomId(str)
-  {
-    return str.includes('-')
-  }
-
-  joinConversationKey(converser1, converser2)
+  generateRoomId(converser1, converser2)
   {
     let keys = [converser1, converser2]
     keys.sort()
 
     return keys.join('-')
+  }
+
+  isRoomId(str)
+  {
+    return str.includes('-')
   }
 
   getRecipients(key) {
@@ -599,7 +598,7 @@ class Messaging extends ResourceBase {
 
   getAllMessages(remote_eth_address)
   {
-    let room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    let room_id = this.generateRoomId(this.account_key, remote_eth_address)
     let conv_obj = this.convs[room_id]
 
     if (conv_obj){
@@ -617,7 +616,7 @@ class Messaging extends ResourceBase {
 
   getAllRawMessages(remote_eth_address)
   {
-    let room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    let room_id = this.generateRoomId(this.account_key, remote_eth_address)
     let conv_obj = this.convs[room_id]
 
     if (conv_obj){
@@ -636,7 +635,7 @@ class Messaging extends ResourceBase {
 
   getMessagesCount(remote_eth_address)
   {
-    let room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+    let room_id = this.generateRoomId(this.account_key, remote_eth_address)
     let conv_obj = this.convs[room_id]
 
     if (conv_obj){
@@ -659,7 +658,7 @@ class Messaging extends ResourceBase {
 
   async startConvoRoom(remote_eth_address) {
     let writers = [this.account_key, remote_eth_address].sort()
-    let room_id = this.joinConversationKey(...writers)
+    let room_id = this.generateRoomId(...writers)
     let room = await this.getShareRoom(CONV, "eventlog", writers,
         (room) => {
           room.events.on("write", (dbname, entry, items) => {
@@ -762,7 +761,7 @@ class Messaging extends ResourceBase {
       remote_eth_address = this.getRecipients(room_id).find(addr => addr !== this.account_key)
     } else {
       remote_eth_address = room_id_or_address
-      room_id = this.joinConversationKey(this.account_key, remote_eth_address)
+      room_id = this.generateRoomId(this.account_key, remote_eth_address)
     }
     let room
     console.log("sending to:", room_id)
