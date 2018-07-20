@@ -45,24 +45,6 @@ contract V01_Listings {
     listingRegistry = _listingRegistry;
   }
 
-  function purchasesLength(uint256 _listingIndex) public constant returns (uint) {
-    return listings[_listingIndex].purchaseIndices.length;
-  }
-
-  function getPurchase(uint256 _listingIndex, uint256 _purchaseIndex)
-    public
-    constant
-    returns (Stages, address, uint32) {
-      Listing memory listing = listings[_listingIndex];
-      uint256 globalPurchaseIndex = listing.purchaseIndices[_purchaseIndex];
-      Purchase memory purchase = purchases[globalPurchaseIndex];
-      return (
-        purchase.stage,
-        purchase.buyer,
-        purchase.expiration
-      );
-  }
-
   function createListing(bytes32 _ipfsHash) public {
     uint256 entryId = listingRegistry.addEntry();
     Listing memory listing = Listing(
@@ -108,5 +90,23 @@ contract V01_Listings {
       escrowContract
     ));
     listings[_listingIndex].purchaseIndices.push(purchases.length - 1);
+  }
+
+  function purchasesLength(uint256 _listingIndex) public constant returns (uint) {
+    return listings[_listingIndex].purchaseIndices.length;
+  }
+
+  function getPurchase(uint256 _listingIndex, uint256 _purchaseIndex)
+    public
+    constant
+    returns (Stages, address, uint32) {
+      Listing memory listing = listings[_listingIndex];
+      uint256 globalPurchaseIndex = listing.purchaseIndices[_purchaseIndex];
+      Purchase memory purchase = purchases[globalPurchaseIndex];
+      return (
+        purchase.stage,
+        purchase.buyer,
+        purchase.expiration
+      );
   }
 }
