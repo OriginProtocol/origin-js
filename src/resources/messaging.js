@@ -800,7 +800,7 @@ class Messaging extends ResourceBase {
     //include a random iv str so that people can't match strings of the same message
     await room.add([{type:"msg", emsg:encmsg, i:iv_str, address: this.account_key}])
     this._sending_message = false
-    return true
+    return room_id
   }
 
   // we allow the entire message to be passed in (for consistency with other resources + convenience)
