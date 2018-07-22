@@ -115,6 +115,50 @@ contract V01_Listings {
     purchases[globalPurchaseIndex].stage = Stages.BUYER_CANCELED;
   }
 
+  function acceptPurchaseRequest(uint256 _listingIndex, uint256 _purchaseIndex)
+    public
+    payable
+    isSeller(_listingIndex)
+    isAtStage(_listingIndex, _purchaseIndex, Stages.BUYER_REQUESTED)
+  {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    purchases[globalPurchaseIndex].stage = Stages.SELLER_ACCEPTED;
+  }
+
+  function rejectPurchaseRequest(uint256 _listingIndex, uint256 _purchaseIndex)
+    public
+    payable
+    isSeller(_listingIndex)
+    isAtStage(_listingIndex, _purchaseIndex, Stages.BUYER_REQUESTED)
+  {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
+    escrow.cancel();
+    purchases[globalPurchaseIndex].stage = Stages.SELLER_REJECTED;
+  }
+
+  function buyerFinalizePurchase(uint256 _listingIndex, uint256 _purchaseIndex)
+    public
+    payable
+    isBuyer(_listingIndex, _purchaseIndex)
+    isAtStage(_listingIndex, _purchaseIndex, Stages.SELLER_ACCEPTED)
+  {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    purchases[globalPurchaseIndex].stage = Stages.BUYER_FINALIZED;
+  }
+
+  function sellerFinalizePurchase(uint256 _listingIndex, uint256 _purchaseIndex)
+    public
+    payable
+    isSeller(_listingIndex)
+    isAtStage(_listingIndex, _purchaseIndex, Stages.BUYER_FINALIZED)
+  {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
+    escrow.complete();
+    purchases[globalPurchaseIndex].stage = Stages.SELLER_FINALIZED;
+  }
+
   function purchasesLength(uint256 _listingIndex) public constant returns (uint) {
     return listings[_listingIndex].purchaseIndices.length;
   }
