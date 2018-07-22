@@ -11,13 +11,26 @@ contract V01_Listings {
     _;
   }
 
+  modifier isBuyer(uint256 _listingIndex, uint256 _purchaseIndex) {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    require(msg.sender == purchases[globalPurchaseIndex].buyer);
+    _;
+  }
+
   modifier isNotSeller(uint256 _listingIndex) {
     require(msg.sender != listings[_listingIndex].seller);
     _;
   }
 
+  modifier isAtStage(uint256 _listingIndex, uint256 _purchaseIndex, Stages _stage) {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    require(purchases[globalPurchaseIndex].stage == _stage);
+    _;
+  }
+
   enum Stages {
     BUYER_REQUESTED,
+    BUYER_CANCELED,
     SELLER_ACCEPTED,
     SELLER_REJECTED,
     BUYER_FINALIZED,
@@ -33,7 +46,6 @@ contract V01_Listings {
   struct Purchase {
     Stages stage;
     address buyer;
-    uint32 expiration;
     address escrowContract;
   }
 
@@ -77,7 +89,7 @@ contract V01_Listings {
     );
   }
 
-  function requestPurchase(uint256 _listingIndex, uint32 _expiration)
+  function requestPurchase(uint256 _listingIndex)
     public
     payable
     isNotSeller(_listingIndex)
@@ -86,10 +98,21 @@ contract V01_Listings {
     purchases.push(Purchase(
       Stages.BUYER_REQUESTED,
       msg.sender,
-      _expiration,
       escrowContract
     ));
     listings[_listingIndex].purchaseIndices.push(purchases.length - 1);
+  }
+
+  function cancelPurchaseRequest(uint256 _listingIndex, uint256 _purchaseIndex)
+    public
+    payable
+    isBuyer(_listingIndex, _purchaseIndex)
+    isAtStage(_listingIndex, _purchaseIndex, Stages.BUYER_REQUESTED)
+  {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
+    purchases[globalPurchaseIndex].stage = Stages.BUYER_CANCELED;
+    escrow.release();
   }
 
   function purchasesLength(uint256 _listingIndex) public constant returns (uint) {
@@ -99,14 +122,12 @@ contract V01_Listings {
   function getPurchase(uint256 _listingIndex, uint256 _purchaseIndex)
     public
     constant
-    returns (Stages, address, uint32) {
-      Listing memory listing = listings[_listingIndex];
-      uint256 globalPurchaseIndex = listing.purchaseIndices[_purchaseIndex];
+    returns (Stages, address) {
+      uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
       Purchase memory purchase = purchases[globalPurchaseIndex];
       return (
         purchase.stage,
-        purchase.buyer,
-        purchase.expiration
+        purchase.buyer
       );
   }
 }
