@@ -94,7 +94,7 @@ contract V01_Listings {
     payable
     isNotSeller(_listingIndex)
   {
-    address escrowContract = (new V01_Escrow).value(msg.value)(msg.sender);
+    address escrowContract = (new V01_Escrow).value(msg.value)(msg.sender, listings[_listingIndex].seller);
     purchases.push(Purchase(
       Stages.BUYER_REQUESTED,
       msg.sender,
@@ -111,8 +111,8 @@ contract V01_Listings {
   {
     uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
     V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
+    escrow.cancel();
     purchases[globalPurchaseIndex].stage = Stages.BUYER_CANCELED;
-    escrow.release();
   }
 
   function purchasesLength(uint256 _listingIndex) public constant returns (uint) {
@@ -122,12 +122,13 @@ contract V01_Listings {
   function getPurchase(uint256 _listingIndex, uint256 _purchaseIndex)
     public
     constant
-    returns (Stages, address) {
+    returns (Stages, address, address _escrowContract) {
       uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
       Purchase memory purchase = purchases[globalPurchaseIndex];
       return (
         purchase.stage,
-        purchase.buyer
+        purchase.buyer,
+        purchase.escrowContract
       );
   }
 }
