@@ -208,7 +208,8 @@ class ContractService {
     address,
     functionName,
     args = [],
-    options = {}
+    options = {},
+    confirmationCallback
   ) {
     // Setup options
     const opts = Object.assign(options, {}) // clone options
@@ -227,6 +228,11 @@ class ContractService {
         .send(opts)
         .on('receipt', receipt => {
           resolve(receipt)
+        })
+        .on('confirmation', confirmationNumber => {
+          if (confirmationCallback) {
+            confirmationCallback(confirmationNumber)
+          }
         })
         .on('error', err => reject(err))
     })
