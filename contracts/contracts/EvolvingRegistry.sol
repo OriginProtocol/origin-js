@@ -3,6 +3,10 @@ pragma solidity 0.4.24;
 import "./Ownable.sol";
 
 contract EvolvingRegistry is Ownable {
+  event NewEntryType(uint16 _entryTypeIndex);
+  event EntryTypeUpdate(uint16 _entryTypeIndex);
+  event NewEntry(uint256 _entryIndex);
+
   struct EntryType {
     address contractAddress;
     bytes31 name;
@@ -28,18 +32,22 @@ contract EvolvingRegistry is Ownable {
     entryTypes[entryTypeIndex] = EntryType(_contractAddress, _name, true);
     entryTypesByAddress[_contractAddress] = entryTypeIndex;
     entryTypeLength++;
+    emit NewEntryType(entryTypeIndex);
   }
 
   function disableEntryType(uint16 _entryTypeIndex) public onlyOwner() {
     entryTypes[_entryTypeIndex].isEnabled = false;
+    emit EntryTypeUpdate(_entryTypeIndex);
   }
 
   function enableEntryType(uint16 _entryTypeIndex) public onlyOwner() {
     entryTypes[_entryTypeIndex].isEnabled = true;
+    emit EntryTypeUpdate(_entryTypeIndex);
   }
 
   function renameEntryType(uint16 _entryTypeIndex, bytes31 _name) public onlyOwner() {
     entryTypes[_entryTypeIndex].name = _name;
+    emit EntryTypeUpdate(_entryTypeIndex);
   }
 
   function size() public constant returns (uint256) {
@@ -50,7 +58,9 @@ contract EvolvingRegistry is Ownable {
     uint16 _entryTypeIndex = entryTypesByAddress[msg.sender];
     require(entryTypes[_entryTypeIndex].isEnabled);
     entries.push(_entryTypeIndex);
-    return entries.length - 1;
+    uint256 entryIndex = entries.length - 1;
+    emit NewEntry(entryIndex);
+    return entryIndex;
   }
 
   function getEntryType(uint16 _entryTypeIndex) public constant returns (address, bytes31, bool) {
