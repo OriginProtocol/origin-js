@@ -231,17 +231,17 @@ describe('Purchase Resource', function() {
     })
   })
 
-  describe('transactions have a whenFinished promise', async () => {
+  describe('transactions return a transaction receipt', async () => {
     before(async () => {
       await resetUnitListingAndPurchase()
     })
 
-    it('should allow us to wait for a transaction to be mined', async () => {
+    it('should include the transaction hash', async () => {
       const transaction = await purchases.pay(
         purchase.address,
         contractService.web3.utils.toWei('0.1', 'ether')
       )
-      await transaction.whenFinished()
+      expect(transaction.transactionHash).to.match(/^0x([A-Fa-f0-9]{64})$/)
     })
   })
 

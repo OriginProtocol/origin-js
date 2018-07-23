@@ -164,7 +164,7 @@ class Listings extends ResourceBase {
     return await this.updateFractional(address, data)
   }
 
-  async buy(address, unitsToBuy, ethToPay) {
+  async buy(address, unitsToBuy, ethToPay, confirmationCallback) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
     const value = this.contractService.web3.utils.toWei(
       String(ethToPay),
@@ -178,7 +178,8 @@ class Listings extends ResourceBase {
       {
         value: value,
         gas: 850000
-      }
+      },
+      confirmationCallback
     )
   }
 
@@ -202,11 +203,14 @@ class Listings extends ResourceBase {
     )
   }
 
-  async close(address) {
+  async close(address, confirmationCallback) {
     return await this.contractService.contractFn(
       this.contractService.unitListingContract,
       address,
-      'close'
+      'close',
+      undefined,
+      undefined,
+      confirmationCallback
     )
   }
 

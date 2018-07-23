@@ -156,53 +156,24 @@ class ContractService {
     return txReceipt
   }
 
-  async waitTransactionFinished(
-    transactionHash,
-    maxConfirmations = 0,
-    confirmationCallback,
-    pollIntervalMilliseconds = 1000
-  ) {
-    console.log('Waiting for transaction')
-    console.log(transactionHash)
-    const receipt = await new Promise((resolve, reject) => {
-      if (!transactionHash) {
-        reject(`Invalid transactionHash passed: ${transactionHash}`)
-        return
-      }
-      let txCheckTimer = null
-      const txCheckTimerCallback = () => {
-        this.web3.eth.getTransactionReceipt(transactionHash, async (error, transactionReceipt) => {
-          // throw error
-          if (error) {
-            reject(error)
-            return
-          }
-          // log reversion and stop polling
-          if (!transactionReceipt.status) {
-            console.error(`Transaction reverted: ${transactionHash}`)
-            clearInterval(txCheckTimer)
-            return
-          }
-
-          const currentBlockNumber = await this.web3.eth.getBlockNumber()
-          const confirmationCount = currentBlockNumber - transactionReceipt.blockNumber
-          // resolve if confirmation threshold has been met
-          if (confirmationCount >= maxConfirmations) {
-            clearInterval(txCheckTimer)
-            resolve(transactionReceipt)
-          }
-
-          if (typeof confirmationCallback === 'function') {
-            confirmationCallback(transactionHash, confirmationCount)
-          }
-        })
-      }
-
-      txCheckTimer = setInterval(txCheckTimerCallback, pollIntervalMilliseconds)
-    })
-    return receipt
-  }
-
+  /**
+   * Runs a call or transaction on a this resource's smart contract.
+   *
+   * This handles getting the contract, using the correct account,
+   * and building our own response for origin transactions.
+   *
+   * If doing a blockchain call, this returns the data returned by
+   * the contract function.
+   *
+   * If running a transaction, this returns the transaction receipt object
+   *
+   * @param {object} contractDefinition - JSON representation of the contract
+   * @param {string} address - address of the contract
+   * @param {string} functionName - contract function to be run
+   * @param {*[]} args - args for the transaction or call.
+   * @param {{gas: number, value:(number | BigNumber)}} options - transaction options for w3
+   * @param {function} confirmationCallback - an optional function that will be called on each block confirmation
+   */
   async contractFn(
     contractDefinition,
     address,
@@ -218,7 +189,6 @@ class ContractService {
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
     contract.options.address = address || contract.options.address
-
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {
       return await method.call(opts)
@@ -226,24 +196,11 @@ class ContractService {
     const transaction = await new Promise((resolve, reject) => {
       method
         .send(opts)
-        .on('receipt', receipt => {
-          resolve(receipt)
-        })
-        .on('confirmation', confirmationNumber => {
-          if (confirmationCallback) {
-            confirmationCallback(confirmationNumber)
-          }
-        })
-        .on('error', err => reject(err))
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
     })
-
-    transaction.tx = transaction.transactionHash
-    // Decorate transaction with whenFinished promise
-    if (transaction.tx !== undefined) {
-      transaction.whenFinished = async (maxConfirmations, confirmationCallback) => {
-        await this.waitTransactionFinished(transaction.tx, maxConfirmations, confirmationCallback)
-      }
-    }
+    transaction.created = (await this.web3.eth.getBlock(transaction.blockNumber)).timestamp
     return transaction
   }
 }
