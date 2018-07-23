@@ -133,6 +133,18 @@ contract V01_Listings {
     emit PurchaseStageChange(Stages.SELLER_ACCEPTED, _ipfsHash);
   }
 
+  function acceptPurchaseAndUpdateListing(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _purchaseIpfsHash, uint256 _currentListingVersion, bytes32 _listingIpfsHash)
+    public
+    payable
+    isSeller(_listingIndex)
+    isAtStage(_listingIndex, _purchaseIndex, Stages.BUYER_REQUESTED)
+  {
+    uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
+    purchases[globalPurchaseIndex].stage = Stages.SELLER_ACCEPTED;
+    emit PurchaseStageChange(Stages.SELLER_ACCEPTED, _purchaseIpfsHash);
+    updateListing(_listingIndex, _currentListingVersion, _listingIpfsHash);
+  }
+
   function rejectPurchaseRequest(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _ipfsHash)
     public
     payable
