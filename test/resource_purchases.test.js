@@ -53,9 +53,9 @@ describe('Purchase Resource', function() {
       price: 0.2
     }
     const schema = 'for-sale'
-    const listingTransaction = await listings.create(listingData, schema)
+    const listingTransactionObj = await listings.create(listingData, schema)
 
-    const listingEvent = listingTransaction.events.NewListing
+    const listingEvent = listingTransactionObj.transactionReceipt.events.NewListing
     listing = await listings.getByIndex(listingEvent.returnValues._index)
 
     // Buy listing to create a purchase

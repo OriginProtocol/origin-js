@@ -66,11 +66,11 @@ describe('Notification Resource', function() {
     })
 
     createListing = async () => {
-      const tx = await listings.create(
+      const txObj = await listings.create(
         { name: 'Sample Listing 1', price: 1 },
         ''
       )
-      return tx.events.NewListing.returnValues._address
+      return txObj.transactionReceipt.events.NewListing.returnValues._address
     }
 
     buyListing = async listingAddress => {

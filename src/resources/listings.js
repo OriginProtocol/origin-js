@@ -373,19 +373,20 @@ class Listings extends ResourceBase {
   async submitUnitListing(ipfsListing, priceWei, units) {
     try {
       const account = await this.contractService.currentAccount()
-      const instance = await this.contractService.deployed(
-        this.contractService.listingsRegistryContract
-      )
-
-      // Note we cannot get the listingId returned by our contract.
-      // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
-      return instance.methods
-        .create(
+      return await this.contractService.contractFn(
+        this.contractService.listingsRegistryContract,
+        null,
+        'create',
+        [
           this.contractService.getBytes32FromIpfsHash(ipfsListing),
           priceWei,
           units
-        )
-        .send({ from: account, gas: 4476768 })
+        ],
+        {
+          gas: 4476768,
+          from: account
+        }
+      )
     } catch (error) {
       console.error('Error submitting to the Ethereum blockchain: ' + error)
       throw error
