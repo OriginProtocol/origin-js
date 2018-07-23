@@ -53,9 +53,9 @@ describe('Purchase Resource', function() {
       price: 0.2
     }
     const schema = 'for-sale'
-    const listingTransactionObj = await listings.create(listingData, schema)
+    const listingTransaction = await listings.create(listingData, schema)
 
-    const listingEvent = listingTransactionObj.transactionReceipt.events.NewListing
+    const listingEvent = listingTransaction.events.NewListing
     listing = await listings.getByIndex(listingEvent.returnValues._index)
 
     // Buy listing to create a purchase
@@ -82,23 +82,23 @@ describe('Purchase Resource', function() {
       priceWei: 2000,
       listingType: 'fractional'
     }
-    const listingTransaction = await listings.create(listingData)
+    const listingTransactionObj = await listings.create(listingData)
 
-    const listingEvent = listingTransaction.events.NewListing
+    const listingEvent = listingTransactionObj.transactionReceipt.events.NewListing
     listing = await listings.getByIndex(listingEvent.returnValues._index)
 
     // Buy listing to create a purchase
     const purchaseData = {
       slot: {}
     }
-    const listingTransactionObj = await asAccount(
+    const purchaseTransactionObj = await asAccount(
       contractService.web3,
       buyer,
       async () => {
         return await listings.request(listing.address, purchaseData, 1)
       }
     )
-    const purchaseEvent = listingTransactionObj.transactionReceipt.events.ListingPurchased
+    const purchaseEvent = purchaseTransactionObj.transactionReceipt.events.ListingPurchased
     purchase = await purchases.get(purchaseEvent.returnValues._purchaseContract)
   }
 
