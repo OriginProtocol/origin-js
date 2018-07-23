@@ -165,7 +165,7 @@ class ContractService {
    * If doing a blockchain call, this returns the data returned by
    * the contract function.
    *
-   * If running a transaction, this returns the transaction receipt object
+   * If running a transaction, this returns an object containing the block timestamp and the transaction receipt.
    *
    * @param {object} contractDefinition - JSON representation of the contract
    * @param {string} address - address of the contract
@@ -193,15 +193,17 @@ class ContractService {
     if (method._method.constant) {
       return await method.call(opts)
     }
-    const transaction = await new Promise((resolve, reject) => {
+    const transactionReceipt = await new Promise((resolve, reject) => {
       method
         .send(opts)
         .on('receipt', resolve)
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
-    transaction.created = (await this.web3.eth.getBlock(transaction.blockNumber)).timestamp
-    return transaction
+    return {
+      created: (await this.web3.eth.getBlock(transaction.blockNumber)).timestamp,
+      transactionReceipt,
+    }
   }
 }
 
