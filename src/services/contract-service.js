@@ -201,7 +201,7 @@ class ContractService {
         .on('error', reject)
     })
     return {
-      created: (await this.web3.eth.getBlock(transaction.blockNumber)).timestamp,
+      created: (await this.web3.eth.getBlock(transactionReceipt.blockNumber)).timestamp,
       transactionReceipt,
     }
   }
