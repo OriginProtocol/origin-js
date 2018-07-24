@@ -1,7 +1,6 @@
 const EvolvingRegistry = artifacts.require('./EvolvingRegistry.sol')
 const Listings = artifacts.require('V01_Listings.sol')
 
-
 const ipfsHash =
   '0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba'
 
@@ -14,8 +13,8 @@ contract('EvolvingRegistry', accounts => {
 
   beforeEach(async function() {
     registry = await EvolvingRegistry.new({ from: owner })
-    listingsA = await Listings.new(registry.address, {from: owner})
-    listingsB = await Listings.new(registry.address, {from: owner})
+    listingsA = await Listings.new(registry.address, { from: owner })
+    listingsB = await Listings.new(registry.address, { from: owner })
   })
 
   it('should have owner as owner of contract', async function() {
