@@ -9,7 +9,7 @@ contract EvolvingRegistry is Ownable {
 
   struct EntryType {
     address contractAddress;
-    bytes31 name;
+    string name;
     bool isEnabled;
   }
 
@@ -27,7 +27,7 @@ contract EvolvingRegistry is Ownable {
   */
   uint16[] public entries;
 
-  function addEntryType(address _contractAddress, bytes31 _name) public onlyOwner() {
+  function addEntryType(address _contractAddress, string _name) public onlyOwner() {
     uint16 entryTypeIndex = entryTypeLength;
     entryTypes[entryTypeIndex] = EntryType(_contractAddress, _name, true);
     entryTypesByAddress[_contractAddress] = entryTypeIndex;
@@ -45,7 +45,7 @@ contract EvolvingRegistry is Ownable {
     emit EntryTypeUpdate(_entryTypeIndex);
   }
 
-  function renameEntryType(uint16 _entryTypeIndex, bytes31 _name) public onlyOwner() {
+  function renameEntryType(uint16 _entryTypeIndex, string _name) public onlyOwner() {
     entryTypes[_entryTypeIndex].name = _name;
     emit EntryTypeUpdate(_entryTypeIndex);
   }
@@ -63,7 +63,7 @@ contract EvolvingRegistry is Ownable {
     return entryIndex;
   }
 
-  function getEntryType(uint16 _entryTypeIndex) public constant returns (address, bytes31, bool) {
+  function getEntryType(uint16 _entryTypeIndex) public constant returns (address, string, bool) {
     return (
       entryTypes[_entryTypeIndex].contractAddress,
       entryTypes[_entryTypeIndex].name,
@@ -71,7 +71,7 @@ contract EvolvingRegistry is Ownable {
     );
   }
 
-  function getEntryTypeOfEntry(uint256 _entryIndex) public constant returns (address, bytes31, bool) {
+  function getEntryTypeOfEntry(uint256 _entryIndex) public constant returns (address, string, bool) {
     uint16 _entryTypeIndex = entries[_entryIndex];
     return getEntryType(_entryTypeIndex);
   }
