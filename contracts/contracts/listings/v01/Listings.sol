@@ -94,6 +94,14 @@ contract V01_Listings {
     );
   }
 
+  function getListingVersion(uint256 _listingIndex)
+    public
+    view
+    returns (uint256 _listingVersion)
+  {
+    return listings[_listingIndex].ipfsVersions.length - 1;
+  }
+
   function requestPurchase(uint256 _listingIndex, bytes32 _ipfsHash)
     public
     payable
