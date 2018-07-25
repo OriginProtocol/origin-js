@@ -5,7 +5,7 @@ import '../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol
 contract EvolvingRegistry is Ownable {
   event NewEntryType(uint16 _entryTypeIndex);
   event EntryTypeUpdate(uint16 _entryTypeIndex);
-  event NewEntry(uint256 _entryIndex);
+  event NewEntry(uint256 _entryIndex, uint16 _entryTypeIndex);
 
   struct EntryType {
     address contractAddress;
@@ -66,7 +66,7 @@ contract EvolvingRegistry is Ownable {
     require(entryTypes[_entryTypeIndex].isEnabled);
     entries.push(_entryTypeIndex);
     uint256 entryIndex = entries.length - 1;
-    emit NewEntry(entryIndex);
+    emit NewEntry(entryIndex, _entryTypeIndex);
     return entryIndex;
   }
 
