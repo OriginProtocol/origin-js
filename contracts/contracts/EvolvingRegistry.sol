@@ -28,6 +28,9 @@ contract EvolvingRegistry is Ownable {
   uint16[] public entries;
 
   function addEntryType(address _contractAddress, string _name) public onlyOwner() {
+    // Don't allow the same contract address to be added twice
+    uint16 trialIndex = entryTypesByAddress[_contractAddress]; 
+    require(entryTypes[trialIndex].contractAddress != _contractAddress);
     uint16 entryTypeIndex = entryTypeLength;
     entryTypes[entryTypeIndex] = EntryType(_contractAddress, _name, true);
     entryTypesByAddress[_contractAddress] = entryTypeIndex;

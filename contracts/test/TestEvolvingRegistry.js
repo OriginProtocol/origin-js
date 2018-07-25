@@ -62,6 +62,14 @@ contract('EvolvingRegistry', accounts => {
       }
       assert(false)
     })
+    it('should not allow a contract address to be added twice', async () => {
+      try{
+        await registry.addEntryType(listingsA.address, 'Listings_V37', {
+          from: owner
+        })
+      } catch(e){ return }
+      assert(false)
+    })
     it('should enable an entry type', async () => {
       let listingType
       // Disable the type
