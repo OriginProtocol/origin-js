@@ -9,11 +9,9 @@ contract('EvolvingRegistry', accounts => {
   const seller = accounts[1]
   const stranger = accounts[2]
   const secondOwner = accounts[3]
-  let registry
-  let listingsA
-  // let listingsB
 
   describe('Ownership', async () => {
+    let registry
     beforeEach(async () => {
       registry = await EvolvingRegistry.new({ from: owner })
     })
@@ -32,19 +30,18 @@ contract('EvolvingRegistry', accounts => {
         assert.equal(await registry.owner(), owner)
         return
       }
-      // fail()
+      assert(false, 'should not allow ownership transfer')
     })
   })
 
   describe('EntryType', async () => {
     let registry
     let listingsA
-    const listingsTypeName = 'Listings_V0'
 
     beforeEach(async () => {
       registry = await EvolvingRegistry.new({ from: owner })
       listingsA = await Listings.new(registry.address, { from: owner })
-      await registry.addEntryType(listingsA.address, listingsTypeName, {
+      await registry.addEntryType(listingsA.address, 'Listings_V0', {
         from: owner
       })
     })
@@ -52,7 +49,7 @@ contract('EvolvingRegistry', accounts => {
     it('should add an entry type', async () => {
       const listingType = await registry.getEntryType(0)
       assert.equal(listingType[0], listingsA.address)
-      assert.equal(listingType[1], listingsTypeName)
+      assert.equal(listingType[1], 'Listings_V0')
       assert.equal(listingType[2], true)
     })
     it('should enable an entry type', async () => {
@@ -90,6 +87,7 @@ contract('EvolvingRegistry', accounts => {
       listingsA.createListing(IPFS_HASH, { from: seller })
       const listingType = await registry.getEntryTypeOfEntry(0)
       assert(listingType[0], listingsA.address)
+      assert(await registry.size(), 1)
     })
   })
 })
