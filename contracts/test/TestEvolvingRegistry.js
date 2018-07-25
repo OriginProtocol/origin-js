@@ -13,7 +13,6 @@ contract('EvolvingRegistry', accounts => {
   let listingsA
   // let listingsB
 
-
   describe('Ownership', async () => {
     beforeEach(async () => {
       registry = await EvolvingRegistry.new({ from: owner })
@@ -37,7 +36,6 @@ contract('EvolvingRegistry', accounts => {
     })
   })
 
-
   describe('EntryType', async () => {
     let registry
     let listingsA
@@ -45,7 +43,7 @@ contract('EvolvingRegistry', accounts => {
 
     beforeEach(async () => {
       registry = await EvolvingRegistry.new({ from: owner })
-      listingsA = await Listings.new(registry.address, { from: owner })  
+      listingsA = await Listings.new(registry.address, { from: owner })
       await registry.addEntryType(listingsA.address, listingsTypeName, {
         from: owner
       })
@@ -58,7 +56,7 @@ contract('EvolvingRegistry', accounts => {
       assert.equal(listingType[2], true)
     })
     it('should enable an entry type', async () => {
-      let listingType 
+      let listingType
       // Disable the type
       await registry.disableEntryType(0, { from: owner })
       listingType = await registry.getEntryType(0)
@@ -81,18 +79,17 @@ contract('EvolvingRegistry', accounts => {
   })
 
   describe('Adding Entries', async () => {
-    beforeEach(async ()=> {
+    beforeEach(async () => {
       registry = await EvolvingRegistry.new({ from: owner })
-      listingsA = await Listings.new(registry.address, { from: owner })  
-      await registry.addEntryType(listingsA.address, "Listings_A", {
+      listingsA = await Listings.new(registry.address, { from: owner })
+      await registry.addEntryType(listingsA.address, 'Listings_A', {
         from: owner
       })
     })
     it('should add an entry', async () => {
-      listingsA.createListing(IPFS_HASH, {from: seller})
+      listingsA.createListing(IPFS_HASH, { from: seller })
       const listingType = await registry.getEntryTypeOfEntry(0)
       assert(listingType[0], listingsA.address)
     })
   })
-
 })

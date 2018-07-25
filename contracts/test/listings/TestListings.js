@@ -17,7 +17,9 @@ contract('Listings', accounts => {
   beforeEach(async function() {
     const evolvingRegistry = await EvolvingRegistry.new({ from: deployer })
     listings = await Listings.new(evolvingRegistry.address, { from: deployer })
-    await evolvingRegistry.addEntryType(listings.address, 'listings', { from: deployer })
+    await evolvingRegistry.addEntryType(listings.address, 'listings', {
+      from: deployer
+    })
     await listings.createListing(ipfsHash_1, { from: seller })
   })
 
@@ -43,7 +45,11 @@ contract('Listings', accounts => {
 
   describe('getListing', () => {
     it('should return the listing data for the specified version', async function() {
-      const [listingSeller, ipfsHash, purchasesLength] = await listings.getListing(0)
+      const [
+        listingSeller,
+        ipfsHash,
+        purchasesLength
+      ] = await listings.getListing(0)
       assert.equal(listingSeller, seller)
       assert.equal(ipfsHash, ipfsHash_1)
       assert.equal(purchasesLength, 0)
@@ -56,7 +62,10 @@ contract('Listings', accounts => {
         from: buyer,
         value: 6
       })
-      const [stage, listingBuyer, escrowContract] = await listings.getPurchase(0, 0)
+      const [stage, listingBuyer, escrowContract] = await listings.getPurchase(
+        0,
+        0
+      )
       assert.equal(stage, 0)
       assert.equal(listingBuyer, buyer)
       assert.ok(escrowContract)
