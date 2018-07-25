@@ -29,7 +29,7 @@ contract EvolvingRegistry is Ownable {
 
   function addEntryType(address _contractAddress, string _name) public onlyOwner() {
     // Don't allow the same contract address to be added twice
-    uint16 trialIndex = entryTypesByAddress[_contractAddress]; 
+    uint16 trialIndex = entryTypesByAddress[_contractAddress];
     require(entryTypes[trialIndex].contractAddress != _contractAddress);
     uint16 entryTypeIndex = entryTypeLength;
     entryTypes[entryTypeIndex] = EntryType(_contractAddress, _name, true);
@@ -59,7 +59,7 @@ contract EvolvingRegistry is Ownable {
 
   function addEntry() public returns (uint256) {
     // This lookup will succeed and return 0 for a contract address that we don't have an entry for...
-    uint16 _entryTypeIndex = entryTypesByAddress[msg.sender]; 
+    uint16 _entryTypeIndex = entryTypesByAddress[msg.sender];
     // ...which will give us a vaild, but wrong entry type.
     // Therefore we check that we have actualy looked up the matching entry type
     require(entryTypes[_entryTypeIndex].contractAddress == msg.sender);
@@ -70,7 +70,7 @@ contract EvolvingRegistry is Ownable {
     return entryIndex;
   }
 
-  function getEntryType(uint16 _entryTypeIndex) public constant returns (address, string, bool) {
+  function getEntryType(uint16 _entryTypeIndex) public constant returns (address _contractAddress, string _name, bool _isEnabled) {
     return (
       entryTypes[_entryTypeIndex].contractAddress,
       entryTypes[_entryTypeIndex].name,
@@ -78,7 +78,7 @@ contract EvolvingRegistry is Ownable {
     );
   }
 
-  function getEntryTypeOfEntry(uint256 _entryIndex) public constant returns (address, string, bool) {
+  function getEntryTypeOfEntry(uint256 _entryIndex) public constant returns (address _contractAddress, string _name, bool _isEnabled) {
     uint16 _entryTypeIndex = entries[_entryIndex];
     return getEntryType(_entryTypeIndex);
   }
