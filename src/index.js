@@ -75,7 +75,7 @@ class Origin {
       ipfsService: this.ipfsService
     })
 
-    this.messaging = new Messaging( {
+    this.messaging = new Messaging({
       contractService: this.contractService,
       ipfsCreator,
       OrbitDB,
