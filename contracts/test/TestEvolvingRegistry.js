@@ -26,9 +26,11 @@ contract('EvolvingRegistry', accounts => {
     it('should not allow a stranger to transfer ownership', async function() {
       try {
         await registry.transferOwnership(secondOwner, { from: stranger })
-        assert(false)
-      } catch (e) {}
-      assert.equal(await registry.owner(), owner)
+        assert.equal(await registry.owner(), owner)
+      } catch (e) {
+        return
+      }
+      assert(false)
     })
   })
 
@@ -51,13 +53,14 @@ contract('EvolvingRegistry', accounts => {
       assert.equal(listingType[2], true)
     })
     it('should not allow a stranger to add an entry type', async () => {
-      const listingType = await registry.getEntryType(0)
       try {
         await registry.addEntryType(listingsA.address, 'Listings_VEVIL', {
           from: stranger
         })
-        assert(false)
-      } catch (e) {}
+      } catch (e) {
+        return
+      }
+      assert(false)
     })
     it('should enable an entry type', async () => {
       let listingType
@@ -79,10 +82,12 @@ contract('EvolvingRegistry', accounts => {
       // Renable it
       try {
         await registry.enableEntryType(0, { from: stranger })
-        assert(false)
-      } catch (e) {}
-      listingType = await registry.getEntryType(0)
-      assert.equal(listingType[2], false)
+      } catch (e) {
+        listingType = await registry.getEntryType(0)
+        assert.equal(listingType[2], false)
+        return
+      }
+      assert(false)
     })
     it('should disable an entry type', async () => {
       await registry.disableEntryType(0, { from: owner })
@@ -92,10 +97,12 @@ contract('EvolvingRegistry', accounts => {
     it('should not allow a stranger to disable an entry type', async () => {
       try {
         await registry.disableEntryType(0, { from: stranger })
-        assert(false)
-      } catch (e) {}
-      const listingType = await registry.getEntryType(0)
-      assert.equal(listingType[2], true)
+      } catch (e) {
+        const listingType = await registry.getEntryType(0)
+        assert.equal(listingType[2], true)
+        return
+      }
+      assert(false)
     })
     it('should rename an entry type', async () => {
       await registry.renameEntryType(0, 'FooBar', { from: owner })
@@ -105,10 +112,12 @@ contract('EvolvingRegistry', accounts => {
     it('should not allow a stranger to rename an entry type', async () => {
       try {
         await registry.renameEntryType(0, 'FooBar', { from: stranger })
-        assert(false)
-      } catch (e) {}
-      const listingType = await registry.getEntryType(0)
-      assert.equal(listingType[1], 'Listings_V0')
+      } catch (e) {
+        const listingType = await registry.getEntryType(0)
+        assert.equal(listingType[1], 'Listings_V0')
+        return
+      }
+      assert(false)
     })
   })
 
@@ -134,9 +143,11 @@ contract('EvolvingRegistry', accounts => {
       try {
         await listingsA.createListing(IPFS_HASH, { from: seller })
         console.log(await registry.size())
-        assert(false)
-      } catch (e) {}
-      assert(await registry.size(), 0)
+      } catch (e) {
+        assert(await registry.size(), 0)
+        return
+      }
+      assert(false)
     })
     it("should not allow a stranger's listing contract to add an entry", async () => {
       const evilListings = await Listings.new(registry.address, {
@@ -144,9 +155,11 @@ contract('EvolvingRegistry', accounts => {
       })
       try {
         await evilListings.createListing(IPFS_HASH, { from: seller })
-        assert(false)
-      } catch (e) {}
-      assert(await registry.size(), 0)
+      } catch (e) {
+        assert(await registry.size(), 0)
+        return
+      }
+      assert(false)
     })
   })
 })
