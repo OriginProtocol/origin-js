@@ -1,108 +1,98 @@
 const EvolvingRegistry = artifacts.require('./EvolvingRegistry.sol')
 const Listings = artifacts.require('V01_Listings.sol')
 
-const ipfsHash =
+const IPFS_HASH =
   '0x6b14cac30356789cd0c39fec0acc2176c3573abdb799f3b17ccc6972ab4d39ba'
 
 contract('EvolvingRegistry', accounts => {
   const owner = accounts[0]
-  const stranger = accounts[1]
+  const seller = accounts[1]
+  const stranger = accounts[2]
+  const secondOwner = accounts[3]
   let registry
   let listingsA
   let listingsB
 
-  beforeEach(async function() {
-    registry = await EvolvingRegistry.new({ from: owner })
-    listingsA = await Listings.new(registry.address, { from: owner })
-    listingsB = await Listings.new(registry.address, { from: owner })
-  })
 
-  it('should have owner as owner of contract', async function() {
-    const contractOwner = await instance.owner()
-    assert.equal(contractOwner, owner)
-  })
-
-  it('should be able to create a listing', async function() {
-    const initPrice = 2
-    const initUnitsAvailable = 5
-    await instance.create(ipfsHash, initPrice, initUnitsAvailable, {
-      from: accounts[0]
+  describe('Ownership', async () => {
+    beforeEach(async () => {
+      registry = await EvolvingRegistry.new({ from: owner })
     })
-    const listingCount = await instance.listingsLength()
-    assert.equal(
-      listingCount,
-      initialListingsLength + 1,
-      'listings count has incremented'
-    )
-    const listingAddress = await instance.getListingAddress(
-      initialListingsLength
-    )
-    const [lister, hash, price, unitsAvailable] = await UnitListing.at(
-      listingAddress
-    ).data()
-    assert.equal(lister, accounts[0], 'lister is correct')
-    assert.equal(hash, ipfsHash, 'ipfsHash is correct')
-    assert.equal(price, initPrice, 'price is correct')
-    assert.equal(
-      unitsAvailable,
-      initUnitsAvailable,
-      'unitsAvailable is correct'
-    )
-  })
 
-  it('should be able to create a listing on behalf of other', async function() {
-    const initPrice = 2
-    const initUnitsAvailable = 5
-    await instance.createOnBehalf(
-      ipfsHash,
-      initPrice,
-      initUnitsAvailable,
-      accounts[1],
-      { from: accounts[0] }
-    )
-    const listingCount = await instance.listingsLength()
-    assert.equal(
-      listingCount,
-      initialListingsLength + 1,
-      'listings count has incremented'
-    )
-    const listingAddress = await instance.getListingAddress(
-      initialListingsLength
-    )
-    const [lister, hash, price, unitsAvailable] = await UnitListing.at(
-      listingAddress
-    ).data()
-    assert.equal(lister, accounts[1], 'lister is correct as other account')
-    assert.equal(hash, ipfsHash, 'ipfsHash is correct')
-    assert.equal(price, initPrice, 'price is correct')
-    assert.equal(
-      unitsAvailable,
-      initUnitsAvailable,
-      'unitsAvailable is correct'
-    )
-  })
-
-  describe('Trusted listing check', async function() {
-    it('should verify a trusted listing', async function() {
-      await instance.create(ipfsHash, 3000, 1, { from: owner })
-      const listingIndex = (await instance.listingsLength()) - 1
-      const trustedListingAddress = await instance.getListingAddress(
-        listingIndex
-      )
-      const isVerified = await instance.isTrustedListing(trustedListingAddress)
-      expect(isVerified).to.equal(true)
+    it('should have an owner', async function() {
+      assert.equal(await registry.owner(), owner)
     })
-    it('should not verify an untrusted listing', async function() {
-      const otherStorage = await ListingsRegistryStorage.new()
-      const otherRegistry = await contractDefinition.new(otherStorage.address)
-      await otherStorage.setActiveRegistry(otherRegistry.address)
-      await otherRegistry.create(ipfsHash, 3000, 1)
-      const listingIndex = (await otherRegistry.listingsLength()) - 1
-      const otherListingAddress = await otherRegistry.getListingAddress(
-        listingIndex
-      )
-      const isVerified = await instance.isTrustedListing(otherListingAddress)
-      expect(isVerified).to.equal(false)
+    it('should transfer ownership to a different owner', async function() {
+      await registry.transferOwnership(secondOwner, { from: owner })
+      assert.equal(await registry.owner(), secondOwner)
+    })
+    it('should not allow a stranger to transfer ownership', async function() {
+      try {
+        await registry.transferOwnership(secondOwner, { from: stranger })
+      } catch (e) {
+        assert.equal(await registry.owner(), owner)
+        return
+      }
+      fail()
     })
   })
+
+
+  describe('EntryType', async () => {
+    let registry
+    let listingsA
+    const listingsTypeName = 'Listings_V0'
+
+    beforeEach(async () => {
+      registry = await EvolvingRegistry.new({ from: owner })
+      listingsA = await Listings.new(registry.address, { from: owner })  
+      await registry.addEntryType(listingsA.address, listingsTypeName, {
+        from: owner
+      })
+    })
+
+    it('should add an entry type', async () => {
+      const listingType = await registry.getEntryType(0)
+      assert.equal(listingType[0], listingsA.address)
+      assert.equal(listingType[1], listingsTypeName)
+      assert.equal(listingType[2], true)
+    })
+    it('should enable an entry type', async () => {
+      let listingType 
+      // Disable the type
+      await registry.disableEntryType(0, { from: owner })
+      listingType = await registry.getEntryType(0)
+      assert.equal(listingType[2], false)
+      // Renable it
+      await registry.enableEntryType(0, { from: owner })
+      listingType = await registry.getEntryType(0)
+      assert.equal(listingType[2], true)
+    })
+    it('should disable an entry type', async () => {
+      await registry.disableEntryType(0, { from: owner })
+      const listingType = await registry.getEntryType(0)
+      assert.equal(listingType[2], false)
+    })
+    it('should rename an entry type', async () => {
+      await registry.renameEntryType(0, 'FooBar', { from: owner })
+      const listingType = await registry.getEntryType(0)
+      assert.equal(listingType[1], 'FooBar')
+    })
+  })
+
+  describe('Adding Entries', async () => {
+    beforeEach(async ()=> {
+      registry = await EvolvingRegistry.new({ from: owner })
+      listingsA = await Listings.new(registry.address, { from: owner })  
+      await registry.addEntryType(listingsA.address, "Listings_A", {
+        from: owner
+      })
+    })
+    it('should add an entry', async () => {
+      listingsA.createListing(IPFS_HASH, {from: seller})
+      const listingType = await registry.getEntryTypeOfEntry(0)
+      assert(listingType[0], listingsA.address)
+    })
+  })
+
 })
