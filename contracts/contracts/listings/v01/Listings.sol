@@ -76,10 +76,9 @@ contract V01_Listings {
     public
     isSeller(_listingIndex)
   {
-    if (_currentVersion == listings[_listingIndex].ipfsVersions.length - 1) {
-      listings[_listingIndex].ipfsVersions.push(_ipfsHash);
-      emit ListingIpfsChange(_ipfsHash);
-    }
+    require(_currentVersion == listings[_listingIndex].ipfsVersions.length - 1);
+    listings[_listingIndex].ipfsVersions.push(_ipfsHash);
+    emit ListingIpfsChange(_ipfsHash);
   }
 
   function getListing(uint256 _listingIndex)
