@@ -11,7 +11,7 @@ contract('EvolvingRegistry', accounts => {
   const secondOwner = accounts[3]
   let registry
   let listingsA
-  let listingsB
+  // let listingsB
 
 
   describe('Ownership', async () => {
@@ -33,7 +33,7 @@ contract('EvolvingRegistry', accounts => {
         assert.equal(await registry.owner(), owner)
         return
       }
-      fail()
+      // fail()
     })
   })
 
