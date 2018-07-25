@@ -55,7 +55,11 @@ contract EvolvingRegistry is Ownable {
   }
 
   function addEntry() public returns (uint256) {
-    uint16 _entryTypeIndex = entryTypesByAddress[msg.sender];
+    // This lookup will succeed and return 0 for a contract address that we don't have an entry for...
+    uint16 _entryTypeIndex = entryTypesByAddress[msg.sender]; 
+    // ...which will give us a vaild, but wrong entry type.
+    // Therefore we check that we have actualy looked up the matching entry type
+    require(entryTypes[_entryTypeIndex].contractAddress == msg.sender);
     require(entryTypes[_entryTypeIndex].isEnabled);
     entries.push(_entryTypeIndex);
     uint256 entryIndex = entries.length - 1;
