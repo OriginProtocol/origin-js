@@ -4,8 +4,8 @@ import "../../EvolvingRegistry.sol";
 import "./Escrow.sol";
 
 contract V01_Listings {
-  event ListingChange(uint256 _listingIndex, bytes32 _ipfsHash);
-  event PurchaseChange(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _ipfsHash);
+  event ListingChange(uint256 indexed _listingIndex, bytes32 _ipfsHash);
+  event PurchaseChange(uint256 indexed _listingIndex, uint256 indexed _purchaseIndex, bytes32 _ipfsHash);
 
   EvolvingRegistry listingRegistry;
 

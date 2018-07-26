@@ -3,9 +3,9 @@ pragma solidity 0.4.23;
 import '../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
 contract EvolvingRegistry is Ownable {
-  event NewEntryType(uint16 _entryTypeIndex);
-  event EntryTypeUpdate(uint16 _entryTypeIndex);
-  event NewEntry(uint256 _entryIndex, uint16 _entryTypeIndex);
+  event NewEntryType(uint16 indexed _entryTypeIndex);
+  event EntryTypeUpdate(uint16 indexed _entryTypeIndex);
+  event NewEntry(uint256 indexed _entryIndex, uint16 _entryTypeIndex);
 
   struct EntryType {
     address contractAddress;
