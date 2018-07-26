@@ -7,6 +7,8 @@ import listingSchema from '../../schemas/listing.json'
 import unitListingSchema from '../../schemas/unit-listing.json'
 import fractionalListingSchema from '../../schemas/fractional-listing.json'
 
+const listingsContract = 'v01_ListingsContract'
+
 const unitListingType = 'unit'
 const fractionalListingType = 'fractional'
 
@@ -74,9 +76,8 @@ class Listings {
   */
 
   async get(listingIndex) {
-    const listing = await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    const listing = await this.contractService.call(
+      listingsContract,
       'getListing',
       [listingIndex]
     )
@@ -107,17 +108,15 @@ class Listings {
 
     // Submit to ETH contract
     const account = await this.contractService.currentAccount()
-    const version = await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    const version = await this.contractService.call(
+      listingsContract,
       'getListingVersion',
       [listingIndex]
     )
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    return await this.contractService.call(
+      listingsContract,
       'updateListing',
       [listingIndex, version, ipfsBytes32],
       { from: account }
@@ -132,9 +131,8 @@ class Listings {
     )
     const ipfsHash = await this.ipfsService.submitFile(ifpsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
-    return await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    return await this.contractService.call(
+      listingsContract,
       'requestPurchase',
       [listingIndex, ipfsBytes32],
       { value: value, gas: 350000 }
@@ -142,9 +140,8 @@ class Listings {
   }
 
   async getPurchases(listingIndex) {
-    const purchasesLength = await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    const purchasesLength = await this.contractService.call(
+      listingsContract,
       'purchasesLength',
       [listingIndex]
     )
@@ -160,9 +157,8 @@ class Listings {
   }
 
   async getPurchase(listingIndex, purchaseIndex) {
-    const result = await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    const result = await this.contractService.call(
+      listingsContract,
       'getPurchase',
       [listingIndex, purchaseIndex]
     )
@@ -181,9 +177,8 @@ class Listings {
 
   async createBlockchainListing(ipfsListing) {
     const account = await this.contractService.currentAccount()
-    return await this.contractService.contractFn(
-      this.contractService.v01_ListingsContract,
-      null,
+    return await this.contractService.call(
+      listingsContract,
       'createListing',
       [this.contractService.getBytes32FromIpfsHash(ipfsListing)],
       { from: account }

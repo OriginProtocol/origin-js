@@ -1,5 +1,7 @@
 import v01ListingsAdapter from '../adapters/v01/listings_adapter'
 
+const evolvingRegistry = 'evolvingRegistryContract'
+
 const appendSlash = url => {
   return url.substr(-1) === '/' ? url : url + '/'
 }
@@ -61,11 +63,7 @@ class Listings {
   async allIds() {
     const range = (start, count) =>
       Array.apply(0, Array(count)).map((element, index) => index + start)
-    const size = await this.contractService.contractFn(
-      this.contractService.evolvingRegistryContract,
-      null,
-      'size'
-    )
+    const size = await this.contractService.call(evolvingRegistry, 'size')
     return range(0, Number(size))
   }
 
@@ -101,9 +99,8 @@ class Listings {
 
   async getAdapter(listingIndex) {
     // get entry type of listing from evolving registry
-    const entryType = await this.contractService.contractFn(
-      this.contractService.evolvingRegistryContract,
-      null,
+    const entryType = await this.contractService.call(
+      evolvingRegistry,
       'getEntryTypeOfEntry',
       [listingIndex]
     )
