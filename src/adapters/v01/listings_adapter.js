@@ -10,6 +10,8 @@ import fractionalListingSchema from '../../schemas/fractional-listing.json'
 const unitListingType = 'unit'
 const fractionalListingType = 'fractional'
 
+const validListingTypes = [unitListingType, fractionalListingType]
+
 const unitSchemaId = 'unit-listing.json'
 const fractionalSchemaId = 'fractional-listing.json'
 
@@ -21,6 +23,15 @@ ajvEnableMerge(ajv)
 const validateUnitListing = ajv.getSchema(unitSchemaId)
 const validateFractionalListing = ajv.getSchema(fractionalSchemaId)
 
+const schemaFor = {
+  unit: unitListingSchema,
+  fractional: fractionalListingSchema
+}
+const validateFor = {
+  unit: validateUnitListing,
+  fractional: validateFractionalListing
+}
+
 const purchaseStageNames = [
   'BUYER_REQUESTED',
   'BUYER_CANCELED',
@@ -30,7 +41,9 @@ const purchaseStageNames = [
   'SELLER_FINALIZED'
 ]
 
-function validate(validateFn, data, schema) {
+function validate(listingType, data) {
+  const schema = schemaFor[listingType]
+  const validateFn = validateFor[listingType]
   if (!validateFn(data)) {
     throw new Error(
       `Data invalid for schema. Data: ${JSON.stringify(
@@ -76,6 +89,13 @@ class Listings {
   }
 
   async create(ipfsData) {
+    if (!ipfsData.listingType) {
+      console.warn('Please specify a listing type. Assuming unit listing type.')
+    } else if (!validListingTypes.includes(ipfsData.listingType)) {
+      console.error('Listing type ${ipfsData.listingType} is invalid. Assuming unit listing type.')
+    }
+    const listingType = ipfsData.listingType || unitListingType
+    validate(listingType, ipfsData)
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const transactionReceipt = await this.createBlockchainListing(ipfsHash)
     return transactionReceipt
