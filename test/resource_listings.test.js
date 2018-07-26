@@ -8,6 +8,8 @@ import asAccount from './helpers/as-account'
 import fetchMock from 'fetch-mock'
 import contractServiceHelper from './helpers/contract-service-helper'
 
+const samplePrice = 1000000000000000
+
 describe('Listing Resource', function() {
   this.timeout(5000) // default is 2000
 
@@ -32,8 +34,18 @@ describe('Listing Resource', function() {
     buyer = accounts[1]
 
     // Ensure that there are at least 2 sample listings
-    await listings.create({ name: 'Sample Listing 1', price: 1 }, '')
-    await listings.create({ name: 'Sample Listing 2', price: 1 }, '')
+    await listings.create({
+      listingType: 'unit',
+      name: 'Sample 1',
+      priceWei: samplePrice,
+      unitsAvailable: 1
+    })
+    await listings.create({
+      listingType: 'unit',
+      name: 'Sample 2',
+      priceWei: samplePrice,
+      unitsAvailable: 1
+    })
   })
 
   it('should get all listing ids', async () => {
@@ -42,14 +54,24 @@ describe('Listing Resource', function() {
   })
 
   it('should get a listing by index', async () => {
-    await listings.create({ name: 'Foo Bar', price: 1 }, '')
+    await listings.create({
+      listingType: 'unit',
+      name: 'Foo Bar',
+      priceWei: samplePrice,
+      unitsAvailable: 1
+    })
     const listingIds = await listings.allIds()
     const listing = await listings.get(listingIds[listingIds.length - 1])
     expect(listing.ipfsData.name).to.equal('Foo Bar')
   })
 
   it('should buy a listing', async () => {
-    await listings.create({ name: 'My Listing', price: 1 }, '')
+    await listings.create({
+      listingType: 'unit',
+      name: 'Sample 1',
+      priceWei: samplePrice,
+      unitsAvailable: 1
+    })
     const listingIds = await listings.allIds()
     const listingIndex = listingIds.length - 1
     await asAccount(contractService.web3, buyer, async () => {
@@ -59,21 +81,6 @@ describe('Listing Resource', function() {
         1
       )
     })
-  })
-
-  it('should create a listing', async () => {
-    const listingData = {
-      name: '1972 Geo Metro 255K',
-      category: 'Cars & Trucks',
-      location: 'New York City',
-      description:
-        'The American auto-show highlight reel will be disproportionately concentrated on the happenings in New York.',
-      pictures: undefined,
-      price: 3.3
-    }
-    const schema = 'for-sale'
-    await listings.create(listingData, schema)
-    // Todo: Check that this worked after we have web3 approvals working
   })
 
   describe('all', () => {
@@ -125,10 +132,47 @@ describe('Listing Resource', function() {
     })
   })
 
+  describe('create', () => {
+    it('should create a listing', async () => {
+      const listingData = {
+        listingType: 'unit',
+        name: '1972 Geo Metro 255K',
+        category: 'Cars & Trucks',
+        location: 'New York City',
+        description:
+          'The American auto-show highlight reel will be disproportionately concentrated on the happenings in New York.',
+        pictures: undefined,
+        priceWei: samplePrice,
+        unitsAvailable: 1
+      }
+      await listings.create(listingData)
+      // Todo: Check that this worked after we have web3 approvals working
+    })
+
+    it('should create a fractional listing', async () => {
+      const listingData = {
+        listingType: 'fractional',
+        name: '1972 Geo Metro 255K',
+        category: 'Cars & Trucks',
+        location: 'New York City',
+        description:
+          'The American auto-show highlight reel will be disproportionately concentrated on the happenings in New York.',
+        pictures: undefined,
+        priceWei: samplePrice
+      }
+      await listings.create(listingData)
+    })
+  })
+
   describe('Getting purchases', async () => {
     let listing, listingIndex
     before(async () => {
-      await listings.create({ name: 'My Listing', price: 1 }, '')
+      await listings.create({
+        listingType: 'unit',
+        name: 'Sample 1',
+        priceWei: samplePrice,
+        unitsAvailable: 1
+      })
       const listingIds = await listings.allIds()
       listing = await listings.getByIndex(listingIds[listingIds.length - 1])
       const ids = await listings.allIds()
@@ -150,11 +194,16 @@ describe('Listing Resource', function() {
 
   describe('update', () => {
     it('should be able to update a listing', async () => {
-      await listings.create({ name: 'Sample Listing 1' })
+      await listings.create({
+        listingType: 'unit',
+        name: 'Sample 1',
+        priceWei: samplePrice,
+        unitsAvailable: 1
+      })
       const ids = await listings.allIds()
       const listingIndex = ids[ids.length - 1]
       const initialListing = await listings.get(listingIndex)
-      expect(initialListing.ipfsData.name).to.equal('Sample Listing 1')
+      expect(initialListing.ipfsData.name).to.equal('Sample 1')
 
       await listings.update(listingIndex, { name: 'foo bar' })
       const updatedListing = await listings.get(listingIndex)
