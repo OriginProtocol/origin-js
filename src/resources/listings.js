@@ -61,10 +61,11 @@ class Listings {
   async allIds() {
     const range = (start, count) =>
       Array.apply(0, Array(count)).map((element, index) => index + start)
-    const evolvingRegistry = await this.contractService.deployed(
-      this.contractService.evolvingRegistryContract
+    const size = await this.contractService.contractFn(
+      this.contractService.evolvingRegistryContract,
+      null,
+      'size'
     )
-    const size = await evolvingRegistry.methods.size().call()
     return range(0, Number(size))
   }
 
@@ -100,10 +101,12 @@ class Listings {
 
   async getAdapter(listingIndex) {
     // get entry type of listing from evolving registry
-    const evolvingRegistry = await this.contractService.deployed(
-      this.contractService.evolvingRegistryContract
+    const entryType = await this.contractService.contractFn(
+      this.contractService.evolvingRegistryContract,
+      null,
+      'getEntryTypeOfEntry',
+      [listingIndex]
     )
-    const entryType = await evolvingRegistry.methods.getEntryTypeOfEntry(listingIndex).call()
     const entryTypeName = entryType['_name']
 
     // use appropriate adapter for entry type

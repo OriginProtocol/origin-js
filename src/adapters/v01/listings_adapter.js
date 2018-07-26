@@ -61,10 +61,12 @@ class Listings {
   */
 
   async get(listingIndex) {
-    const v01_Listings = await this.contractService.deployed(
-      this.contractService.v01_ListingsContract
+    const listing = await this.contractService.contractFn(
+      this.contractService.v01_ListingsContract,
+      null,
+      'getListing',
+      [listingIndex]
     )
-    const listing = await v01_Listings.methods.getListing(listingIndex).call()
     const ipfsData = await this.getIpfsData(listing._ipfsHash)
     return {
       ipfsData,
@@ -85,10 +87,12 @@ class Listings {
 
     // Submit to ETH contract
     const account = await this.contractService.currentAccount()
-    const v01_Listings = await this.contractService.deployed(
-      this.contractService.v01_ListingsContract
+    const version = await this.contractService.contractFn(
+      this.contractService.v01_ListingsContract,
+      null,
+      'getListingVersion',
+      [listingIndex]
     )
-    const version = await v01_Listings.methods.getListingVersion(listingIndex).call()
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await this.contractService.contractFn(
@@ -118,10 +122,12 @@ class Listings {
   }
 
   async getPurchases(listingIndex) {
-    const v01_Listings = await this.contractService.deployed(
-      this.contractService.v01_ListingsContract
+    const purchasesLength = await this.contractService.contractFn(
+      this.contractService.v01_ListingsContract,
+      null,
+      'purchasesLength',
+      [listingIndex]
     )
-    const purchasesLength = await v01_Listings.methods.purchasesLength(listingIndex).call()
     const indices = []
     for (let i = 0; i < purchasesLength; i++) {
       indices.push(i)
