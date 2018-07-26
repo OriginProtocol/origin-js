@@ -194,7 +194,7 @@ contract V01_Listings {
   function getPurchase(uint256 _listingIndex, uint256 _purchaseIndex)
     public
     constant
-    returns (Stages, address, address _escrowContract) {
+    returns (Stages _stage, address _buyer, address _escrowContract) {
       uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
       Purchase memory purchase = purchases[globalPurchaseIndex];
       return (
