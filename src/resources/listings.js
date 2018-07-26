@@ -100,11 +100,6 @@ class Listings {
     return await adapter.getPurchases(...arguments)
   }
 
-  async getPurchase(listingIndex, purchaseIndex) {
-    const adapter = await this.getAdapter(listingIndex)
-    return await adapter.getPurchase(...arguments)
-  }
-
   async getAdapter(listingIndex) {
     // get entry type of listing from evolving registry
     const evolvingRegistry = await this.contractService.deployed(

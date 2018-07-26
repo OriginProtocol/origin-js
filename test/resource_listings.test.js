@@ -146,11 +146,6 @@ describe('Listing Resource', function() {
         JSON.stringify({ foo: 'bar' })
       )
     })
-
-    it('should get a specific purchase', async () => {
-      const purchase = await listings.getPurchase(listingIndex, 0)
-      expect(purchase.stage).to.equal('BUYER_REQUESTED')
-    })
   })
 
   describe('update', () => {
