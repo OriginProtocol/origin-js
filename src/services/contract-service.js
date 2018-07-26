@@ -1,6 +1,7 @@
 import ClaimHolderRegisteredContract from './../../contracts/build/contracts/ClaimHolderRegistered.json'
 import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
+import EvolvingRegistryContract from './../../contracts/build/contracts/EvolvingRegistry.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
 import PurchaseLibrary from './../../contracts/build/contracts/PurchaseLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
@@ -11,6 +12,9 @@ import FractionalListingContract from './../../contracts/build/contracts/Fractio
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
+
+import V01_ListingsContract from './../../contracts/build/contracts/V01_Listings.json'
+
 import bs58 from 'bs58'
 import Web3 from 'web3'
 
@@ -25,6 +29,7 @@ class ContractService {
     this.web3 = new Web3(externalWeb3.currentProvider)
 
     const contracts = {
+      evolvingRegistryContract: EvolvingRegistryContract,
       listingContract: ListingContract,
       listingsRegistryContract: ListingsRegistryContract,
       listingsRegistryStorageContract: ListingsRegistryStorageContract,
@@ -34,7 +39,8 @@ class ContractService {
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
       claimHolderPresignedContract: ClaimHolderPresignedContract,
-      originIdentityContract: OriginIdentityContract
+      originIdentityContract: OriginIdentityContract,
+      v01_ListingsContract: V01_ListingsContract
     }
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
