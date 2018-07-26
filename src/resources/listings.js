@@ -1,5 +1,3 @@
-// TODO: ipfs data format, gas optimization
-
 import v01ListingsAdapter from '../adapters/v01/listings_adapter'
 
 const appendSlash = url => {

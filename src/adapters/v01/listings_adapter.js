@@ -96,7 +96,7 @@ class Listings {
       null,
       'updateListing',
       [listingIndex, version, ipfsBytes32],
-      { from: account, gas: 4476768 }
+      { from: account }
     )
   }
 
@@ -113,10 +113,7 @@ class Listings {
       null,
       'requestPurchase',
       [listingIndex, ipfsBytes32],
-      {
-        value: value,
-        gas: 850000
-      }
+      { value: value, gas: 350000 }
     )
   }
 
@@ -141,8 +138,7 @@ class Listings {
       this.contractService.v01_ListingsContract,
       null,
       'getPurchase',
-      [listingIndex, purchaseIndex],
-      { gas: 850000 }
+      [listingIndex, purchaseIndex]
     )
     const ipfsData = await this.getPurchaseIpfsData(listingIndex, purchaseIndex)
     return {
@@ -164,7 +160,7 @@ class Listings {
       null,
       'createListing',
       [this.contractService.getBytes32FromIpfsHash(ipfsListing)],
-      { from: account, gas: 4476768 }
+      { from: account }
     )
   }
 
