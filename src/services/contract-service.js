@@ -180,26 +180,32 @@ class ContractService {
    * @param {{gas: number, value:(number | BigNumber)}} options - transaction options for w3
    * @param {function} confirmationCallback - an optional function that will be called on each block confirmation
    */
-  async contractFn(
-    contractDefinition,
-    address,
+  async call(
+    contractName,
     functionName,
     args = [],
-    options = {},
-    confirmationCallback
+    web3Options = {},
+    { contractAddress, confirmationCallback } = {}
   ) {
+    const contractDefinition = this[contractName]
+    // TODO we should probably store contract definitions on a contracts object
+    // rather than on the top level of this class. Eaiser to check that it's a
+    // valid contract name.
+    if (!contractDefinition.abi) {
+      throw new Error(`Invalid contract name: ${contractName}`)
+    }
     // Setup options
-    const opts = Object.assign(options, {}) // clone options
+    const opts = Object.assign(web3Options, {}) // clone options
     opts.from = opts.from || (await this.currentAccount())
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
-    contract.options.address = address || contract.options.address
+    contract.options.address = contractAddress || contract.options.address
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {
       return await method.call(opts)
     }
     const gasEstimate = await method.estimateGas()
-    opts.gas = options.gas || gasEstimate
+    opts.gas = web3Options.gas || gasEstimate
     const transactionReceipt = await new Promise((resolve, reject) => {
       method
         .send(opts)
