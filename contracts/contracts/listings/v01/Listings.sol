@@ -5,7 +5,7 @@ import "./Escrow.sol";
 
 contract V01_Listings {
   event ListingChange(uint256 indexed _listingIndex, bytes32 _ipfsHash);
-  event PurchaseChange(uint256 indexed _listingIndex, uint256 indexed _purchaseIndex, bytes32 _ipfsHash);
+  event PurchaseChange(uint256 indexed _listingIndex, uint256 indexed _purchaseIndex, bytes32 _ipfsHash, Stages _stage);
 
   EvolvingRegistry listingRegistry;
 
@@ -113,7 +113,7 @@ contract V01_Listings {
       escrowContract
     ));
     listings[_listingIndex].purchaseIndices.push(purchases.length - 1);
-    emit PurchaseChange(_listingIndex, purchases.length - 1, _ipfsHash);
+    emit PurchaseChange(_listingIndex, purchases.length - 1, _ipfsHash, Stages.BUYER_REQUESTED);
   }
 
   function cancelPurchaseRequest(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _ipfsHash)
@@ -126,7 +126,7 @@ contract V01_Listings {
     V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
     escrow.cancel();
     purchases[globalPurchaseIndex].stage = Stages.BUYER_CANCELED;
-    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash);
+    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash, purchases[globalPurchaseIndex].stage);
   }
 
   function acceptPurchaseRequest(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _ipfsHash)
@@ -137,7 +137,7 @@ contract V01_Listings {
   {
     uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
     purchases[globalPurchaseIndex].stage = Stages.SELLER_ACCEPTED;
-    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash);
+    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash, purchases[globalPurchaseIndex].stage);
   }
 
   function acceptPurchaseAndUpdateListing(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _purchaseIpfsHash, uint256 _currentListingVersion, bytes32 _listingIpfsHash)
@@ -160,7 +160,7 @@ contract V01_Listings {
     V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
     escrow.cancel();
     purchases[globalPurchaseIndex].stage = Stages.SELLER_REJECTED;
-    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash);
+    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash, purchases[globalPurchaseIndex].stage);
   }
 
   function buyerFinalizePurchase(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _ipfsHash)
@@ -171,7 +171,7 @@ contract V01_Listings {
   {
     uint256 globalPurchaseIndex = listings[_listingIndex].purchaseIndices[_purchaseIndex];
     purchases[globalPurchaseIndex].stage = Stages.BUYER_FINALIZED;
-    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash);
+    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash, purchases[globalPurchaseIndex].stage);
   }
 
   function sellerFinalizePurchase(uint256 _listingIndex, uint256 _purchaseIndex, bytes32 _ipfsHash)
@@ -184,7 +184,7 @@ contract V01_Listings {
     V01_Escrow escrow = V01_Escrow(purchases[globalPurchaseIndex].escrowContract);
     escrow.complete();
     purchases[globalPurchaseIndex].stage = Stages.SELLER_FINALIZED;
-    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash);
+    emit PurchaseChange(_listingIndex, _purchaseIndex, _ipfsHash, purchases[globalPurchaseIndex].stage);
   }
 
   function purchasesLength(uint256 _listingIndex) public constant returns (uint) {
