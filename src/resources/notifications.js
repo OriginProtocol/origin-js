@@ -9,19 +9,19 @@ const readStatus = 'read'
 const notificationTypes = {
   sellerListingPurchased: {
     name: 'seller_listing_purchased',
-    purchaseStage: 'in_escrow'
+    purchaseStage: 'BUYER_REQUESTED'
   },
   sellerReviewReceived: {
     name: 'seller_review_received',
-    purchaseStage: 'seller_pending'
+    purchaseStage: 'BUYER_FINALIZED'
   },
   buyerListingShipped: {
     name: 'buyer_listing_shipped',
-    purchaseStage: 'buyer_pending'
+    purchaseStage: 'SELLER_ACCEPTED'
   },
   buyerReviewReceived: {
     name: 'buyer_review_received',
-    purchaseStage: 'complete'
+    purchaseStage: 'SELLER_FINALIZED'
   }
 }
 
@@ -169,54 +169,44 @@ class Notifications {
     })
   }
 
-  async allListings() {
-    const allListingAddresses = await this.listings.allAddresses()
-    return await Promise.all(
-      allListingAddresses.map(address => {
-        return this.listings.get(address)
-      })
-    )
+  async allListingsIds() {
+    return await this.listings.allIds()
   }
 
   async blockchainData() {
-    const allListings = await this.allListings()
+    const allListingIds = await this.allListingsIds()
     const purchasesByListing = await Promise.all(
-      allListings.map(listing => {
-        return this.purchaseDataForListing(listing)
+      allListingIds.map(listingId => {
+        return this.purchaseDataForListing(listingId)
       })
     )
     return [].concat.apply([], purchasesByListing) // flatten to one-dimensional array
   }
 
-  async purchaseDataForListing(listing) {
-    const len = await this.listings.purchasesLength(listing.address)
-    const purchaseAddresses = await Promise.all(
-      [...Array(len).keys()].map(i => {
-        return this.listings.purchaseAddressByIndex(listing.address, i)
-      })
-    )
+  async purchaseDataForListing(listingIndex) {
+    const purchases = await this.listings.getPurchases(listingIndex)
+    const listing = await this.listings.get(listingIndex)
     return await Promise.all(
-      purchaseAddresses.map(purchaseAddress => {
-        return this.purchaseDataForListingAndPurchase(purchaseAddress, listing)
+      purchases.map((purchase, purchaseIndex) => {
+        return this.purchaseDataForListingAndPurchase(listing, purchase, listingIndex, purchaseIndex)
       })
     )
   }
 
-  async purchaseDataForListingAndPurchase(purchaseAddress, listing) {
-    const purchase = await this.purchases.get(purchaseAddress)
-    const purchaseLogs = await this.purchases.getLogs(purchaseAddress)
+  async purchaseDataForListingAndPurchase(listing, purchase, listingIndex, purchaseIndex) {
+    const purchaseLogs = await this.purchases.getLogs(listingIndex, purchaseIndex)
     return { purchase, purchaseLogs, listing }
   }
 
   sellerPurchaseLogsFor(blockchainData, account) {
     return this.purchaseLogsFor(blockchainData, account, ({ listing }) => {
-      return listing.sellerAddress === account
+      return listing.seller === account
     })
   }
 
   buyerPurchaseLogsFor(blockchainData, account) {
     return this.purchaseLogsFor(blockchainData, account, ({ purchase }) => {
-      return purchase.buyerAddress === account
+      return purchase.buyer === account
     })
   }
 
