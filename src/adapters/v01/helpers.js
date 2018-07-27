@@ -1,0 +1,71 @@
+const listingsContract = 'v01_ListingsContract'
+
+const purchaseStageNames = [
+  'BUYER_REQUESTED',
+  'BUYER_CANCELED',
+  'SELLER_ACCEPTED',
+  'SELLER_REJECTED',
+  'BUYER_FINALIZED',
+  'SELLER_FINALIZED'
+]
+
+async function createBlockchainListing(contractService, ipfsListing) {
+  const account = await contractService.currentAccount()
+  return await contractService.call(
+    listingsContract,
+    'createListing',
+    [contractService.getBytes32FromIpfsHash(ipfsListing)],
+    { from: account }
+  )
+}
+
+async function getIpfsData(contractService, ipfsService, asBytes32) {
+  const ipfsHash = contractService.getIpfsHashFromBytes32(asBytes32)
+  return await ipfsService.getFile(ipfsHash)
+}
+
+async function getPurchaseIpfsData(contractService, ipfsService, listingIndex, purchaseIndex) {
+  const v01_ListingsContract = await contractService.deployed(
+    contractService.v01_ListingsContract
+  )
+  const events = await new Promise((resolve) => {
+    v01_ListingsContract.getPastEvents(
+      'PurchaseChange',
+      {
+        fromBlock: 0,
+        toBlock: 'latest',
+        filter: { _listingIndex: listingIndex, _purchaseIndex: purchaseIndex }
+      },
+      (error, logs) => {
+        resolve(logs)
+      }
+    )
+  })
+  if (!events || !events.length) {
+    throw new Error('No matching events found!')
+  }
+  const latestEvent = events[events.length - 1]
+  return await getIpfsData(contractService, ipfsService, latestEvent.returnValues._ipfsHash)
+}
+
+async function getPurchase(contractService, ipfsService, listingIndex, purchaseIndex) {
+  const result = await contractService.call(
+    listingsContract,
+    'getPurchase',
+    [listingIndex, purchaseIndex]
+  )
+  const ipfsData = await getPurchaseIpfsData(contractService, ipfsService, listingIndex, purchaseIndex)
+  return {
+    ipfsData,
+    stage: purchaseStageNames[result._stage],
+    buyer: result._buyer,
+    escrowContract: result._escrowContract
+  }
+}
+
+module.exports = {
+  createBlockchainListing,
+  getIpfsData,
+  getPurchaseIpfsData,
+  getPurchase
+}

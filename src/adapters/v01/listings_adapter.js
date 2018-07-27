@@ -6,6 +6,11 @@ import ajvEnableMerge from 'ajv-merge-patch/keywords/merge'
 import listingSchema from '../../schemas/listing.json'
 import unitListingSchema from '../../schemas/unit-listing.json'
 import fractionalListingSchema from '../../schemas/fractional-listing.json'
+import {
+  createBlockchainListing,
+  getIpfsData,
+  getPurchase,
+} from './helpers'
 
 const listingsContract = 'v01_ListingsContract'
 
@@ -33,15 +38,6 @@ const validateFor = {
   unit: validateUnitListing,
   fractional: validateFractionalListing
 }
-
-const purchaseStageNames = [
-  'BUYER_REQUESTED',
-  'BUYER_CANCELED',
-  'SELLER_ACCEPTED',
-  'SELLER_REJECTED',
-  'BUYER_FINALIZED',
-  'SELLER_FINALIZED'
-]
 
 function validate(listingType, data) {
   const schema = schemaFor[listingType]
@@ -81,7 +77,7 @@ class Listings {
       'getListing',
       [listingIndex]
     )
-    const ipfsData = await this.getIpfsData(listing._ipfsHash)
+    const ipfsData = await getIpfsData(this.contractService, this.ipfsService, listing._ipfsHash)
     return {
       ipfsData,
       seller: listing._seller,
@@ -98,7 +94,7 @@ class Listings {
     const listingType = ipfsData.listingType || unitListingType
     validate(listingType, ipfsData)
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
-    const transactionReceipt = await this.createBlockchainListing(ipfsHash)
+    const transactionReceipt = await createBlockchainListing(this.contractService, ipfsHash)
     return transactionReceipt
   }
 
@@ -151,67 +147,9 @@ class Listings {
     }
     return await Promise.all(
       indices.map(async purchaseIndex => {
-        return this.getPurchase(listingIndex, purchaseIndex)
+        return getPurchase(this.contractService, this.ipfsService, listingIndex, purchaseIndex)
       })
     )
-  }
-
-  async getPurchase(listingIndex, purchaseIndex) {
-    const result = await this.contractService.call(
-      listingsContract,
-      'getPurchase',
-      [listingIndex, purchaseIndex]
-    )
-    const ipfsData = await this.getPurchaseIpfsData(listingIndex, purchaseIndex)
-    return {
-      ipfsData,
-      stage: purchaseStageNames[result._stage],
-      buyer: result._buyer,
-      escrowContract: result._escrowContract
-    }
-  }
-
-  /*
-      Private methods
-  */
-
-  async createBlockchainListing(ipfsListing) {
-    const account = await this.contractService.currentAccount()
-    return await this.contractService.call(
-      listingsContract,
-      'createListing',
-      [this.contractService.getBytes32FromIpfsHash(ipfsListing)],
-      { from: account }
-    )
-  }
-
-  async getIpfsData(asBytes32) {
-    const ipfsHash = this.contractService.getIpfsHashFromBytes32(asBytes32)
-    return await this.ipfsService.getFile(ipfsHash)
-  }
-
-  async getPurchaseIpfsData(listingIndex, purchaseIndex) {
-    const v01_ListingsContract = await this.contractService.deployed(
-      this.contractService.v01_ListingsContract
-    )
-    const events = await new Promise((resolve) => {
-      v01_ListingsContract.getPastEvents(
-        'PurchaseChange',
-        {
-          fromBlock: 0,
-          toBlock: 'latest',
-          filter: { _listingIndex: listingIndex, _purchaseIndex: purchaseIndex }
-        },
-        (error, logs) => {
-          resolve(logs)
-        }
-      )
-    })
-    if (!events || !events.length) {
-      throw new Error('No matching events found!')
-    }
-    const latestEvent = events[events.length - 1]
-    return await this.getIpfsData(latestEvent.returnValues._ipfsHash)
   }
 }
 
