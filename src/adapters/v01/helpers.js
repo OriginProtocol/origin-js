@@ -24,11 +24,11 @@ async function getIpfsData(contractService, ipfsService, asBytes32) {
   return await ipfsService.getFile(ipfsHash)
 }
 
-async function getPurchaseIpfsData(contractService, ipfsService, listingIndex, purchaseIndex) {
+async function getPurchaseLogs(contractService, listingIndex, purchaseIndex) {
   const v01_ListingsContract = await contractService.deployed(
     contractService.v01_ListingsContract
   )
-  const events = await new Promise((resolve) => {
+  return await new Promise((resolve) => {
     v01_ListingsContract.getPastEvents(
       'PurchaseChange',
       {
@@ -41,6 +41,10 @@ async function getPurchaseIpfsData(contractService, ipfsService, listingIndex, p
       }
     )
   })
+}
+
+async function getPurchaseIpfsData(contractService, ipfsService, listingIndex, purchaseIndex) {
+  const events = await getPurchaseLogs(contractService, listingIndex, purchaseIndex)
   if (!events || !events.length) {
     throw new Error('No matching events found!')
   }
@@ -67,5 +71,7 @@ module.exports = {
   createBlockchainListing,
   getIpfsData,
   getPurchaseIpfsData,
-  getPurchase
+  getPurchase,
+  getPurchaseLogs,
+  purchaseStageNames
 }

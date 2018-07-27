@@ -7,11 +7,15 @@ import IpfsService from '../src/services/ipfs-service.js'
 import Web3 from 'web3'
 import asAccount from './helpers/as-account'
 import fetchMock from 'fetch-mock'
+import contractServiceHelper from './helpers/contract-service-helper'
+
+const samplePrice = 1000000000000000
 
 describe('Purchase Resource', function() {
   this.timeout(5000) // default is 2000
 
   let listings
+  let listingIndex
   let listing
   let purchases
   let purchase
@@ -24,7 +28,7 @@ describe('Purchase Resource', function() {
   before(async () => {
     const provider = new Web3.providers.HttpProvider('http://localhost:8545')
     web3 = new Web3(provider)
-    contractService = new ContractService({ web3 })
+    contractService = await contractServiceHelper(web3)
     ipfsService = new IpfsService({
       ipfsDomain: '127.0.0.1',
       ipfsApiPort: '5002',
@@ -38,211 +42,81 @@ describe('Purchase Resource', function() {
     buyer = accounts[1]
   })
 
-  // Helpers
-  // -----
+  const reloadPurchase = async function() {
+    purchase = await purchases.get(listingIndex, 0)
+  }
 
   const resetUnitListingAndPurchase = async () => {
     // Create a new listing and a new purchase for the tests to use.
     const listingData = {
+      listingType: 'unit',
       name: 'Australorp Rooser',
       category: 'For Sale',
       location: 'Atlanta, GA',
       description:
         'Peaceful and dignified, Australorps are an absolutely delightful bird which we highly recommend to anyone who wants a pet chicken that lays dependably.',
-      pictures: undefined,
-      price: 0.2
+      priceWei: samplePrice,
+      unitsAvailable: 1
     }
-    const schema = 'for-sale'
-    const listingTransactionObj = await listings.create(listingData, schema)
-
-    const listingEvent = listingTransactionObj.transactionReceipt.events.NewListing
-    listing = await listings.getByIndex(listingEvent.returnValues._index)
+    await listings.create(listingData)
+    const listingIds = await listings.allIds()
+    listingIndex = listingIds[listingIds.length - 1]
 
     // Buy listing to create a purchase
-    const purchaseTransactionObj = await asAccount(
+    await asAccount(
       contractService.web3,
       buyer,
       async () => {
-        return await listings.buy(listing.address, 1, listing.price - 0.1)
+        return await listings.requestPurchase(listingIndex, {}, samplePrice)
       }
     )
-    const purchaseEvent = purchaseTransactionObj.transactionReceipt.events.ListingPurchased
-    purchase = await purchases.get(purchaseEvent.returnValues._purchaseContract)
-  }
-
-  const resetFractionalListingAndPurchase = async () => {
-    // Create a new listing and a new purchase for the tests to use.
-    const listingData = {
-      name: 'Australorp Rooser',
-      category: 'For Rent',
-      location: 'Atlanta, GA',
-      description:
-        'Peaceful and dignified, Australorps are an absolutely delightful bird which we highly recommend to anyone who wants a pet chicken that lays dependably.',
-      pictures: undefined,
-      priceWei: 2000,
-      listingType: 'fractional'
-    }
-    const listingTransactionObj = await listings.create(listingData)
-
-    const listingEvent = listingTransactionObj.transactionReceipt.events.NewListing
-    listing = await listings.getByIndex(listingEvent.returnValues._index)
-
-    // Buy listing to create a purchase
-    const purchaseData = {
-      slot: {}
-    }
-    const purchaseTransactionObj = await asAccount(
-      contractService.web3,
-      buyer,
-      async () => {
-        return await listings.request(listing.address, purchaseData, 1)
-      }
-    )
-    const purchaseEvent = purchaseTransactionObj.transactionReceipt.events.ListingPurchased
-    purchase = await purchases.get(purchaseEvent.returnValues._purchaseContract)
-  }
-
-  const reloadPurchase = async function() {
-    purchase = await purchases.get(purchase.address)
+    await reloadPurchase()
   }
 
   const expectStage = function(expectedStage) {
     expect(purchase.stage).to.equal(expectedStage)
   }
 
-  // Tests
-  // -----
-
   describe('simple purchase flow: unit listing', async () => {
+    const purchaseIndex = 0
+
     before(async () => {
       await resetUnitListingAndPurchase()
     })
 
     it('should get a purchase', async () => {
-      expectStage('awaiting_payment')
-      expect(purchase.listingAddress).to.equal(listing.address)
-      expect(purchase.buyerAddress).to.equal(buyer)
+      expectStage('BUYER_REQUESTED')
+      expect(purchase.buyer).to.equal(buyer)
     })
 
-    it('should allow the buyer to pay', async () => {
-      expectStage('awaiting_payment')
-      await asAccount(contractService.web3, buyer, async () => {
-        await purchases.pay(
-          purchase.address,
-          contractService.web3.utils.toWei('0.1', 'ether')
-        )
-      })
+    it('should allow the seller to accept', async () => {
+      expectStage('BUYER_REQUESTED')
+      await purchases.acceptRequest(listingIndex, purchaseIndex, { foo: 'bar' })
       await reloadPurchase()
-      expectStage('in_escrow')
-    })
-
-    it('should allow the seller to mark as shipped', async () => {
-      expectStage('in_escrow')
-      await purchases.sellerConfirmShipped(purchase.address)
-      await reloadPurchase()
-      expectStage('buyer_pending')
+      expectStage('SELLER_ACCEPTED')
     })
 
     it('should allow the buyer to mark a purchase received', async () => {
-      expectStage('buyer_pending')
+      expectStage('SELLER_ACCEPTED')
       await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerConfirmReceipt(purchase.address, { rating: 3 })
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, { rating: 3 })
       })
       await reloadPurchase()
-      expectStage('seller_pending')
+      expectStage('BUYER_FINALIZED')
     })
 
     it('should allow the seller to collect money', async () => {
-      expectStage('seller_pending')
-      const reviewText = 'Some delay before marking purchase recieved'
-      await purchases.sellerGetPayout(purchase.address, {
-        rating: 4,
-        reviewText: reviewText
-      })
+      expectStage('BUYER_FINALIZED')
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, { rating: 4 })
       await reloadPurchase()
-      expectStage('complete')
-      const purchaseReviews = await reviews.find({
-        purchaseAddress: purchase.address
-      })
-      expect(purchaseReviews[1].rating).to.equal(4)
-      expect(purchaseReviews[1].revieweeAddress).to.equal(purchase.buyerAddress)
-      expect(purchaseReviews[1].revieweeRole).to.equal('BUYER')
     })
 
     it('should list logs', async () => {
-      const logs = await purchases.getLogs(purchase.address)
-      expect(logs[0].stage).to.equal('awaiting_payment')
-      expect(logs[1].stage).to.equal('in_escrow')
-      expect(logs[2].stage).to.equal('buyer_pending')
-      expect(logs[3].stage).to.equal('seller_pending')
-      expect(logs[4].stage).to.equal('complete')
-    })
-  })
-
-  describe('simple purchase flow: fractional listing', async () => {
-    before(async () => {
-      await resetFractionalListingAndPurchase()
-    })
-
-    it('should get a purchase', async () => {
-      expect(purchase.listingAddress).to.equal(listing.address)
-      expect(purchase.buyerAddress).to.equal(buyer)
-      expectStage('awaiting_seller_approval')
-    })
-
-    it('should allow the seller to approve', async () => {
-      await purchases.sellerApprove(purchase.address)
-      await reloadPurchase()
-      expectStage('buyer_pending')
-    })
-
-    it('should allow the buyer to mark a purchase received', async () => {
-      await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerConfirmReceipt(purchase.address, { rating: 3 })
-      })
-      await reloadPurchase()
-      expectStage('seller_pending')
-    })
-
-    it('should allow the seller to collect money', async () => {
-      expectStage('seller_pending')
-      const reviewText = 'Some delay before marking purchase recieved'
-      await purchases.sellerGetPayout(purchase.address, {
-        rating: 4,
-        reviewText: reviewText
-      })
-      await reloadPurchase()
-      expectStage('complete')
-      const purchaseReviews = await reviews.find({
-        purchaseAddress: purchase.address
-      })
-      expect(purchaseReviews[1].rating).to.equal(4)
-      expect(purchaseReviews[1].revieweeAddress).to.equal(purchase.buyerAddress)
-      expect(purchaseReviews[1].revieweeRole).to.equal('BUYER')
-    })
-
-    it('should list logs', async () => {
-      const logs = await purchases.getLogs(purchase.address)
-      expect(logs[0].stage).to.equal('awaiting_payment')
-      expect(logs[1].stage).to.equal('awaiting_seller_approval')
-      expect(logs[2].stage).to.equal('buyer_pending')
-      expect(logs[3].stage).to.equal('seller_pending')
-      expect(logs[4].stage).to.equal('complete')
-    })
-  })
-
-  describe('transactions return an object containing a timestamp and transaction receipt', async () => {
-    before(async () => {
-      await resetUnitListingAndPurchase()
-    })
-
-    it('should include the transaction hash', async () => {
-      const purchaseTransactionObj = await purchases.pay(
-        purchase.address,
-        contractService.web3.utils.toWei('0.1', 'ether')
-      )
-      expect(purchaseTransactionObj.created).to.match(/^[0-9]{10}$/)
-      expect(purchaseTransactionObj.transactionReceipt.transactionHash).to.match(/^0x([A-Fa-f0-9]{64})$/)
+      const logs = await purchases.getLogs(listingIndex, purchaseIndex)
+      expect(logs[0].stage).to.equal('BUYER_REQUESTED')
+      expect(logs[1].stage).to.equal('SELLER_ACCEPTED')
+      expect(logs[2].stage).to.equal('BUYER_FINALIZED')
+      expect(logs[3].stage).to.equal('SELLER_FINALIZED')
     })
   })
 
@@ -281,8 +155,7 @@ describe('Purchase Resource', function() {
       expect(first.address).to.equal(
         '0xefb3fd7f9260874d8afd7cb4b42183babea0ca1b'
       )
-      expect(first.stage).to.equal('in_escrow')
-      expect(first.created).to.equal(1524492517)
+      expectStage('SELLER_FINALIZED')
     })
   })
 })

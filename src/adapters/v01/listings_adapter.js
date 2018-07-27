@@ -6,7 +6,9 @@ import fractionalListingSchema from '../../schemas/fractional-listing.json'
 import {
   createBlockchainListing,
   getIpfsData,
-  getPurchase,
+  getPurchase as getPurchaseHelper,
+  getPurchaseLogs as getPurchaseLogsHelper,
+  purchaseStageNames
 } from './helpers'
 
 const listingsContract = 'v01_ListingsContract'
@@ -58,15 +60,10 @@ class ListingsAdapter {
   }) {
     this.contractService = contractService
     this.ipfsService = ipfsService
-    this.contractDefinition = this.contractService.listingContract
     this.fetch = fetch
     this.indexingServerUrl = indexingServerUrl
     this.purchases = purchases
   }
-
-  /*
-      Public mehods
-  */
 
   async get(listingIndex) {
     const listing = await this.contractService.call(
@@ -116,8 +113,8 @@ class ListingsAdapter {
     )
   }
 
-  async requestPurchase(listingIndex, ifpsData, offerWei) {
-    const ipfsHash = await this.ipfsService.submitFile(ifpsData)
+  async requestPurchase(listingIndex, ipfsData, offerWei) {
+    const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
       listingsContract,
@@ -125,6 +122,58 @@ class ListingsAdapter {
       [listingIndex, ipfsBytes32],
       { value: offerWei, gas: 350000 }
     )
+  }
+
+  async acceptPurchaseRequest(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+    const ipfsHash = await this.ipfsService.submitFile(ipfsData)
+    const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    return await this.contractService.call(
+      listingsContract,
+      'acceptPurchaseRequest',
+      [listingIndex, purchaseIndex, ipfsBytes32],
+      {},
+      confirmationCallback
+    )
+  }
+
+  async rejectPurchaseRequest(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+    const ipfsHash = await this.ipfsService.submitFile(ipfsData)
+    const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    return await this.contractService.call(
+      listingsContract,
+      'rejectPurchaseRequest',
+      [listingIndex, purchaseIndex, ipfsBytes32],
+      {},
+      confirmationCallback
+    )
+  }
+
+  async buyerFinalizePurchase(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+    const ipfsHash = await this.ipfsService.submitFile(ipfsData)
+    const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    return await this.contractService.call(
+      listingsContract,
+      'buyerFinalizePurchase',
+      [listingIndex, purchaseIndex, ipfsBytes32],
+      {},
+      confirmationCallback
+    )
+  }
+
+  async sellerFinalizePurchase(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+    const ipfsHash = await this.ipfsService.submitFile(ipfsData)
+    const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    return await this.contractService.call(
+      listingsContract,
+      'sellerFinalizePurchase',
+      [listingIndex, purchaseIndex, ipfsBytes32],
+      {},
+      confirmationCallback
+    )
+  }
+
+  async getPurchase(listingIndex, purchaseIndex) {
+    return await getPurchaseHelper(this.contractService, this.ipfsService, listingIndex, purchaseIndex)
   }
 
   async getPurchases(listingIndex) {
@@ -139,9 +188,45 @@ class ListingsAdapter {
     }
     return await Promise.all(
       indices.map(async purchaseIndex => {
-        return getPurchase(this.contractService, this.ipfsService, listingIndex, purchaseIndex)
+        return getPurchaseHelper(this.contractService, this.ipfsService, listingIndex, purchaseIndex)
       })
     )
+  }
+
+  async getPurchaseLogs(listingIndex, purchaseIndex) {
+    const events = await getPurchaseLogsHelper(
+      this.contractService,
+      listingIndex,
+      purchaseIndex
+    )
+    const mapped = events.map(log => {
+      const stageNumber = Number(log.returnValues._stage)
+      const stage = purchaseStageNames[stageNumber]
+      return {
+        transactionHash: log.transactionHash,
+        stage: stage,
+        blockNumber: log.blockNumber,
+        blockHash: log.blockHash,
+        event: log.event
+      }
+    })
+    // Fetch user and timestamp information for all logs, in parallel
+    const addUserAddressFn = async event => {
+      event.from = (await this.contractService.getTransaction(
+        event.transactionHash
+      )).from
+    }
+    const addTimestampFn = async event => {
+      event.timestamp = (await this.contractService.getBlock(
+        event.blockHash
+      )).timestamp
+    }
+    const fetchPromises = [].concat(
+      mapped.map(addUserAddressFn),
+      mapped.map(addTimestampFn)
+    )
+    await Promise.all(fetchPromises)
+    return mapped
   }
 }
 
