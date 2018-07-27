@@ -5,12 +5,7 @@ const appendSlash = url => {
 }
 
 class Listings extends Adaptable {
-  constructor({
-    contractService,
-    ipfsService,
-    fetch,
-    indexingServerUrl,
-  }) {
+  constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
     super(...arguments)
     this.contractService = contractService
     this.ipfsService = ipfsService

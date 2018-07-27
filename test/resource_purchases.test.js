@@ -63,13 +63,9 @@ describe('Purchase Resource', function() {
     listingIndex = listingIds[listingIds.length - 1]
 
     // Buy listing to create a purchase
-    await asAccount(
-      contractService.web3,
-      buyer,
-      async () => {
-        return await listings.requestPurchase(listingIndex, {}, samplePrice)
-      }
-    )
+    await asAccount(contractService.web3, buyer, async () => {
+      return await listings.requestPurchase(listingIndex, {}, samplePrice)
+    })
     await reloadPurchase()
   }
 
@@ -99,7 +95,9 @@ describe('Purchase Resource', function() {
     it('should allow the buyer to mark a purchase received', async () => {
       expectStage('SELLER_ACCEPTED')
       await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerFinalize(listingIndex, purchaseIndex, { rating: 3 })
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, {
+          rating: 3
+        })
       })
       await reloadPurchase()
       expectStage('BUYER_FINALIZED')

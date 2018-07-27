@@ -73,11 +73,7 @@ describe('Listing Resource', function() {
     const listingIds = await listings.allIds()
     const listingIndex = listingIds.length - 1
     await asAccount(contractService.web3, buyer, async () => {
-      await listings.requestPurchase(
-        listingIndex,
-        { foo: 'bar' },
-        1
-      )
+      await listings.requestPurchase(listingIndex, { foo: 'bar' }, 1)
     })
   })
 

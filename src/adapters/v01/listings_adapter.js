@@ -71,7 +71,11 @@ class ListingsAdapter {
       'getListing',
       [listingIndex]
     )
-    const ipfsData = await getIpfsData(this.contractService, this.ipfsService, listing._ipfsHash)
+    const ipfsData = await getIpfsData(
+      this.contractService,
+      this.ipfsService,
+      listing._ipfsHash
+    )
     return {
       ipfsData,
       seller: listing._seller,
@@ -83,12 +87,17 @@ class ListingsAdapter {
     if (!ipfsData.listingType) {
       console.warn('Please specify a listing type. Assuming unit listing type.')
     } else if (!validListingTypes.includes(ipfsData.listingType)) {
-      console.error('Listing type ${ipfsData.listingType} is invalid. Assuming unit listing type.')
+      console.error(
+        'Listing type ${ipfsData.listingType} is invalid. Assuming unit listing type.'
+      )
     }
     const listingType = ipfsData.listingType || unitListingType
     validate(listingType, ipfsData)
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
-    const transactionReceipt = await createBlockchainListing(this.contractService, ipfsHash)
+    const transactionReceipt = await createBlockchainListing(
+      this.contractService,
+      ipfsHash
+    )
     return transactionReceipt
   }
 
@@ -124,7 +133,12 @@ class ListingsAdapter {
     )
   }
 
-  async acceptPurchaseRequest(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async acceptPurchaseRequest(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
@@ -136,7 +150,12 @@ class ListingsAdapter {
     )
   }
 
-  async rejectPurchaseRequest(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async rejectPurchaseRequest(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
@@ -148,7 +167,12 @@ class ListingsAdapter {
     )
   }
 
-  async buyerFinalizePurchase(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async buyerFinalizePurchase(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
@@ -160,7 +184,12 @@ class ListingsAdapter {
     )
   }
 
-  async sellerFinalizePurchase(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async sellerFinalizePurchase(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
@@ -173,7 +202,12 @@ class ListingsAdapter {
   }
 
   async getPurchase(listingIndex, purchaseIndex) {
-    return await getPurchaseHelper(this.contractService, this.ipfsService, listingIndex, purchaseIndex)
+    return await getPurchaseHelper(
+      this.contractService,
+      this.ipfsService,
+      listingIndex,
+      purchaseIndex
+    )
   }
 
   async getPurchases(listingIndex) {
@@ -188,7 +222,12 @@ class ListingsAdapter {
     }
     return await Promise.all(
       indices.map(async purchaseIndex => {
-        return getPurchaseHelper(this.contractService, this.ipfsService, listingIndex, purchaseIndex)
+        return getPurchaseHelper(
+          this.contractService,
+          this.ipfsService,
+          listingIndex,
+          purchaseIndex
+        )
       })
     )
   }

@@ -34,22 +34,42 @@ class Purchases extends Adaptable {
     return await adapter.requestPurchase(...arguments)
   }
 
-  async acceptRequest(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async acceptRequest(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const adapter = await this.getAdapter(listingIndex)
     return await adapter.acceptPurchaseRequest(...arguments)
   }
 
-  async rejectRequest(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async rejectRequest(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const adapter = await this.getAdapter(listingIndex)
     return await adapter.rejectPurchaseRequest(...arguments)
   }
 
-  async buyerFinalize(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async buyerFinalize(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const adapter = await this.getAdapter(listingIndex)
     return await adapter.buyerFinalizePurchase(...arguments)
   }
 
-  async sellerFinalize(listingIndex, purchaseIndex, ipfsData, confirmationCallback) {
+  async sellerFinalize(
+    listingIndex,
+    purchaseIndex,
+    ipfsData,
+    confirmationCallback
+  ) {
     const adapter = await this.getAdapter(listingIndex)
     return await adapter.sellerFinalizePurchase(...arguments)
   }
