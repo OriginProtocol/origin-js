@@ -1,6 +1,3 @@
-// For now, we are just wrapping the methods that are already in
-// contractService and ipfsService.
-
 import Ajv from 'ajv'
 import ajvEnableMerge from 'ajv-merge-patch/keywords/merge'
 import listingSchema from '../../schemas/listing.json'
@@ -51,7 +48,7 @@ function validate(listingType, data) {
   }
 }
 
-class Listings {
+class ListingsAdapter {
   constructor({
     contractService,
     ipfsService,
@@ -148,4 +145,4 @@ class Listings {
   }
 }
 
-module.exports = Listings
+module.exports = ListingsAdapter
