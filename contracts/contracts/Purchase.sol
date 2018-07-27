@@ -46,6 +46,7 @@ contract Purchase {
   uint public created;
   uint public buyerTimeout;
   uint public listingVersion;
+  bytes32 public ipfsHash;
 
   /*
   * Modifiers
@@ -73,6 +74,7 @@ contract Purchase {
   constructor(
     address _listingContractAddress,
     uint _listingVersion,
+    bytes32 _ipfsHash,
     address _buyer
   )
   public
@@ -80,6 +82,7 @@ contract Purchase {
     buyer = _buyer;
     listingContract = Listing(_listingContractAddress);
     listingVersion = _listingVersion;
+    ipfsHash = _ipfsHash;
     created = now;
     emit PurchaseChange(internalStage);
   }
@@ -87,8 +90,8 @@ contract Purchase {
   function data()
   public
   view
-  returns (Stages _stage, Listing _listingContract, address _buyer, uint _created, uint _buyerTimeout) {
-      return (stage(), listingContract, buyer, created, buyerTimeout);
+  returns (Stages _stage, Listing _listingContract, address _buyer, uint _created, uint _buyerTimeout, bytes32 _ipfsHash) {
+      return (stage(), listingContract, buyer, created, buyerTimeout, ipfsHash);
   }
 
   // Pay for listing
@@ -113,7 +116,12 @@ contract Purchase {
   isSeller
   atStage(Stages.AWAITING_SELLER_APPROVAL)
   {
-    setStage(Stages.IN_ESCROW);
+    /*
+      TODO: consider fractional usage timeout scenarios
+        We probably want to allow timeout period to be passed into constructor
+    */
+    buyerTimeout = now + 21 days;
+    setStage(Stages.BUYER_PENDING);
   }
 
   function sellerReject()
@@ -121,6 +129,7 @@ contract Purchase {
   isSeller
   atStage(Stages.AWAITING_SELLER_APPROVAL)
   {
+    /* TODO: return the buyer's money! */
     setStage(Stages.SELLER_REJECTED);
   }
 

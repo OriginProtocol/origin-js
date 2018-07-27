@@ -1,5 +1,6 @@
 import { expect } from 'chai'
 import Listings from '../src/resources/listings.js'
+import Purchases from '../src/resources/purchases.js'
 import ContractService from '../src/services/contract-service'
 import IpfsService from '../src/services/ipfs-service.js'
 import Web3 from 'web3'
@@ -24,7 +25,8 @@ describe('Listing Resource', function() {
       ipfsGatewayPort: '8080',
       ipfsGatewayProtocol: 'http'
     })
-    listings = new Listings({ contractService, ipfsService })
+    const purchases = new Purchases({ contractService, ipfsService })
+    listings = new Listings({ contractService, ipfsService, purchases })
     const accounts = await web3.eth.getAccounts()
     buyer = accounts[1]
 
@@ -49,7 +51,6 @@ describe('Listing Resource', function() {
     const listingIds = await listings.allIds()
     const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
     expect(listing.name).to.equal('Foo Bar')
-    expect(listing.index).to.equal(listingIds.length - 1)
   })
 
   it('should get a listing by address', async () => {
@@ -60,6 +61,7 @@ describe('Listing Resource', function() {
     )
     const listing = await listings.get(listingFromIndex.address)
     expect(listing.name).to.equal('Foo Bar')
+    expect(listing.listingType).to.equal('unit')
   })
 
   it('should buy a listing', async () => {
@@ -148,29 +150,18 @@ describe('Listing Resource', function() {
         '0x4E205e04A1A8f230702fe51f3AfdCC38aafB0f3C'
       )
       expect(first.name).to.equal("Taylor Swift's Reputation Tour")
-      expect(first.price).to.equal('0.30')
-    })
-  })
-
-  describe('getListing', () => {
-    // Skipped because of https://github.com/OriginProtocol/platform/issues/27
-    it('should reject when listing cannot be found', done => {
-      listings.getListing('foo').then(done.fail, error => {
-        expect(error).to.be.instanceof(Error)
-        done()
-      })
+      expect(first.price).to.equal(0.3)
     })
 
-    it('should get a listing object', async () => {
-      const listing = await listings.getListing(0)
-      expect(listing).to.have.keys(
-        'address',
-        'index',
-        'lister',
-        'ipfsHash',
-        'price',
-        'unitsAvailable'
-      )
+    it('should get all listings directly from the blockchain', async () => {
+      const all = await listings.all({ noIndex: true })
+      expect(all.length).to.be.greaterThan(1)
+      expect(all[0])
+        .to.be.an('object')
+        .with.property('price')
+      expect(all[1])
+        .to.be.an('object')
+        .with.property('price')
     })
   })
 
@@ -193,6 +184,52 @@ describe('Listing Resource', function() {
     it('should get the address of a purchase', async () => {
       const address = await listings.purchaseAddressByIndex(listing.address, 0)
       expect(address.slice(0, 2)).to.equal('0x')
+    })
+  })
+
+  describe('update', () => {
+    it('should be able to update a fractional listing', async () => {
+      const tx = await listings.create({
+        name: 'Sample Listing 1',
+        priceWei: 1000,
+        listingType: 'fractional'
+      })
+      const listingAddress = tx.events.NewListing.returnValues._address
+      const initialListing = await listings.get(listingAddress)
+      expect(initialListing.name).to.equal('Sample Listing 1')
+
+      await listings.update(listingAddress, {
+        name: 'foo bar',
+        priceWei: 1000,
+        listingType: 'fractional'
+      })
+      const updatedListing = await listings.get(listingAddress)
+      expect(updatedListing.name).to.equal('foo bar')
+    })
+  })
+
+  describe('getPurchases', async () => {
+    let listing
+    before(async () => {
+      await listings.create({
+        name: 'My Listing',
+        priceWei: 1,
+        listingType: 'fractional'
+      })
+      const listingIds = await listings.allIds()
+      listing = await listings.getByIndex(listingIds[listingIds.length - 1])
+      await asAccount(contractService.web3, buyer, async () => {
+        await listings.request(listing.address, { foo: 'bar' }, 1)
+      })
+    })
+
+    it('should get purchases', async () => {
+      const listingPurchases = await listings.getPurchases(listing.address)
+      expect(listingPurchases.length).to.equal(1)
+      expect(listingPurchases[0].stage).to.equal('awaiting_seller_approval')
+      expect(JSON.stringify(listingPurchases[0].ipfsData)).to.equal(
+        JSON.stringify({ foo: 'bar' })
+      )
     })
   })
 })

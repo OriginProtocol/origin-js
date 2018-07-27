@@ -43,6 +43,7 @@
     "web3": "^1.0.0-beta.34"
   },
   "devDependencies": {
+    "ajv-merge-patch": "^4.1.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.3",
@@ -53,6 +54,7 @@
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "chai": "^4.1.2",
+    "chai-string": "1.4.0",
     "chalk": "^2.4.1",
     "eth-gas-reporter": "^0.1.2",
     "fetch-mock": "^6.3.0",

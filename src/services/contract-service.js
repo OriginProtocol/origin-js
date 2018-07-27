@@ -2,8 +2,12 @@ import ClaimHolderRegisteredContract from './../../contracts/build/contracts/Cla
 import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
+import PurchaseLibrary from './../../contracts/build/contracts/PurchaseLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
+import ListingsRegistryStorageContract from './../../contracts/build/contracts/ListingsRegistryStorage.json'
+import ListingContract from './../../contracts/build/contracts/Listing.json'
 import UnitListingContract from './../../contracts/build/contracts/UnitListing.json'
+import FractionalListingContract from './../../contracts/build/contracts/FractionalListing.json'
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
@@ -21,8 +25,11 @@ class ContractService {
     this.web3 = new Web3(externalWeb3.currentProvider)
 
     const contracts = {
+      listingContract: ListingContract,
       listingsRegistryContract: ListingsRegistryContract,
+      listingsRegistryStorageContract: ListingsRegistryStorageContract,
       unitListingContract: UnitListingContract,
+      fractionalListingContract: FractionalListingContract,
       purchaseContract: PurchaseContract,
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
@@ -32,6 +39,7 @@ class ContractService {
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
     this.libraries.KeyHolderLibrary = KeyHolderLibrary
+    this.libraries.PurchaseLibrary = PurchaseLibrary
     for (const name in contracts) {
       this[name] = contracts[name]
       try {
@@ -191,7 +199,8 @@ class ContractService {
     address,
     functionName,
     args = [],
-    options = {}
+    options = {},
+    confirmationCallback
   ) {
     // Setup options
     const opts = Object.assign(options, {}) // clone options
@@ -199,7 +208,7 @@ class ContractService {
     opts.gas = options.gas || 50000 // Default gas
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
-    contract.options.address = address
+    contract.options.address = address || contract.options.address
 
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {
@@ -210,6 +219,11 @@ class ContractService {
         .send(opts)
         .on('receipt', receipt => {
           resolve(receipt)
+        })
+        .on('confirmation', confirmationNumber => {
+          if (confirmationCallback) {
+            confirmationCallback(confirmationNumber)
+          }
         })
         .on('error', err => reject(err))
     })
