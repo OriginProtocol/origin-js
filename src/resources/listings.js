@@ -1,32 +1,22 @@
-import v01ListingsAdapter from '../adapters/v01/listings_adapter'
-
-const evolvingRegistry = 'evolvingRegistryContract'
+import Adaptable from './adaptable'
 
 const appendSlash = url => {
   return url.substr(-1) === '/' ? url : url + '/'
 }
 
-class Listings {
+class Listings extends Adaptable {
   constructor({
     contractService,
     ipfsService,
     fetch,
     indexingServerUrl,
-    purchases
   }) {
+    super(...arguments)
     this.contractService = contractService
     this.ipfsService = ipfsService
     this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
-    this.adapters = {
-      'V01_Listings': new v01ListingsAdapter(...arguments)
-    }
-    this.currentAdapter = this.adapters.V01_Listings
   }
-
-  /*
-      Public mehods
-  */
 
   // fetches all listings (all data included)
   async all() {
@@ -63,7 +53,10 @@ class Listings {
   async allIds() {
     const range = (start, count) =>
       Array.apply(0, Array(count)).map((element, index) => index + start)
-    const size = await this.contractService.call(evolvingRegistry, 'size')
+    const size = await this.contractService.call(
+      'evolvingRegistryContract',
+      'size'
+    )
     return range(0, Number(size))
   }
 
@@ -77,9 +70,8 @@ class Listings {
     return await this.get(listingIndex)
   }
 
-  async create(data, schemaType) {
-    const adapter = this.currentAdapter
-    return await adapter.create(...arguments)
+  async create(data) {
+    return await this.currentAdapter.create(...arguments)
   }
 
   async update(listingIndex, data = {}) {
@@ -95,23 +87,6 @@ class Listings {
   async getPurchases(listingIndex) {
     const adapter = await this.getAdapter(listingIndex)
     return await adapter.getPurchases(...arguments)
-  }
-
-  async getAdapter(listingIndex) {
-    // get entry type of listing from evolving registry
-    const entryType = await this.contractService.call(
-      evolvingRegistry,
-      'getEntryTypeOfEntry',
-      [listingIndex]
-    )
-    const entryTypeName = entryType['_name']
-
-    // use appropriate adapter for entry type
-    const adapter = this.adapters[entryTypeName]
-    if (!adapter) {
-      throw new Error(`Adapter not found: ${entryTypeName}`)
-    }
-    return adapter
   }
 }
 
