@@ -119,19 +119,14 @@ class Listings {
     )
   }
 
-  async requestPurchase(listingIndex, ifpsData, ethToPay) {
-    // TODO: ethToPay should really be replaced by something that takes Wei.
-    const value = this.contractService.web3.utils.toWei(
-      String(ethToPay),
-      'ether'
-    )
+  async requestPurchase(listingIndex, ifpsData, offerWei) {
     const ipfsHash = await this.ipfsService.submitFile(ifpsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
       listingsContract,
       'requestPurchase',
       [listingIndex, ipfsBytes32],
-      { value: value, gas: 350000 }
+      { value: offerWei, gas: 350000 }
     )
   }
 
