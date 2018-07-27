@@ -1,6 +1,5 @@
 import { expect } from 'chai'
 import Listings from '../src/resources/listings.js'
-import Purchases from '../src/resources/purchases.js'
 import ContractService from '../src/services/contract-service'
 import IpfsService from '../src/services/ipfs-service.js'
 import Web3 from 'web3'
@@ -28,8 +27,7 @@ describe('Listing Resource', function() {
       ipfsGatewayPort: '8080',
       ipfsGatewayProtocol: 'http'
     })
-    const purchases = new Purchases({ contractService, ipfsService })
-    listings = new Listings({ contractService, ipfsService, purchases })
+    listings = new Listings({ contractService, ipfsService })
     const accounts = await web3.eth.getAccounts()
     buyer = accounts[1]
 
