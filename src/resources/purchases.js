@@ -26,12 +26,12 @@ class Purchases extends Adaptable {
 
   async get(listingIndex, purchaseIndex) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.getPurchase(...arguments)
+    return await adapter.getPurchase(listingIndex, purchaseIndex)
   }
 
   async request(listingIndex, ipfsData, offerWei) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.requestPurchase(...arguments)
+    return await adapter.requestPurchase(listingIndex, ipfsData, offerWei)
   }
 
   async acceptRequest(
@@ -41,7 +41,12 @@ class Purchases extends Adaptable {
     confirmationCallback
   ) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.acceptPurchaseRequest(...arguments)
+    return await adapter.acceptPurchaseRequest(
+      listingIndex,
+      purchaseIndex,
+      ipfsData,
+      confirmationCallback
+    )
   }
 
   async rejectRequest(
@@ -51,7 +56,12 @@ class Purchases extends Adaptable {
     confirmationCallback
   ) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.rejectPurchaseRequest(...arguments)
+    return await adapter.rejectPurchaseRequest(
+      listingIndex,
+      purchaseIndex,
+      ipfsData,
+      confirmationCallback
+    )
   }
 
   async buyerFinalize(
@@ -61,7 +71,12 @@ class Purchases extends Adaptable {
     confirmationCallback
   ) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.buyerFinalizePurchase(...arguments)
+    return await adapter.buyerFinalizePurchase(
+      listingIndex,
+      purchaseIndex,
+      ipfsData,
+      confirmationCallback
+    )
   }
 
   async sellerFinalize(
@@ -71,12 +86,17 @@ class Purchases extends Adaptable {
     confirmationCallback
   ) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.sellerFinalizePurchase(...arguments)
+    return await adapter.sellerFinalizePurchase(
+      listingIndex,
+      purchaseIndex,
+      ipfsData,
+      confirmationCallback
+    )
   }
 
   async getLogs(listingIndex, purchaseIndex) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.getPurchaseLogs(...arguments)
+    return await adapter.getPurchaseLogs(listingIndex, purchaseIndex)
   }
 
   /*

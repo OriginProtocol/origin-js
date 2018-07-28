@@ -1,6 +1,5 @@
 import { expect } from 'chai'
 import Listings from '../src/resources/listings.js'
-import ContractService from '../src/services/contract-service'
 import IpfsService from '../src/services/ipfs-service.js'
 import Web3 from 'web3'
 import asAccount from './helpers/as-account'
@@ -163,7 +162,7 @@ describe('Listing Resource', function() {
   })
 
   describe('Getting purchases', async () => {
-    let listing, listingIndex
+    let listingIndex
     before(async () => {
       await listings.create({
         listingType: 'unit',
@@ -171,8 +170,6 @@ describe('Listing Resource', function() {
         priceWei: samplePrice,
         unitsAvailable: 1
       })
-      const listingIds = await listings.allIds()
-      listing = await listings.getByIndex(listingIds[listingIds.length - 1])
       const ids = await listings.allIds()
       listingIndex = ids[ids.length - 1]
       await asAccount(contractService.web3, buyer, async () => {

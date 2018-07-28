@@ -1,5 +1,7 @@
 import Adaptable from './adaptable'
 
+const unitListingType = 'unit'
+
 const appendSlash = url => {
   return url.substr(-1) === '/' ? url : url + '/'
 }
@@ -66,7 +68,7 @@ class Listings extends Adaptable {
   }
 
   async create(data) {
-    return await this.currentAdapter.create(...arguments)
+    return await this.currentAdapter.create(data)
   }
 
   async update(listingIndex, data = {}) {
@@ -76,7 +78,7 @@ class Listings extends Adaptable {
 
   async requestPurchase(listingIndex, ipfsData, offerWei) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.requestPurchase(...arguments)
+    return await adapter.requestPurchase(listingIndex, ipfsData, offerWei)
   }
 
   async getPurchases(listingIndex) {

@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import Listings from '../src/resources/listings.js'
 import Purchase from '../src/resources/purchases.js'
 import Review from '../src/resources/reviews.js'
-import ContractService from '../src/services/contract-service'
 import IpfsService from '../src/services/ipfs-service.js'
 import Web3 from 'web3'
 import asAccount from './helpers/as-account'
@@ -25,10 +24,8 @@ describe('Purchase Resource', function() {
 
   let listings
   let listingIndex
-  let listing
   let purchases
   let purchase
-  let reviews
   let contractService
   let ipfsService
   let web3
@@ -46,7 +43,7 @@ describe('Purchase Resource', function() {
     })
     listings = new Listings({ contractService, ipfsService })
     purchases = new Purchase({ contractService, ipfsService })
-    reviews = new Review({ contractService, ipfsService })
+    new Review({ contractService, ipfsService })
     const accounts = await web3.eth.getAccounts()
     buyer = accounts[1]
   })

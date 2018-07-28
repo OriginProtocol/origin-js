@@ -25,7 +25,6 @@ describe('Review Resource', function() {
 
   let reviews,
     accounts,
-    seller,
     buyer,
     contractService,
     listings,
@@ -44,7 +43,6 @@ describe('Review Resource', function() {
     const web3 = new Web3(provider)
     contractService = await contractServiceHelper(web3)
     accounts = await web3.eth.getAccounts()
-    seller = accounts[0]
     buyer = accounts[2]
     listings = new Listings({ contractService, ipfsService })
     purchases = new Purchase({ contractService, ipfsService })
