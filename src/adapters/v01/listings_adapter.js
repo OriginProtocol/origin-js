@@ -2,7 +2,9 @@ import Ajv from 'ajv'
 import ajvEnableMerge from 'ajv-merge-patch/keywords/merge'
 import listingSchema from '../../schemas/listing.json'
 import unitListingSchema from '../../schemas/unit-listing.json'
+import unitPurchaseSchema from '../../schemas/unit-purchase.json'
 import fractionalListingSchema from '../../schemas/fractional-listing.json'
+import fractionalPurchaseSchema from '../../schemas/fractional-purchase.json'
 import {
   createBlockchainListing,
   getIpfsData,
@@ -18,29 +20,28 @@ const fractionalListingType = 'fractional'
 
 const validListingTypes = [unitListingType, fractionalListingType]
 
-const unitSchemaId = 'unit-listing.json'
-const fractionalSchemaId = 'fractional-listing.json'
+const unitListingSchemaId = 'unit-listing.json'
+const fractionalListingSchemaId = 'fractional-listing.json'
+const unitPurchaseSchemaId = 'unit-purchase.json'
+const fractionalPurchaseSchemaId = 'fractional-purchase.json'
 
 const ajv = new Ajv({
-  schemas: [listingSchema, unitListingSchema, fractionalListingSchema]
+  schemas: [
+    listingSchema,
+    unitListingSchema,
+    unitPurchaseSchema,
+    fractionalListingSchema,
+    fractionalPurchaseSchema
+  ]
 })
 ajvEnableMerge(ajv)
 
-const validateUnitListing = ajv.getSchema(unitSchemaId)
-const validateFractionalListing = ajv.getSchema(fractionalSchemaId)
+const validateUnitListing = ajv.getSchema(unitListingSchemaId)
+const validateUnitPurchase = ajv.getSchema(unitPurchaseSchemaId)
+const validateFractionalListing = ajv.getSchema(fractionalListingSchemaId)
+const validateFractionalPurchase = ajv.getSchema(fractionalPurchaseSchemaId)
 
-const schemaFor = {
-  unit: unitListingSchema,
-  fractional: fractionalListingSchema
-}
-const validateFor = {
-  unit: validateUnitListing,
-  fractional: validateFractionalListing
-}
-
-function validate(listingType, data) {
-  const schema = schemaFor[listingType]
-  const validateFn = validateFor[listingType]
+function validate(validateFn, schema, data) {
   if (!validateFn(data)) {
     throw new Error(
       `Data invalid for schema. Data: ${JSON.stringify(
@@ -92,7 +93,15 @@ class ListingsAdapter {
       )
     }
     const listingType = ipfsData.listingType || unitListingType
-    validate(listingType, ipfsData)
+    let validateFn, schema
+    if (listingType === unitListingType) {
+      validateFn = validateUnitListing
+      schema = unitListingSchema
+    } else if (listingType === fractionalListingType) {
+      validateFn = validateFractionalListing
+      schema = fractionalListingSchema
+    }
+    validate(validateFn, schema, ipfsData)
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const transactionReceipt = await createBlockchainListing(
       this.contractService,
@@ -123,6 +132,24 @@ class ListingsAdapter {
   }
 
   async requestPurchase(listingIndex, ipfsData, offerWei) {
+    if (!ipfsData.purchaseType) {
+      console.warn('Please specify a purchase type. Assuming unit purchase type.')
+    } else if (!validListingTypes.includes(ipfsData.purchaseType)) {
+      console.error(
+        'Purchase type ${ipfsData.purchaseType} is invalid. Assuming unit purchase type.'
+      )
+    }
+    const purchaseType = ipfsData.purchaseType || unitListingType
+    let validateFn, schema
+    if (purchaseType === unitListingType) {
+      validateFn = validateUnitPurchase
+      schema = unitPurchaseSchema
+    } else if (purchaseType === fractionalListingType) {
+      validateFn = validateFractionalPurchase
+      schema = fractionalPurchaseSchema
+    }
+    validate(validateFn, schema, ipfsData)
+
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(

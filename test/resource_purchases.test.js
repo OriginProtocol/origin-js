@@ -10,6 +10,15 @@ import fetchMock from 'fetch-mock'
 import contractServiceHelper from './helpers/contract-service-helper'
 
 const samplePrice = 1000000000000000
+const unitPurchaseData = {
+  priceWei: samplePrice,
+  units: 1,
+  purchaseType: 'unit'
+}
+const fractionalPurchaseData = {
+  priceWei: samplePrice,
+  purchaseType: 'fractional'
+}
 
 describe('Purchase Resource', function() {
   this.timeout(5000) // default is 2000
@@ -64,7 +73,29 @@ describe('Purchase Resource', function() {
 
     // Buy listing to create a purchase
     await asAccount(contractService.web3, buyer, async () => {
-      return await listings.requestPurchase(listingIndex, {}, samplePrice)
+      return await listings.requestPurchase(listingIndex, unitPurchaseData, samplePrice)
+    })
+    await reloadPurchase()
+  }
+
+  const resetFractionalListingAndPurchase = async () => {
+    // Create a new listing and a new purchase for the tests to use.
+    const listingData = {
+      listingType: 'fractional',
+      name: 'Australorp Rooser',
+      category: 'For Sale',
+      location: 'Atlanta, GA',
+      description:
+        'Peaceful and dignified, Australorps are an absolutely delightful bird which we highly recommend to anyone who wants a pet chicken that lays dependably.',
+      priceWei: samplePrice
+    }
+    await listings.create(listingData)
+    const listingIds = await listings.allIds()
+    listingIndex = listingIds[listingIds.length - 1]
+
+    // Buy listing to create a purchase
+    await asAccount(contractService.web3, buyer, async () => {
+      return await listings.requestPurchase(listingIndex, fractionalPurchaseData, samplePrice)
     })
     await reloadPurchase()
   }
@@ -78,6 +109,51 @@ describe('Purchase Resource', function() {
 
     before(async () => {
       await resetUnitListingAndPurchase()
+    })
+
+    it('should get a purchase', async () => {
+      expectStage('BUYER_REQUESTED')
+      expect(purchase.buyer).to.equal(buyer)
+    })
+
+    it('should allow the seller to accept', async () => {
+      expectStage('BUYER_REQUESTED')
+      await purchases.acceptRequest(listingIndex, purchaseIndex, { foo: 'bar' })
+      await reloadPurchase()
+      expectStage('SELLER_ACCEPTED')
+    })
+
+    it('should allow the buyer to mark a purchase received', async () => {
+      expectStage('SELLER_ACCEPTED')
+      await asAccount(contractService.web3, buyer, async () => {
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, {
+          rating: 3
+        })
+      })
+      await reloadPurchase()
+      expectStage('BUYER_FINALIZED')
+    })
+
+    it('should allow the seller to collect money', async () => {
+      expectStage('BUYER_FINALIZED')
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, { rating: 4 })
+      await reloadPurchase()
+    })
+
+    it('should list logs', async () => {
+      const logs = await purchases.getLogs(listingIndex, purchaseIndex)
+      expect(logs[0].stage).to.equal('BUYER_REQUESTED')
+      expect(logs[1].stage).to.equal('SELLER_ACCEPTED')
+      expect(logs[2].stage).to.equal('BUYER_FINALIZED')
+      expect(logs[3].stage).to.equal('SELLER_FINALIZED')
+    })
+  })
+
+  describe('simple purchase flow: fractional listing', async () => {
+    const purchaseIndex = 0
+
+    before(async () => {
+      await resetFractionalListingAndPurchase()
     })
 
     it('should get a purchase', async () => {
