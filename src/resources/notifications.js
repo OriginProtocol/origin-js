@@ -188,13 +188,26 @@ class Notifications {
     const listing = await this.listings.get(listingIndex)
     return await Promise.all(
       purchases.map((purchase, purchaseIndex) => {
-        return this.purchaseDataForListingAndPurchase(listing, purchase, listingIndex, purchaseIndex)
+        return this.purchaseDataForListingAndPurchase(
+          listing,
+          purchase,
+          listingIndex,
+          purchaseIndex
+        )
       })
     )
   }
 
-  async purchaseDataForListingAndPurchase(listing, purchase, listingIndex, purchaseIndex) {
-    const purchaseLogs = await this.purchases.getLogs(listingIndex, purchaseIndex)
+  async purchaseDataForListingAndPurchase(
+    listing,
+    purchase,
+    listingIndex,
+    purchaseIndex
+  ) {
+    const purchaseLogs = await this.purchases.getLogs(
+      listingIndex,
+      purchaseIndex
+    )
     return { purchase, purchaseLogs, listing }
   }
 

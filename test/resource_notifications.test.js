@@ -68,19 +68,17 @@ describe('Notification Resource', function() {
     })
 
     createListing = async () => {
-      await listings.create(
-        {
-          listingType: 'unit',
-          name: 'Sample Listing 1',
-          priceWei: samplePrice,
-          unitsAvailable: 1
-        }
-      )
+      await listings.create({
+        listingType: 'unit',
+        name: 'Sample Listing 1',
+        priceWei: samplePrice,
+        unitsAvailable: 1
+      })
       const listingIds = await listings.allIds()
       return listingIds[listingIds.length - 1]
     }
 
-    buyListing = async (listingIndex) => {
+    buyListing = async listingIndex => {
       return await asAccount(contractService.web3, buyer, async () => {
         await listings.requestPurchase(listingIndex, {}, samplePrice)
         const purchases = await listings.getPurchases(listingIndex)

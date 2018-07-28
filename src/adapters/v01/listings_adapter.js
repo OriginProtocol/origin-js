@@ -133,7 +133,9 @@ class ListingsAdapter {
 
   async requestPurchase(listingIndex, ipfsData, offerWei) {
     if (!ipfsData.purchaseType) {
-      console.warn('Please specify a purchase type. Assuming unit purchase type.')
+      console.warn(
+        'Please specify a purchase type. Assuming unit purchase type.'
+      )
     } else if (!validListingTypes.includes(ipfsData.purchaseType)) {
       console.error(
         'Purchase type ${ipfsData.purchaseType} is invalid. Assuming unit purchase type.'

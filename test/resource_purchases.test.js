@@ -73,7 +73,11 @@ describe('Purchase Resource', function() {
 
     // Buy listing to create a purchase
     await asAccount(contractService.web3, buyer, async () => {
-      return await listings.requestPurchase(listingIndex, unitPurchaseData, samplePrice)
+      return await listings.requestPurchase(
+        listingIndex,
+        unitPurchaseData,
+        samplePrice
+      )
     })
     await reloadPurchase()
   }
@@ -95,7 +99,11 @@ describe('Purchase Resource', function() {
 
     // Buy listing to create a purchase
     await asAccount(contractService.web3, buyer, async () => {
-      return await listings.requestPurchase(listingIndex, fractionalPurchaseData, samplePrice)
+      return await listings.requestPurchase(
+        listingIndex,
+        fractionalPurchaseData,
+        samplePrice
+      )
     })
     await reloadPurchase()
   }
