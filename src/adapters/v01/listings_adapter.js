@@ -5,6 +5,7 @@ import unitListingSchema from '../../schemas/unit-listing.json'
 import unitPurchaseSchema from '../../schemas/unit-purchase.json'
 import fractionalListingSchema from '../../schemas/fractional-listing.json'
 import fractionalPurchaseSchema from '../../schemas/fractional-purchase.json'
+import reviewSchema from '../../schemas/review.json'
 import {
   createBlockchainListing,
   getIpfsData,
@@ -24,6 +25,7 @@ const unitListingSchemaId = 'unit-listing.json'
 const fractionalListingSchemaId = 'fractional-listing.json'
 const unitPurchaseSchemaId = 'unit-purchase.json'
 const fractionalPurchaseSchemaId = 'fractional-purchase.json'
+const reviewSchemaId = 'review.json'
 
 const buyerReviewStage = 4
 const sellerReviewStage = 5
@@ -37,7 +39,8 @@ const ajv = new Ajv({
     unitListingSchema,
     unitPurchaseSchema,
     fractionalListingSchema,
-    fractionalPurchaseSchema
+    fractionalPurchaseSchema,
+    reviewSchema
   ]
 })
 ajvEnableMerge(ajv)
@@ -46,6 +49,7 @@ const validateUnitListing = ajv.getSchema(unitListingSchemaId)
 const validateUnitPurchase = ajv.getSchema(unitPurchaseSchemaId)
 const validateFractionalListing = ajv.getSchema(fractionalListingSchemaId)
 const validateFractionalPurchase = ajv.getSchema(fractionalPurchaseSchemaId)
+const validateReview = ajv.getSchema(reviewSchemaId)
 
 function validate(validateFn, schema, data) {
   if (!validateFn(data)) {
@@ -208,6 +212,7 @@ class ListingsAdapter {
     ipfsData,
     confirmationCallback
   ) {
+    validate(validateReview, reviewSchema, ipfsData)
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
@@ -225,6 +230,7 @@ class ListingsAdapter {
     ipfsData,
     confirmationCallback
   ) {
+    validate(validateReview, reviewSchema, ipfsData)
     const ipfsHash = await this.ipfsService.submitFile(ipfsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.call(
