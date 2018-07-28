@@ -1,5 +1,4 @@
 import ResourceBase from './_resource-base'
-import Web3 from 'web3'
 import secp256k1 from 'secp256k1'
 import CryptoJS from 'crypto-js'
 import cryptoRandomString from 'crypto-random-string'
@@ -60,22 +59,18 @@ class InsertOnlyKeystore {
     }
   }
 
-  createKey(id) {
-    return ''
-  }
-
-  getKey(id) {
+  getKey() {
     // for some reason Orbit requires a key for verify to be triggered
     return {
-      getPublic: type => this._pubKey
+      getPublic: () => this._pubKey
     }
   }
 
-  async exportPublicKey(key) {
+  async exportPublicKey() {
     return this._pubKey
   }
 
-  exportPrivateKey(key) {
+  exportPrivateKey() {
     // This function should never be called
   }
 
@@ -83,7 +78,7 @@ class InsertOnlyKeystore {
     return key
   }
 
-  async importPrivateKey(key) {
+  async importPrivateKey() {
     return this._privKey
   }
 
@@ -268,7 +263,7 @@ class Messaging extends ResourceBase {
     })
   }
 
-  signRegistry(key, data) {
+  signRegistry() {
     return this.pub_sig
   }
 
@@ -280,8 +275,8 @@ class Messaging extends ResourceBase {
     return this.account.sign(data).signature
   }
 
-  verifySignature(room) {
-    return (signature, key, data) => {
+  verifySignature() {
+    return (/* signature, key, data */) => {
       // pass through for now
       return true
     }
@@ -586,7 +581,7 @@ class Messaging extends ResourceBase {
       const room = this.sharedRooms[CONV + '-' + room_id]
       const ops = room._index.get()
       const messages = []
-      ops.forEach((entry, index) => {
+      ops.forEach(entry => {
         for (const v of entry.payload.value) {
           messages.push(v)
         }
@@ -603,7 +598,7 @@ class Messaging extends ResourceBase {
       const room = this.sharedRooms[CONV + '-' + room_id]
       const ops = room._index.get()
       let messages_count = 0
-      ops.forEach((entry, index) => {
+      ops.forEach(entry => {
         for (const v of entry.payload.value) {
           if (v.type == 'msg') {
             messages_count += 1
@@ -618,13 +613,13 @@ class Messaging extends ResourceBase {
     const writers = [this.account_key, remote_eth_address].sort()
     const room_id = this.generateRoomId(...writers)
     const room = await this.getShareRoom(CONV, 'eventlog', writers, room => {
-      room.events.on('write', (dbname, entry, items) => {
+      room.events.on('write', (/* dbname, entry, items */) => {
         this.processMessage(room_id, room)
       })
-      room.events.on('ready', (dbname, entry, items) => {
+      room.events.on('ready', (/* dbname, entry, items */) => {
         this.processMessage(room_id, room)
       })
-      room.events.on('replicated', dbname => {
+      room.events.on('replicated', (/* dbname */) => {
         this.processMessage(room_id, room)
       })
     })
@@ -632,7 +627,7 @@ class Messaging extends ResourceBase {
   }
 
   async watchMyConv() {
-    const watchConv = await this.getConvo(this.account_key)
+    await this.getConvo(this.account_key)
   }
 
   async getMyConvs() {
