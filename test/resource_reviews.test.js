@@ -64,21 +64,15 @@ describe('Review Resource', function() {
 
     const listingPurchases = await listings.getPurchases(listingIndex)
     purchaseIndex = listingPurchases.length - 1
-    await purchases.acceptRequest(
-      listingIndex,
-      purchaseIndex,
-      {}
-    )
+    await purchases.acceptRequest(listingIndex, purchaseIndex, {})
   })
 
   describe('find', () => {
     it('should return review data', async () => {
       await asAccount(contractService.web3, buyer, async () => {
-        return await purchases.buyerFinalize(
-          listingIndex,
-          purchaseIndex,
-          { foo: 'bar' }
-        )
+        return await purchases.buyerFinalize(listingIndex, purchaseIndex, {
+          foo: 'bar'
+        })
       })
       let results = await reviews.find({
         listingId: listingIndex,
@@ -86,11 +80,9 @@ describe('Review Resource', function() {
       })
       expect(results.fromBuyer.ipfsData.foo).to.equal('bar')
 
-      await purchases.sellerFinalize(
-        listingIndex,
-        purchaseIndex,
-        { crypto: 'hodl' }
-      )
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, {
+        crypto: 'hodl'
+      })
       results = await reviews.find({
         listingId: listingIndex,
         purchaseId: purchaseIndex

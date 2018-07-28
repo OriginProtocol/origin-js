@@ -28,7 +28,8 @@ const fractionalPurchaseSchemaId = 'fractional-purchase.json'
 const buyerReviewStage = 4
 const sellerReviewStage = 5
 const reviewStages = [buyerReviewStage, sellerReviewStage]
-const emptyIpfsHash = '0x0000000000000000000000000000000000000000000000000000000000000000'
+const emptyIpfsHash =
+  '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 const ajv = new Ajv({
   schemas: [
@@ -302,7 +303,12 @@ class ListingsAdapter {
     return mapped
   }
 
-  async findReviewForPurchase(contractService, ipfsService, listingId, purchaseId) {
+  async findReviewForPurchase(
+    contractService,
+    ipfsService,
+    listingId,
+    purchaseId
+  ) {
     const v01_ListingsContract = await contractService.deployed(
       contractService.v01_ListingsContract
     )
@@ -318,10 +324,11 @@ class ListingsAdapter {
           if (error) {
             reject(error)
           }
-        resolve(logs)
-      })
+          resolve(logs)
+        }
+      )
     })
-    const createItem = async (log) => {
+    const createItem = async log => {
       const asBytes32 = log.returnValues._ipfsHash
       const stage = log.returnValues._stage
       const ipfsHash = contractService.getIpfsHashFromBytes32(asBytes32)
@@ -331,9 +338,11 @@ class ListingsAdapter {
       }
       return { ipfsData, stage }
     }
-    const itemsPromise = logs.filter(log => {
-      return reviewStages.includes(Number(log.returnValues._stage))
-    }).map(createItem)
+    const itemsPromise = logs
+      .filter(log => {
+        return reviewStages.includes(Number(log.returnValues._stage))
+      })
+      .map(createItem)
     const items = await Promise.all(itemsPromise)
     const buyerReviewItems = items.filter(({ stage }) => {
       return Number(stage) === buyerReviewStage
@@ -341,11 +350,15 @@ class ListingsAdapter {
     const sellerReviewItems = items.filter(({ stage }) => {
       return Number(stage) === sellerReviewStage
     })
-    const format = (item) => {
+    const format = item => {
       return { ipfsData: item.ipfsData }
     }
-    const fromBuyer = buyerReviewItems.length ? format(buyerReviewItems[0]) : null
-    const fromSeller = sellerReviewItems.length ? format(sellerReviewItems[0]) : null
+    const fromBuyer = buyerReviewItems.length
+      ? format(buyerReviewItems[0])
+      : null
+    const fromSeller = sellerReviewItems.length
+      ? format(sellerReviewItems[0])
+      : null
     return { fromBuyer, fromSeller }
   }
 }
