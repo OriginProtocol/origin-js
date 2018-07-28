@@ -8,6 +8,10 @@ import asAccount from './helpers/as-account'
 import contractServiceHelper from './helpers/contract-service-helper'
 
 const samplePrice = 1000000000000000
+const reviewData = {
+  rating: 4,
+  description: 'sweet'
+}
 
 class StoreMock {
   constructor() {
@@ -96,12 +100,12 @@ describe('Notification Resource', function() {
 
     buyerFinalize = async (listingIndex, purchaseIndex) => {
       await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerFinalize(listingIndex, purchaseIndex, {})
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, reviewData)
       })
     }
 
     sellerFinalize = async (listingIndex, purchaseIndex) => {
-      await purchases.sellerFinalize(listingIndex, purchaseIndex, {})
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, reviewData)
     }
   })
 

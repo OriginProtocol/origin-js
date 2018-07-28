@@ -19,6 +19,14 @@ const purchaseData = {
   units: 1,
   purchaseType: 'unit'
 }
+const reviewData_1 = {
+  rating: 2,
+  description: 'lol'
+}
+const reviewData_2 = {
+  rating: 5,
+  description: 'omg wat'
+}
 
 describe('Review Resource', function() {
   this.timeout(5000) // default is 2000
@@ -68,24 +76,24 @@ describe('Review Resource', function() {
   describe('find', () => {
     it('should return review data', async () => {
       await asAccount(contractService.web3, buyer, async () => {
-        return await purchases.buyerFinalize(listingIndex, purchaseIndex, {
-          foo: 'bar'
-        })
+        return await purchases.buyerFinalize(
+          listingIndex,
+          purchaseIndex,
+          reviewData_1
+        )
       })
       let results = await reviews.find({
         listingId: listingIndex,
         purchaseId: purchaseIndex
       })
-      expect(results.fromBuyer.ipfsData.foo).to.equal('bar')
+      expect(results.fromBuyer.ipfsData.description).to.equal('lol')
 
-      await purchases.sellerFinalize(listingIndex, purchaseIndex, {
-        crypto: 'hodl'
-      })
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, reviewData_2)
       results = await reviews.find({
         listingId: listingIndex,
         purchaseId: purchaseIndex
       })
-      expect(results.fromSeller.ipfsData.crypto).to.equal('hodl')
+      expect(results.fromSeller.ipfsData.description).to.equal('omg wat')
     })
   })
 })

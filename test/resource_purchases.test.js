@@ -18,6 +18,10 @@ const fractionalPurchaseData = {
   priceWei: samplePrice,
   purchaseType: 'fractional'
 }
+const reviewData = {
+  rating: 4,
+  description: 'such hodl'
+}
 
 describe('Purchase Resource', function() {
   this.timeout(5000) // default is 2000
@@ -131,9 +135,7 @@ describe('Purchase Resource', function() {
     it('should allow the buyer to mark a purchase received', async () => {
       expectStage('SELLER_ACCEPTED')
       await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerFinalize(listingIndex, purchaseIndex, {
-          rating: 3
-        })
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, reviewData)
       })
       await reloadPurchase()
       expectStage('BUYER_FINALIZED')
@@ -141,7 +143,7 @@ describe('Purchase Resource', function() {
 
     it('should allow the seller to collect money', async () => {
       expectStage('BUYER_FINALIZED')
-      await purchases.sellerFinalize(listingIndex, purchaseIndex, { rating: 4 })
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, reviewData)
       await reloadPurchase()
     })
 
@@ -176,9 +178,7 @@ describe('Purchase Resource', function() {
     it('should allow the buyer to mark a purchase received', async () => {
       expectStage('SELLER_ACCEPTED')
       await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerFinalize(listingIndex, purchaseIndex, {
-          rating: 3
-        })
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, reviewData)
       })
       await reloadPurchase()
       expectStage('BUYER_FINALIZED')
@@ -186,7 +186,7 @@ describe('Purchase Resource', function() {
 
     it('should allow the seller to collect money', async () => {
       expectStage('BUYER_FINALIZED')
-      await purchases.sellerFinalize(listingIndex, purchaseIndex, { rating: 4 })
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, reviewData)
       await reloadPurchase()
     })
 
