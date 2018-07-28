@@ -73,7 +73,11 @@ describe('Listing Resource', function() {
     const listingIds = await listings.allIds()
     const listingIndex = listingIds.length - 1
     await asAccount(contractService.web3, buyer, async () => {
-      await listings.requestPurchase(listingIndex, { foo: 'bar' }, 1)
+      await listings.requestPurchase(
+        listingIndex,
+        { purchaseType: 'unit', units: 1, priceWei: samplePrice },
+        1
+      )
     })
   })
 
@@ -172,7 +176,11 @@ describe('Listing Resource', function() {
       const ids = await listings.allIds()
       listingIndex = ids[ids.length - 1]
       await asAccount(contractService.web3, buyer, async () => {
-        await listings.requestPurchase(listingIndex, { foo: 'bar' }, 1)
+        await listings.requestPurchase(
+          listingIndex,
+          { purchaseType: 'unit', units: 1, priceWei: samplePrice },
+          1
+        )
       })
     })
 
@@ -181,7 +189,7 @@ describe('Listing Resource', function() {
       expect(listingPurchases.length).to.equal(1)
       expect(listingPurchases[0].stage).to.equal('BUYER_REQUESTED')
       expect(JSON.stringify(listingPurchases[0].ipfsData)).to.equal(
-        JSON.stringify({ foo: 'bar' })
+        JSON.stringify({ purchaseType: 'unit', units: 1, priceWei: samplePrice })
       )
     })
   })
