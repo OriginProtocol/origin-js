@@ -182,7 +182,10 @@ class Messaging extends ResourceBase {
   refreshPeerList() {
     this.ipfs.swarm.peers().then(peers => {
       const peer_ids = peers.map(x => x.peer._idB58String)
-      if (peer_ids && !_.isEqual(peer_ids, this.last_peers)) {
+      if (
+        peer_ids && !this.last_peers ||
+        peer_ids && peer_ids.sort().join() !== this.last_peers.sort().join()
+      ) {
         this.last_peers = peer_ids
       }
     })
