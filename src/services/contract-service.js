@@ -1,6 +1,7 @@
 import ClaimHolderRegisteredContract from './../../contracts/build/contracts/ClaimHolderRegistered.json'
 import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
+import EvolvingRegistryContract from './../../contracts/build/contracts/EvolvingRegistry.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
 import PurchaseLibrary from './../../contracts/build/contracts/PurchaseLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
@@ -11,6 +12,9 @@ import FractionalListingContract from './../../contracts/build/contracts/Fractio
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
+
+import V01_ListingsContract from './../../contracts/build/contracts/V01_Listings.json'
+
 import bs58 from 'bs58'
 import Web3 from 'web3'
 
@@ -25,6 +29,7 @@ class ContractService {
     this.web3 = new Web3(externalWeb3.currentProvider)
 
     const contracts = {
+      evolvingRegistryContract: EvolvingRegistryContract,
       listingContract: ListingContract,
       listingsRegistryContract: ListingsRegistryContract,
       listingsRegistryStorageContract: ListingsRegistryStorageContract,
@@ -34,7 +39,8 @@ class ContractService {
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
       claimHolderPresignedContract: ClaimHolderPresignedContract,
-      originIdentityContract: OriginIdentityContract
+      originIdentityContract: OriginIdentityContract,
+      v01_ListingsContract: V01_ListingsContract
     }
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
@@ -174,25 +180,32 @@ class ContractService {
    * @param {{gas: number, value:(number | BigNumber)}} options - transaction options for w3
    * @param {function} confirmationCallback - an optional function that will be called on each block confirmation
    */
-  async contractFn(
-    contractDefinition,
-    address,
+  async call(
+    contractName,
     functionName,
     args = [],
-    options = {},
-    confirmationCallback
+    web3Options = {},
+    { contractAddress, confirmationCallback } = {}
   ) {
+    const contractDefinition = this[contractName]
+    // TODO we should probably store contract definitions on a contracts object
+    // rather than on the top level of this class. Eaiser to check that it's a
+    // valid contract name.
+    if (!contractDefinition.abi) {
+      throw new Error(`Invalid contract name: ${contractName}`)
+    }
     // Setup options
-    const opts = Object.assign(options, {}) // clone options
+    const opts = Object.assign(web3Options, {}) // clone options
     opts.from = opts.from || (await this.currentAccount())
-    opts.gas = options.gas || 50000 // Default gas
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
-    contract.options.address = address || contract.options.address
+    contract.options.address = contractAddress || contract.options.address
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {
       return await method.call(opts)
     }
+    const gasEstimate = await method.estimateGas()
+    opts.gas = web3Options.gas || gasEstimate
     const transactionReceipt = await new Promise((resolve, reject) => {
       method
         .send(opts)
@@ -201,8 +214,9 @@ class ContractService {
         .on('error', reject)
     })
     return {
-      created: (await this.web3.eth.getBlock(transactionReceipt.blockNumber)).timestamp,
-      transactionReceipt,
+      created: (await this.web3.eth.getBlock(transactionReceipt.blockNumber))
+        .timestamp,
+      transactionReceipt
     }
   }
 }

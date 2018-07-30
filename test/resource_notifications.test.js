@@ -7,6 +7,12 @@ import Web3 from 'web3'
 import asAccount from './helpers/as-account'
 import contractServiceHelper from './helpers/contract-service-helper'
 
+const samplePrice = 1000000000000000
+const reviewData = {
+  rating: 4,
+  description: 'sweet'
+}
+
 class StoreMock {
   constructor() {
     this.storage = {}
@@ -33,9 +39,9 @@ describe('Notification Resource', function() {
     contractService,
     createListing,
     buyListing,
-    sellerConfirmShipped,
-    buyerConfirmReceipt,
-    sellerGetPayout,
+    sellerAccept,
+    buyerFinalize,
+    sellerFinalize,
     purchases
 
   beforeEach(async () => {
@@ -66,39 +72,47 @@ describe('Notification Resource', function() {
     })
 
     createListing = async () => {
-      const txObj = await listings.create(
-        { name: 'Sample Listing 1', price: 1 },
-        ''
-      )
-      return txObj.transactionReceipt.events.NewListing.returnValues._address
+      await listings.create({
+        listingType: 'unit',
+        name: 'Sample Listing 1',
+        priceWei: samplePrice,
+        unitsAvailable: 1
+      })
+      const listingIds = await listings.allIds()
+      return listingIds[listingIds.length - 1]
     }
 
-    buyListing = async listingAddress => {
+    buyListing = async listingIndex => {
       return await asAccount(contractService.web3, buyer, async () => {
-        const listingTransactionObj = await listings.buy(listingAddress, 1, 1)
-        return listingTransactionObj.transactionReceipt.events.ListingPurchased.returnValues._purchaseContract
+        await listings.requestPurchase(
+          listingIndex,
+          { purchaseType: 'unit', units: 1, priceWei: samplePrice },
+          samplePrice
+        )
+        const purchases = await listings.getPurchases(listingIndex)
+        return purchases.length - 1
       })
     }
 
-    sellerConfirmShipped = async purchaseAddress => {
-      await purchases.sellerConfirmShipped(purchaseAddress)
+    sellerAccept = async (listingIndex, purchaseIndex) => {
+      await purchases.acceptRequest(listingIndex, purchaseIndex, {})
     }
 
-    buyerConfirmReceipt = async purchaseAddress => {
+    buyerFinalize = async (listingIndex, purchaseIndex) => {
       await asAccount(contractService.web3, buyer, async () => {
-        await purchases.buyerConfirmReceipt(purchaseAddress)
+        await purchases.buyerFinalize(listingIndex, purchaseIndex, reviewData)
       })
     }
 
-    sellerGetPayout = async purchaseAddress => {
-      await purchases.sellerGetPayout(purchaseAddress)
+    sellerFinalize = async (listingIndex, purchaseIndex) => {
+      await purchases.sellerFinalize(listingIndex, purchaseIndex, reviewData)
     }
   })
 
   describe('all', () => {
     it('should return listing purchased notifications for seller', async () => {
-      const listingAddress = await createListing()
-      await buyListing(listingAddress)
+      const listingIndex = await createListing()
+      await buyListing(listingIndex)
 
       const for_seller = await notifications.all(seller)
       const listingPurchased = for_seller.filter(
@@ -110,10 +124,10 @@ describe('Notification Resource', function() {
     })
 
     it('should return review received notifications for seller', async () => {
-      const listingAddress = await createListing()
-      const purchaseAddress = await buyListing(listingAddress)
-      await sellerConfirmShipped(purchaseAddress)
-      await buyerConfirmReceipt(purchaseAddress)
+      const listingIndex = await createListing()
+      const purchaseIndex = await buyListing(listingIndex)
+      await sellerAccept(listingIndex, purchaseIndex)
+      await buyerFinalize(listingIndex, purchaseIndex)
 
       const for_seller = await notifications.all(seller)
       const reviewReceived = for_seller.filter(
@@ -124,10 +138,10 @@ describe('Notification Resource', function() {
       expect(reviewReceived[0].status).to.equal('unread')
     })
 
-    it('should return listing shipped notifications for buyer', async () => {
-      const listingAddress = await createListing()
-      const purchaseAddress = await buyListing(listingAddress)
-      await sellerConfirmShipped(purchaseAddress)
+    it('should return seller accepted notifications for buyer', async () => {
+      const listingIndex = await createListing()
+      const purchaseIndex = await buyListing(listingIndex)
+      await sellerAccept(listingIndex, purchaseIndex)
 
       const for_buyer = await notifications.all(buyer)
       const reviewReceived = for_buyer.filter(
@@ -139,11 +153,11 @@ describe('Notification Resource', function() {
     })
 
     it('should return review received notifications for buyer', async () => {
-      const listingAddress = await createListing()
-      const purchaseAddress = await buyListing(listingAddress)
-      await sellerConfirmShipped(purchaseAddress)
-      await buyerConfirmReceipt(purchaseAddress)
-      await sellerGetPayout(purchaseAddress)
+      const listingIndex = await createListing()
+      const purchaseIndex = await buyListing(listingIndex)
+      await sellerAccept(listingIndex, purchaseIndex)
+      await buyerFinalize(listingIndex, purchaseIndex)
+      await sellerFinalize(listingIndex, purchaseIndex)
 
       const for_buyer = await notifications.all(buyer)
       const reviewReceived = for_buyer.filter(
@@ -157,8 +171,8 @@ describe('Notification Resource', function() {
 
   describe('set', () => {
     it('should allow notifications to be marked as read', async () => {
-      const listingAddress = await createListing()
-      await buyListing(listingAddress)
+      const listingIndex = await createListing()
+      await buyListing(listingIndex)
 
       const all = await notifications.all(seller)
       expect(all[0].status).to.equal('unread')
