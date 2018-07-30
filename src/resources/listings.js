@@ -473,7 +473,8 @@ class Listings extends ResourceBase {
       listingType: ipfsData.listingType,
       schemaType: ipfsData.schemaType,
       slots: ipfsData.slots,
-      calendarStep: ipfsData.calendarStep
+      calendarStep: ipfsData.calendarStep,
+      recurs: ipfsData.recurs
     }
   }
 }
