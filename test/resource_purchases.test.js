@@ -120,7 +120,7 @@ describe('Purchase Resource', function() {
 
     it('should get a purchase', async () => {
       expectStage('BUYER_REQUESTED')
-      expect(purchase.buyer).to.equal(buyer)
+      expect(purchase.buyerAddress).to.equal(buyer)
     })
 
     it('should allow the seller to accept', async () => {
@@ -163,7 +163,7 @@ describe('Purchase Resource', function() {
 
     it('should get a purchase', async () => {
       expectStage('BUYER_REQUESTED')
-      expect(purchase.buyer).to.equal(buyer)
+      expect(purchase.buyerAddress).to.equal(buyer)
     })
 
     it('should allow the seller to accept', async () => {

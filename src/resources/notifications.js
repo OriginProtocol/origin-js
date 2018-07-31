@@ -213,13 +213,13 @@ class Notifications {
 
   sellerPurchaseLogsFor(blockchainData, account) {
     return this.purchaseLogsFor(blockchainData, account, ({ listing }) => {
-      return listing.seller === account
+      return listing.sellerAddress === account
     })
   }
 
   buyerPurchaseLogsFor(blockchainData, account) {
     return this.purchaseLogsFor(blockchainData, account, ({ purchase }) => {
-      return purchase.buyer === account
+      return purchase.buyerAddress === account
     })
   }
 
