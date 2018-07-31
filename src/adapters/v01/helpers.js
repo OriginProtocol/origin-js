@@ -85,7 +85,14 @@ async function getPurchase(
     ipfsData,
     stage: purchaseStageNames[result._stage],
     buyer: result._buyer,
-    escrowContract: result._escrowContract
+    escrowContract: result._escrowContract,
+    priceEth: weiToEth(contractService, ipfsData.priceWei)
+  }
+}
+
+function weiToEth(contractService, priceWei) {
+  if (typeof priceWei !== 'undefined') {
+    return contractService.web3.utils.fromWei(String(priceWei), 'ether')
   }
 }
 
@@ -95,5 +102,6 @@ module.exports = {
   getPurchaseIpfsData,
   getPurchase,
   getPurchaseLogs,
-  purchaseStageNames
+  purchaseStageNames,
+  weiToEth
 }

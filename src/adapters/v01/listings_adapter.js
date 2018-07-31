@@ -11,7 +11,8 @@ import {
   getIpfsData,
   getPurchase as getPurchaseHelper,
   getPurchaseLogs as getPurchaseLogsHelper,
-  purchaseStageNames
+  purchaseStageNames,
+  weiToEth
 } from './helpers'
 
 const listingsContract = 'v01_ListingsContract'
@@ -90,7 +91,8 @@ class ListingsAdapter {
     return {
       ipfsData,
       seller: listing._seller,
-      purchasesLength: listing._purchasesLength
+      purchasesLength: listing._purchasesLength,
+      priceEth: weiToEth(this.contractService, ipfsData.priceWei)
     }
   }
 
