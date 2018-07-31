@@ -175,10 +175,12 @@ class Listings extends ResourceBase {
       String(ethToPay),
       'ether'
     )
-    return await this.contractFn(address, 'buyListing', [unitsToBuy], {
+    const trans_receipt = await this.contractFn(address, 'buyListing', [unitsToBuy], {
       value: value,
-      gas: 850000
+      gas: 1850000
     })
+    console.log("Transaction receipt:", trans_receipt)
+    return trans_receipt
   }
 
   async close(address) {
@@ -208,15 +210,27 @@ class Listings extends ResourceBase {
         String(ethPrice),
         'ether'
       )
-      // Note we cannot get the listingId returned by our contract.
-      // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
-      return instance.methods
-        .create(
+
+      if ((await this.contractService.getBalance()) < 1000000000 && instance.methods.proxy_create)
+      {
+        console.log("calling by proxy: create");
+        return this.contractService.proxyCall(undefined, 4476768, instance, account, "create", 
           this.contractService.getBytes32FromIpfsHash(ipfsListing),
           weiToGive,
-          units
-        )
-        .send({ from: account, gas: 4476768 })
+          units)
+      }
+      else
+      {
+        // Note we cannot get the listingId returned by our contract.
+        // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
+        return instance.methods
+          .create(
+            this.contractService.getBytes32FromIpfsHash(ipfsListing),
+            weiToGive,
+            units
+          )
+          .send({ from: account, gas: 4476768 })
+      }
     } catch (error) {
       console.error('Error submitting to the Ethereum blockchain: ' + error)
       throw error

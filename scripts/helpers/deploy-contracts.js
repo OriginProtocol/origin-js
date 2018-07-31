@@ -1,8 +1,10 @@
 const { spawn } = require('child_process')
 const minifyContracts = require('./minify-contracts')
+const precompile = require('../precompile')
 
 const deployContracts = () => {
   return new Promise((resolve, reject) => {
+    precompile('./contracts/origin_contracts', './contracts/contracts')
     const truffleMigrate = spawn(
       '../node_modules/.bin/truffle',
       ['migrate', '--reset', '--compile-all'],

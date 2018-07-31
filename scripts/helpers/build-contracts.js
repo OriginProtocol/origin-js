@@ -1,8 +1,10 @@
 const { spawn } = require('child_process')
 const minifyContracts = require('./minify-contracts')
+const precompile = require('../precompile')
 
 const buildContracts = () => {
   return new Promise((resolve, reject) => {
+    precompile('./contracts/origin_contracts', './contracts/contracts')
     const truffleCompile = spawn('../node_modules/.bin/truffle', ['compile'], {
       cwd: './contracts'
     })

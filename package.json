@@ -39,6 +39,7 @@
     "form-data": "^2.3.2",
     "map-cache": "^0.2.2",
     "rlp": "^2.0.0",
+    "solc": "^0.4.23",
     "store": "^2.0.12",
     "web3": "^1.0.0-beta.34"
   },
@@ -57,7 +58,7 @@
     "eth-gas-reporter": "^0.1.2",
     "fetch-mock": "^6.3.0",
     "flow-bin": "^0.71.0",
-    "ganache-core": "^2.1.0",
+    "ganache-core": "^2.1.5",
     "html-webpack-plugin": "^3.2.0",
     "ipfs": "^0.28.2",
     "ipfs-api": "^20.2.1",

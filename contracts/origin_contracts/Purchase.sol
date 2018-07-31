@@ -54,12 +54,12 @@ contract Purchase {
   */
 
   modifier isSeller() {
-    require(OnBehalfableLibrary.getSender_Purchase() == listingContract.owner());
+    require(msg.sender == listingContract.owner());
     _;
   }
 
   modifier isBuyer() {
-    require(OnBehalfableLibrary.getSender_Purchase() == buyer);
+    require(msg.sender == buyer);
     _;
   }
 
@@ -182,8 +182,8 @@ contract Purchase {
   {
     // Must be buyer or seller
     require(
-      (OnBehalfableLibrary.getSender_Purchase() == buyer) ||
-      (OnBehalfableLibrary.getSender_Purchase() == listingContract.owner())
+      (msg.sender == buyer) ||
+      (msg.sender == listingContract.owner())
     );
 
     // Must be in a valid stage
@@ -217,61 +217,4 @@ contract Purchase {
     internalStage = _stage;
     emit PurchaseChange(_stage);
   }
-  event UnMatchedData(address _contract, address _nonce_tracker, uint256 _nonce);
-  event UnMatchedHash(bytes32 hash);
-
-    
-    function proxy_sellerApprove(address __sender, uint8 __v, bytes32 __r, bytes32 __s, address __ntracker, uint256 __nonce)  public {
-      bytes32 in_hash = keccak256("sellerApprove", address(this), __ntracker, __nonce);
-      if (OnBehalfableLibrary.hashCheck(__sender, __v, __r, __s, in_hash) && NonceTracker(__ntracker).setNonce(__sender, __nonce))
-      {
-        sellerApprove();
-      }
-      else
-      {
-        emit UnMatchedData(address(this), __ntracker, __nonce);
-        emit UnMatchedHash(in_hash);
-      }
-    }
-      
-    function proxy_sellerConfirmShipped(address __sender, uint8 __v, bytes32 __r, bytes32 __s, address __ntracker, uint256 __nonce)  public {
-      bytes32 in_hash = keccak256("sellerConfirmShipped", address(this), __ntracker, __nonce);
-      if (OnBehalfableLibrary.hashCheck(__sender, __v, __r, __s, in_hash) && NonceTracker(__ntracker).setNonce(__sender, __nonce))
-      {
-        sellerConfirmShipped();
-      }
-      else
-      {
-        emit UnMatchedData(address(this), __ntracker, __nonce);
-        emit UnMatchedHash(in_hash);
-      }
-    }
-      
-    function proxy_buyerConfirmReceipt(address __sender, uint8 __v, bytes32 __r, bytes32 __s, address __ntracker, uint256 __nonce, uint8 _rating, bytes32 _ipfsHash)  public {
-      bytes32 in_hash = keccak256("buyerConfirmReceipt", address(this), __ntracker, __nonce, _rating, _ipfsHash);
-      if (OnBehalfableLibrary.hashCheck(__sender, __v, __r, __s, in_hash) && NonceTracker(__ntracker).setNonce(__sender, __nonce))
-      {
-        buyerConfirmReceipt(_rating, _ipfsHash);
-      }
-      else
-      {
-        emit UnMatchedData(address(this), __ntracker, __nonce);
-        emit UnMatchedHash(in_hash);
-      }
-    }
-      
-    function proxy_sellerCollectPayout(address __sender, uint8 __v, bytes32 __r, bytes32 __s, address __ntracker, uint256 __nonce, uint8 _rating, bytes32 _ipfsHash)  public {
-      bytes32 in_hash = keccak256("sellerCollectPayout", address(this), __ntracker, __nonce, _rating, _ipfsHash);
-      if (OnBehalfableLibrary.hashCheck(__sender, __v, __r, __s, in_hash) && NonceTracker(__ntracker).setNonce(__sender, __nonce))
-      {
-        sellerCollectPayout(_rating, _ipfsHash);
-      }
-      else
-      {
-        emit UnMatchedData(address(this), __ntracker, __nonce);
-        emit UnMatchedHash(in_hash);
-      }
-    }
-      
-    
 }

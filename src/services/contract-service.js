@@ -7,6 +7,7 @@ import UnitListingContract from './../../contracts/build/contracts/UnitListing.j
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
+import NonceTrackerContract from './../../contracts/build/contracts/NonceTracker.json'
 import bs58 from 'bs58'
 import Web3 from 'web3'
 
@@ -27,7 +28,8 @@ class ContractService {
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
       claimHolderPresignedContract: ClaimHolderPresignedContract,
-      originIdentityContract: OriginIdentityContract
+      originIdentityContract: OriginIdentityContract,
+      nonceTrackerContract:NonceTrackerContract
     }
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
@@ -80,6 +82,11 @@ class ContractService {
     const accounts = await this.web3.eth.getAccounts()
     const defaultAccount = this.web3.eth.defaultAccount
     return defaultAccount || accounts[0]
+  }
+
+  async getBalance() {
+    const account = await this.currentAccount()
+    return Number(await this.web3.eth.getBalance(account))
   }
 
   // async convenience method for getting block details
@@ -186,6 +193,8 @@ class ContractService {
     return blockNumber
   }
 
+
+
   async contractFn(
     contractDefinition,
     address,
@@ -205,14 +214,25 @@ class ContractService {
     if (method._method.constant) {
       return await method.call(opts)
     }
-    const transaction = await new Promise((resolve, reject) => {
-      method
-        .send(opts)
-        .on('receipt', receipt => {
-          resolve(receipt)
-        })
-        .on('error', err => reject(err))
-    })
+
+    let transaction
+    const balance = await this.getBalance()
+    if (balance < 1000000000)
+    {
+      console.log("calling by proxy:", functionName)
+      transaction = await this.proxyCall(opts.value, opts.gas, contract, opts.from, functionName, ...args)
+    }
+    else
+    {
+      transaction = await new Promise((resolve, reject) => {
+        method
+          .send(opts)
+          .on('receipt', receipt => {
+            resolve(receipt)
+          })
+          .on('error', err => reject(err))
+      })
+    }
 
     transaction.tx = transaction.transactionHash
     // Decorate transaction with whenFinished promise
@@ -222,6 +242,55 @@ class ContractService {
       }
     }
     return transaction
+  }
+
+  async proxyCall(value, gas, contract_instance, account, func_name, ...rest_args)
+  {
+    const nonce_tracker = await this.deployed(
+      this.nonceTrackerContract )
+    const contract_address = contract_instance._address
+    const nonce_tracker_address = nonce_tracker._address
+    const nonce = await nonce_tracker.methods.getNextNonce(contract_address, account).call()
+    console.log("Got nonce:", nonce, " for contract:", contract_address, " account: ", account)
+
+    if (rest_args.length)
+    {
+      for (const call of contract_instance.options.jsonInterface)
+      {
+        if (call.name == func_name && call.inputs.length == rest_args.length && call.signature)
+        {
+          rest_args = _.zipWith(call.inputs, rest_args, (a, b) => { return {t:a.type, v:b}})
+        }
+      }
+    }
+
+    console.log("hashing:", {t:"string", v:func_name}, {t:"address", v:contract_address}, {t:"address", v:nonce_tracker_address}, {t:"uint256", v:nonce}, ...rest_args)
+    const hash = this.web3.utils.soliditySha3({t:"string", v:func_name}, {t:"address", v:contract_address}, {t:"address", v:nonce_tracker_address}, {t:"uint256", v:nonce}, ...rest_args)
+    //sign this damn thing.
+    console.log("Sign this hash:", hash)
+    const signature = await this.web3.eth.personal.sign(hash, account)
+    const r = '0x' + signature.slice(2, 66)
+    const s = '0x' + signature.slice(66, 130)
+    const v = '0x' + signature.slice(130, 132)
+    console.log("sign result of hash:", signature, " by: ", account)
+    console.log("vrs:", {v, r, s})
+    const params = rest_args.map(a => a.v)
+    const data = contract_instance.methods["proxy_" + func_name](account, v, r, s, nonce_tracker_address, nonce, ...params).encodeABI()
+    console.log("call data:", data)
+
+    gas += 100000
+
+    //sign with a private key of a test account
+    const signed_transaction = await this.web3.eth.accounts.signTransaction({
+      to:contract_address,
+      gas:gas,
+      value:value,
+      data:data
+    }, "0x388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418")
+    console.log("sending with gas:", gas)
+    let transactionReciept = await this.web3.eth.sendSignedTransaction(signed_transaction.rawTransaction)
+    console.log("We got a transaction reciept:", transactionReciept)
+    return transactionReciept
   }
 }
 

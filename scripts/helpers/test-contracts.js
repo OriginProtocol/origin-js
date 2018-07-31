@@ -1,7 +1,9 @@
 const { spawn } = require('child_process')
+const precompile = require('../precompile')
 
 const testContracts = () => {
   return new Promise((resolve, reject) => {
+    precompile('./contracts/origin_contracts', './contracts/contracts')
     const truffleTest = spawn(
       '../node_modules/.bin/truffle',
       ['test', '--compile-all'],

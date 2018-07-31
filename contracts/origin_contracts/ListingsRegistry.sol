@@ -34,7 +34,7 @@ contract ListingsRegistry {
     public
   {
     // Defines origin admin address - may be removed for public deployment
-    owner = OnBehalfableLibrary.getSender_ListingsRegistry();
+    owner = msg.sender;
     listingStorage = _listingStorage;
   }
 
@@ -85,7 +85,7 @@ contract ListingsRegistry {
     public
     returns (uint)
   {
-    Listing newListing = new UnitListing(OnBehalfableLibrary.getSender_ListingsRegistry(), _ipfsHash, _price, _unitsAvailable);
+    Listing newListing = new UnitListing(msg.sender, _ipfsHash, _price, _unitsAvailable);
     listingStorage.add(newListing);
     emit NewListing((listingStorage.length())-1, address(newListing));
     return listingStorage.length();
@@ -106,7 +106,7 @@ contract ListingsRegistry {
     public
     returns (uint)
   {
-    require (OnBehalfableLibrary.getSender_ListingsRegistry() == owner, "Only callable by registry owner");
+    require (msg.sender == owner, "Only callable by registry owner");
     Listing newListing = new UnitListing(_creatorAddress, _ipfsHash, _price, _unitsAvailable);
     listingStorage.add(newListing);
     emit NewListing(listingStorage.length()-1, address(newListing));
@@ -126,22 +126,4 @@ contract ListingsRegistry {
   {
     return listingStorage.isTrustedListing(_listingAddress);
   }
-  event UnMatchedData(address _contract, address _nonce_tracker, uint256 _nonce);
-  event UnMatchedHash(bytes32 hash);
-
-    
-    function proxy_create(address __sender, uint8 __v, bytes32 __r, bytes32 __s, address __ntracker, uint256 __nonce, bytes32 _ipfsHash, uint256 _price, uint256 _unitsAvailable)  public {
-      bytes32 in_hash = keccak256("create", address(this), __ntracker, __nonce, _ipfsHash, _price, _unitsAvailable);
-      if (OnBehalfableLibrary.hashCheck(__sender, __v, __r, __s, in_hash) && NonceTracker(__ntracker).setNonce(__sender, __nonce))
-      {
-        create(_ipfsHash, _price, _unitsAvailable);
-      }
-      else
-      {
-        emit UnMatchedData(address(this), __ntracker, __nonce);
-        emit UnMatchedHash(in_hash);
-      }
-    }
-      
-    
 }
