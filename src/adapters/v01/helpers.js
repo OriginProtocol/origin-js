@@ -84,7 +84,7 @@ async function getPurchase(
   return {
     ipfsData,
     stage: purchaseStageNames[result._stage],
-    buyer: result._buyer,
+    buyerAddress: result._buyer,
     escrowContract: result._escrowContract,
     priceEth: weiToEth(contractService, ipfsData.priceWei)
   }

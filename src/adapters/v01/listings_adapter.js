@@ -90,7 +90,7 @@ class ListingsAdapter {
     )
     return {
       ipfsData,
-      seller: listing._seller,
+      sellerAddress: listing._seller,
       purchasesLength: listing._purchasesLength,
       priceEth: weiToEth(this.contractService, ipfsData.priceWei)
     }
