@@ -15,7 +15,6 @@ const listingData = {
   name: 'Foo Bar'
 }
 const purchaseData = {
-  priceWei: samplePrice,
   units: 1,
   purchaseType: 'unit'
 }

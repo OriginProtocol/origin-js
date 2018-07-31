@@ -10,12 +10,10 @@ import contractServiceHelper from './helpers/contract-service-helper'
 
 const samplePrice = 1000000000000000
 const unitPurchaseData = {
-  priceWei: samplePrice,
   units: 1,
   purchaseType: 'unit'
 }
 const fractionalPurchaseData = {
-  priceWei: samplePrice,
   purchaseType: 'fractional'
 }
 const reviewData = {

@@ -2,11 +2,8 @@
   "$id": "fractional-purchase.json",
   "title": "FractionalPurchase",
   "type": "object",
-  "required": ["priceWei"],
+  "required": [],
   "properties": {
-    "priceWei": {
-      "type": "number"
-    },
     "purchaseType": {
       "type": "string"
     }

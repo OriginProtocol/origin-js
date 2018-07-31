@@ -2,11 +2,8 @@
   "$id":"unit-purchase.json",
   "title": "UnitPurchase",
   "type": "object",
-  "required": ["priceWei", "units"],
+  "required": ["units"],
   "properties": {
-    "priceWei": {
-      "type": "number"
-    },
     "units": {
       "type": "number"
     },
