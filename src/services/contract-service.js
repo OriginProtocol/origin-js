@@ -209,6 +209,8 @@ class ContractService {
       // this method can apparently fail with metamask,
       // even when the actual transaction will succeed
       gasEstimate = await method.estimateGas()
+    } catch(e) {
+      console.warn('Error estimating gas:', e)
     }
     opts.gas = web3Options.gas || gasEstimate
     const transactionReceipt = await new Promise((resolve, reject) => {
