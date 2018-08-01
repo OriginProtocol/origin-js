@@ -204,7 +204,12 @@ class ContractService {
     if (method._method.constant) {
       return await method.call(opts)
     }
-    const gasEstimate = await method.estimateGas()
+    let gasEstimate = 50000
+    try {
+      // this method can apparently fail with metamask,
+      // even when the actual transaction will succeed
+      gasEstimate = await method.estimateGas()
+    }
     opts.gas = web3Options.gas || gasEstimate
     const transactionReceipt = await new Promise((resolve, reject) => {
       method
