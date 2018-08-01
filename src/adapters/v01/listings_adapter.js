@@ -143,7 +143,7 @@ class ListingsAdapter {
     )
   }
 
-  async requestPurchase(listingIndex, ipfsData, offerWei) {
+  async requestPurchase(listingIndex, ipfsData, offerWei, confirmationCallback) {
     if (!ipfsData.purchaseType) {
       console.warn(
         'Please specify a purchase type. Assuming unit purchase type.'
@@ -170,7 +170,8 @@ class ListingsAdapter {
       listingsContract,
       'requestPurchase',
       [listingIndex, ipfsBytes32],
-      { value: offerWei, gas: 350000 }
+      { value: offerWei, gas: 350000 },
+      { confirmationCallback }
     )
   }
 
@@ -187,7 +188,7 @@ class ListingsAdapter {
       'acceptPurchaseRequest',
       [listingIndex, purchaseIndex, ipfsBytes32],
       {},
-      confirmationCallback
+      { confirmationCallback }
     )
   }
 
@@ -204,7 +205,7 @@ class ListingsAdapter {
       'rejectPurchaseRequest',
       [listingIndex, purchaseIndex, ipfsBytes32],
       {},
-      confirmationCallback
+      { confirmationCallback }
     )
   }
 
@@ -222,7 +223,7 @@ class ListingsAdapter {
       'buyerFinalizePurchase',
       [listingIndex, purchaseIndex, ipfsBytes32],
       {},
-      confirmationCallback
+      { confirmationCallback }
     )
   }
 
@@ -240,7 +241,7 @@ class ListingsAdapter {
       'sellerFinalizePurchase',
       [listingIndex, purchaseIndex, ipfsBytes32],
       {},
-      confirmationCallback
+      { confirmationCallback }
     )
   }
 

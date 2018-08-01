@@ -76,14 +76,14 @@ class Listings extends Adaptable {
     return await adapter.update(listingIndex, data)
   }
 
-  async requestPurchase(listingIndex, ipfsData, offerWei) {
+  async requestPurchase(listingIndex, ipfsData, offerWei, confirmationCallback) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.requestPurchase(listingIndex, ipfsData, offerWei)
+    return await adapter.requestPurchase(listingIndex, ipfsData, offerWei, confirmationCallback)
   }
 
   async getPurchases(listingIndex) {
     const adapter = await this.getAdapter(listingIndex)
-    return await adapter.getPurchases(...arguments)
+    return await adapter.getPurchases(listingIndex)
   }
 }
 
