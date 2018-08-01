@@ -74,7 +74,7 @@ describe('Listing Resource', function() {
     await asAccount(contractService.web3, buyer, async () => {
       await listings.requestPurchase(
         listingIndex,
-        { purchaseType: 'unit', units: 1, priceWei: samplePrice },
+        { purchaseType: 'unit', units: 1 },
         1
       )
     })
@@ -175,7 +175,7 @@ describe('Listing Resource', function() {
       await asAccount(contractService.web3, buyer, async () => {
         await listings.requestPurchase(
           listingIndex,
-          { purchaseType: 'unit', units: 1, priceWei: samplePrice },
+          { purchaseType: 'unit', units: 1 },
           1
         )
       })
