@@ -1,4 +1,3 @@
-const EvolvingRegistry = artifacts.require('./EvolvingRegistry.sol')
 const Listings = artifacts.require('./V01_Listings.sol')
 
 const ipfsHash_1 =
@@ -15,11 +14,7 @@ contract('Listings', accounts => {
   let listings
 
   beforeEach(async function() {
-    const evolvingRegistry = await EvolvingRegistry.new({ from: deployer })
-    listings = await Listings.new(evolvingRegistry.address, { from: deployer })
-    await evolvingRegistry.addEntryType(listings.address, 'listings', {
-      from: deployer
-    })
+    listings = await Listings.new({ from: deployer })
     await listings.createListing(ipfsHash_1, { from: seller })
   })
 
