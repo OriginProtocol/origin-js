@@ -1,4 +1,5 @@
 import Adaptable from './adaptable'
+import { generateListingId, parseListingId } from '../utils/id'
 
 const unitListingType = 'unit'
 
@@ -48,41 +49,57 @@ class Listings extends Adaptable {
   }
 
   async allIds() {
-    const range = (start, count) =>
-      Array.apply(0, Array(count)).map((element, index) => index + start)
-    const size = await this.contractService.call(
-      'evolvingRegistryContract',
-      'size'
-    )
-    return range(0, Number(size))
+    const network = '999' // TODO don't hard code this
+    const adapters = this.adapters
+    const versions = this.versions
+    const sizesByVersionPromise = versions.map(version => {
+      const adapter = adapters[version]
+      return new Promise(async (resolve) => {
+        const size = await adapter.listingsLength()
+        resolve({ version, size })
+      })
+    })
+    const sizesByVersion = await Promise.all(sizesByVersionPromise)
+    const idsByVersion = sizesByVersion.map(({ version, size }) => {
+      const listingIndices = [...Array(size).keys()]
+      return listingIndices.map(listingIndex => {
+        return generateListingId({ version, network, listingIndex })
+      })
+    })
+    // flatten array
+    return [].concat.apply([], idsByVersion)
   }
 
-  async get(listingIndex) {
-    const adapter = await this.getAdapter(listingIndex)
+  async get(listingId) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.get(listingIndex)
   }
 
   // This method is DEPRECATED (just use get instead)
-  async getByIndex(listingIndex) {
-    return await this.get(listingIndex)
+  async getByIndex(listingId) {
+    return await this.get(listingId)
   }
 
   async create(data) {
     return await this.currentAdapter.create(data)
   }
 
-  async update(listingIndex, data = {}) {
-    const adapter = await this.getAdapter(listingIndex)
+  async update(listingId, data = {}) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.update(listingIndex, data)
   }
 
-  async requestPurchase(listingIndex, ipfsData, offerWei, confirmationCallback) {
-    const adapter = await this.getAdapter(listingIndex)
+  async requestPurchase(listingId, ipfsData, offerWei, confirmationCallback) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.requestPurchase(listingIndex, ipfsData, offerWei, confirmationCallback)
   }
 
-  async getPurchases(listingIndex) {
-    const adapter = await this.getAdapter(listingIndex)
+  async getPurchases(listingId) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.getPurchases(listingIndex)
   }
 }

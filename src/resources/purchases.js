@@ -1,4 +1,5 @@
 import Adaptable from './adaptable'
+import { parseListingId } from '../utils/id'
 
 const appendSlash = url => {
   return url.substr(-1) === '/' ? url : url + '/'
@@ -24,23 +25,26 @@ class Purchases extends Adaptable {
     }
   }
 
-  async get(listingIndex, purchaseIndex) {
-    const adapter = await this.getAdapter(listingIndex)
+  async get(listingId, purchaseIndex) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.getPurchase(listingIndex, purchaseIndex)
   }
 
-  async request(listingIndex, ipfsData, offerWei) {
-    const adapter = await this.getAdapter(listingIndex)
+  async request(listingId, ipfsData, offerWei) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.requestPurchase(listingIndex, ipfsData, offerWei)
   }
 
   async acceptRequest(
-    listingIndex,
+    listingId,
     purchaseIndex,
     ipfsData,
     confirmationCallback
   ) {
-    const adapter = await this.getAdapter(listingIndex)
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.acceptPurchaseRequest(
       listingIndex,
       purchaseIndex,
@@ -50,12 +54,13 @@ class Purchases extends Adaptable {
   }
 
   async rejectRequest(
-    listingIndex,
+    listingId,
     purchaseIndex,
     ipfsData,
     confirmationCallback
   ) {
-    const adapter = await this.getAdapter(listingIndex)
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.rejectPurchaseRequest(
       listingIndex,
       purchaseIndex,
@@ -65,12 +70,13 @@ class Purchases extends Adaptable {
   }
 
   async buyerFinalize(
-    listingIndex,
+    listingId,
     purchaseIndex,
     ipfsData,
     confirmationCallback
   ) {
-    const adapter = await this.getAdapter(listingIndex)
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.buyerFinalizePurchase(
       listingIndex,
       purchaseIndex,
@@ -80,12 +86,13 @@ class Purchases extends Adaptable {
   }
 
   async sellerFinalize(
-    listingIndex,
+    listingId,
     purchaseIndex,
     ipfsData,
     confirmationCallback
   ) {
-    const adapter = await this.getAdapter(listingIndex)
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.sellerFinalizePurchase(
       listingIndex,
       purchaseIndex,
@@ -94,8 +101,9 @@ class Purchases extends Adaptable {
     )
   }
 
-  async getLogs(listingIndex, purchaseIndex) {
-    const adapter = await this.getAdapter(listingIndex)
+  async getLogs(listingId, purchaseIndex) {
+    const adapter = await this.getAdapter(listingId)
+    const { listingIndex } = parseListingId(listingId)
     return await adapter.getPurchaseLogs(listingIndex, purchaseIndex)
   }
 
