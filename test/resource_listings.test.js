@@ -70,7 +70,7 @@ describe('Listing Resource', function() {
       unitsAvailable: 1
     })
     const listingIds = await listings.allIds()
-    const listingIndex = listingIds.length - 1
+    const listingIndex = listingIds[listingIds.length - 1]
     await asAccount(contractService.web3, buyer, async () => {
       await listings.requestPurchase(
         listingIndex,
@@ -186,11 +186,7 @@ describe('Listing Resource', function() {
       expect(listingPurchases.length).to.equal(1)
       expect(listingPurchases[0].stage).to.equal('BUYER_REQUESTED')
       expect(JSON.stringify(listingPurchases[0].ipfsData)).to.equal(
-        JSON.stringify({
-          purchaseType: 'unit',
-          units: 1,
-          priceWei: samplePrice
-        })
+        JSON.stringify({ purchaseType: 'unit', units: 1 })
       )
     })
   })
