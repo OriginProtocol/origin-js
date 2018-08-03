@@ -1,13 +1,15 @@
 import v01ListingsAdapter from '../adapters/v01/listings_adapter'
+import v02MarketplaceAdapter from '../adapters/v02/marketplace_adapter'
 import { parseListingId } from '../utils/id'
 
 class Adaptable {
   constructor() {
     this.adapters = {
-      '001': new v01ListingsAdapter(...arguments)
+      '001': new v01ListingsAdapter(...arguments),
+      '002': new v02MarketplaceAdapter(...arguments)
     }
     this.versions = [
-      '001'
+      '001', '002'
     ]
     this.currentVersion = this.versions[this.versions.length - 1]
     this.currentAdapter = this.adapters[this.currentVersion]

@@ -14,6 +14,10 @@ class Listings extends Adaptable {
     this.ipfsService = ipfsService
     this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
+
+    this.versions = ['001']
+    this.currentVersion = '001'
+    this.currentAdapter = this.adapters['001']
   }
 
   // fetches all listings (all data included)
