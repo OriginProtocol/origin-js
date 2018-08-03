@@ -1,13 +1,10 @@
 pragma solidity 0.4.23;
 
-import "../../EvolvingRegistry.sol";
 import "./Escrow.sol";
 
 contract V01_Listings {
   event ListingChange(uint256 indexed _listingIndex, bytes32 _ipfsHash);
   event PurchaseChange(uint256 indexed _listingIndex, uint256 indexed _purchaseIndex, bytes32 _ipfsHash, Stages _stage);
-
-  EvolvingRegistry listingRegistry;
 
   modifier isSeller(uint256 _listingIndex) {
     require(msg.sender == listings[_listingIndex].seller);
@@ -52,24 +49,22 @@ contract V01_Listings {
     address escrowContract;
   }
 
-  mapping(uint256 => Listing) public listings;
-
+  Listing[] public listings;
   Purchase[] public purchases;
 
-  constructor(EvolvingRegistry _listingRegistry) public {
-    listingRegistry = _listingRegistry;
+  function listingsLength() public constant returns (uint) {
+    return listings.length;
   }
 
   function createListing(bytes32 _ipfsHash) public {
-    uint256 entryId = listingRegistry.addEntry();
     Listing memory listing = Listing(
       msg.sender,
       new bytes32[](0),
       new uint256[](0)
     );
-    listings[entryId] = listing;
-    listings[entryId].ipfsVersions.push(_ipfsHash);
-    emit ListingChange(entryId, _ipfsHash);
+    listings.push(listing);
+    listings[listings.length - 1].ipfsVersions.push(_ipfsHash);
+    emit ListingChange(listings.length - 1, _ipfsHash);
   }
 
   function updateListing(uint256 _listingIndex, uint256 _currentVersion, bytes32 _ipfsHash)
