@@ -77,6 +77,15 @@ class ListingsAdapter {
     this.purchases = purchases
   }
 
+  async listingsLength() {
+    const result = await this.contractService.call(
+      listingsContract,
+      'listingsLength',
+      []
+    )
+    return Number(result)
+  }
+
   async get(listingIndex) {
     const listing = await this.contractService.call(
       listingsContract,
