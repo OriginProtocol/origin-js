@@ -83,7 +83,7 @@ class Listings extends ResourceBase {
         this.contractService.listingsRegistryContract
       )
     } catch (error) {
-      console.log('Contract not deployed')
+      console.log('Contract not deployed', error)
       throw error
     }
 
@@ -98,6 +98,44 @@ class Listings extends ResourceBase {
     }
 
     return range(0, Number(listingsLength))
+  }
+
+  async search(query) {
+    console.log("****** ORIGINJS - Issuing search query:", query)
+
+    const url = appendSlash(this.indexingServerUrl) + 'api/search/listings?query=' + query
+    console.log("search API call:", url)
+    const response = await this.fetch(url, { method: 'GET' })
+    if (response.status != 200) {
+      console.log('Search API call failed')
+      throw error
+    }
+    const json = await response.json()
+    console.log("search API returned:", json)
+
+    // Extract addresses from search results.
+    let addresses = json.listings.map(listing => listing._id)
+    console.log("Addresses:", addresses)
+
+    // HACK - FIX ONCE WE MOVE TO NEW CONTRACTS.
+    // Currently the ListingGrids component manipulate Listing Ids.
+    // The search API only returns addresses so we need to convert those into ids.
+    // Since there is no method on the contract to handle this conversion,
+    // we very inefficiently build a map of id -> address and use that as a lookup table.
+    const contract = this.contractService.listingsRegistryContract
+    const listingsRegistry = await this.contractService.deployed(contract)
+    const len = await listingsRegistry.methods.listingsLength().call()
+    console.log("Listing len=", len)
+    let id
+    let addressToId = {}
+    for (id = 0; id < len; id++) {
+      const address = await listingsRegistry.methods.getListingAddress(id).call()
+      addressToId[address] = id
+    }
+    console.log("addressToId=", addressToId)
+    let ids = addresses.map( address => addressToId[address])
+    console.log("ids=", ids)
+    return ids
   }
 
   async allAddresses() {
