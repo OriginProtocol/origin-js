@@ -419,10 +419,8 @@ class Listings extends ResourceBase {
     return Promise.all(
       json.objects.map(async obj => {
         const ipfsData = obj['ipfs_data']
-        // While we wait on https://github.com/OriginProtocol/origin-bridge/issues/18
-        // we fetch the array of image data strings for each listing
         const indexedIpfsData = await this.ipfsService.getFile(obj['ipfs_hash'])
-        const pictures = indexedIpfsData.data.pictures
+        const pictures = this.transformPictureUrls(indexedIpfsData.data.pictures)
         return {
           address: obj['contract_address'],
           ipfsHash: obj['ipfs_hash'],
@@ -463,7 +461,7 @@ class Listings extends ResourceBase {
       category: ipfsData.category,
       description: ipfsData.description,
       location: ipfsData.location,
-      pictures: ipfsData.pictures,
+      pictures: this.transformPictureUrls(ipfsData.pictures),
       listingType: ipfsData.listingType,
       schemaType: ipfsData.schemaType
     }
@@ -477,11 +475,43 @@ class Listings extends ResourceBase {
       category: ipfsData.category,
       description: ipfsData.description,
       location: ipfsData.location,
-      pictures: ipfsData.pictures,
+      pictures: this.transformPictureUrls(ipfsData.pictures),
       listingType: ipfsData.listingType,
       schemaType: ipfsData.schemaType,
       slots: ipfsData.slots
     }
+  }
+
+  /**
+   * Transforms an array of image URLs by filtering out unsafe methods and
+   * rewriting IPFS URLs to use the IPFS gateway configured for origin-js.
+   *
+   * Allowed protocols for image URLs are dweb:, ipfs: and data:.
+   *
+   * @param {array} pictureUrls - URLs to be transformed
+   */
+  transformPictureUrls(pictureUrls) {
+    return pictureUrls.filter((url) => {
+      try {
+        // Only allow data:, dweb:, and ipfs: URLs
+        return ['data:', 'dweb:', 'ipfs:'].includes((new URL(url).protocol))
+      } catch (error) {
+        // Invalid URL, filter it out
+        return false
+      }
+    }).map((url) => {
+      if (url.startsWith('ipfs://')) {
+        // Rewrite ipfs: URLs
+        const ipfsHash = url.replace('ipfs://', '')
+        return `${this.ipfsService.gateway}/ipfs/${ipfsHash}`
+      } else if (url.startsWith('dweb://')) {
+        // Rewrite dweb: URLs
+        const ipfsHash = url.replace('dweb://', '')
+        return `${this.ipfsService.gateway}/${ipfsHash}`
+      }
+      // Leave data: URLs untouched
+      return url
+    })
   }
 }
 
