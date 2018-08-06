@@ -78,14 +78,45 @@ describe('Listing Resource', function() {
       name: '1972 Geo Metro 255K',
       category: 'Cars & Trucks',
       location: 'New York City',
-      description:
-        'The American auto-show highlight reel will be disproportionately concentrated on the happenings in New York.',
+      description: 'An amazing automobile.',
       pictures: undefined,
       price: 3.3
     }
     const schema = 'for-sale'
     await listings.create(listingData, schema)
     // Todo: Check that this worked after we have web3 approvals working
+  })
+
+  it('should filter and rewrite urls for images', async () => {
+    const listingData = {
+      name: '1972 Geo Metro 255K',
+      category: 'Cars & Trucks',
+      location: 'New York City',
+      description: 'An amazing automobile.',
+      pictures: [
+        'dweb://ipfs/QmZEdyf8mqmSQX6ty3u7APMoSQJVi1xjKMHNx5JefTdtpp',
+        'https://www.originprotocol.com/static/img/origin-logo.png',
+        'ipfs://QmVKfmSho2aqpZB674RGMmZNZhdS5FPGCkeMpDdtaRzptY',
+        'nothing',
+        'ftp://127.0.0.1',
+        1
+      ],
+      price: 3.3
+    }
+    const schema = 'for-sale'
+    await listings.create(listingData, schema)
+
+    const listingIds = await listings.allIds()
+    const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
+    expect(JSON.stringify(listing.pictures)).to.equal(
+      JSON.stringify([
+        ipfsService.gatewayUrlForHash('QmZEdyf8mqmSQX6ty3u7APMoSQJVi1xjKMHNx5JefTdtpp'),
+        ipfsService.gatewayUrlForHash('QmVKfmSho2aqpZB674RGMmZNZhdS5FPGCkeMpDdtaRzptY')
+      ])
+    )
+  })
+
+  it('should upload data urls to ipfs', async () => {
   })
 
   it('should close a listing', async () => {
@@ -120,7 +151,7 @@ describe('Listing Resource', function() {
                 contract_address: '0x4E205e04A1A8f230702fe51f3AfdCC38aafB0f3C',
                 created_at: null,
                 expires_at: null,
-                ipfs_hash: 'QmfXRgtSbrGggApvaFCa88ofeNQP79G18DpWaSW1Wya1u8',
+                ipfs_hash: 'QmavCc7aqb2EFBMQ9ZR497f4kDarWu46NrYZf7gewMieo7',
                 price: '0.30',
                 owner_address: '0x627306090abaB3A6e1400e9345bC60c78a8BEf57',
                 units: 23,

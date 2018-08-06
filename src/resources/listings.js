@@ -148,6 +148,21 @@ class Listings extends ResourceBase {
   async create(data, schemaType, confirmationCallback) {
     const listingType = data.listingType || unitListingType
     data.listingType = listingType // in case it wasn't set
+
+    if (data.pictures) {
+      // Filter picture URLs and upload data: URLs to ipfs
+      data.pictures = this.filterPictureUrls(data.pictures).map((url) => {
+        if (url.startsWith('data:')) {
+          // Upload data: URLs to IPFS and replace with IPFS URL
+          const ipfsHash = this.ipfsService.saveDataURIAsFile(url)
+          return this.ipfsService.gatewayUrlForHash(ipfsHash)
+        }
+
+        // Leave other URLs untouched
+        return url
+      })
+    }
+
     if (listingType === unitListingType) {
       return await this.createUnit(data, schemaType, confirmationCallback)
     } else if (listingType === fractionalListingType) {
@@ -424,8 +439,8 @@ class Listings extends ResourceBase {
     return Promise.all(
       json.objects.map(async obj => {
         const ipfsData = obj['ipfs_data']
-        const pictures = this.transformPictureUrls(indexedIpfsData.data.pictures)
         const indexedIpfsData = await this.ipfsService.loadObjFromFile(obj['ipfs_hash'])
+        const pictures = this.rewritePictureUrls(indexedIpfsData.data.pictures)
         return {
           address: obj['contract_address'],
           ipfsHash: obj['ipfs_hash'],
@@ -466,7 +481,7 @@ class Listings extends ResourceBase {
       category: ipfsData.category,
       description: ipfsData.description,
       location: ipfsData.location,
-      pictures: this.transformPictureUrls(ipfsData.pictures),
+      pictures: this.rewritePictureUrls(ipfsData.pictures),
       listingType: ipfsData.listingType,
       schemaType: ipfsData.schemaType
     }
@@ -480,7 +495,7 @@ class Listings extends ResourceBase {
       category: ipfsData.category,
       description: ipfsData.description,
       location: ipfsData.location,
-      pictures: this.transformPictureUrls(ipfsData.pictures),
+      pictures: this.rewritePictureUrls(ipfsData.pictures),
       listingType: ipfsData.listingType,
       schemaType: ipfsData.schemaType,
       slots: ipfsData.slots
@@ -488,14 +503,15 @@ class Listings extends ResourceBase {
   }
 
   /**
-   * Transforms an array of image URLs by filtering out unsafe methods and
-   * rewriting IPFS URLs to use the IPFS gateway configured for origin-js.
+   * Filters an array of image URLs to remove unsafe protocols.
    *
-   * Allowed protocols for image URLs are dweb:, ipfs: and data:.
+   * Allowed protocols are dweb:, ipfs: and data:.
    *
-   * @param {array} pictureUrls - URLs to be transformed
+   * @param {array} pictureUrls - URLs to be filtered
    */
-  transformPictureUrls(pictureUrls) {
+  filterPictureUrls(pictureUrls) {
+    if (!pictureUrls) return pictureUrls
+
     return pictureUrls.filter((url) => {
       try {
         // Only allow data:, dweb:, and ipfs: URLs
@@ -504,14 +520,25 @@ class Listings extends ResourceBase {
         // Invalid URL, filter it out
         return false
       }
-    }).map((url) => {
+    })
+  }
+
+  /**
+   * Rewrites image URLs to use the configured IPFS gateway.
+   *
+   * @param {array} pictureUrls - URLs to be rewritten
+   */
+  rewritePictureUrls(pictureUrls) {
+    if (!pictureUrls) return pictureUrls
+
+    return pictureUrls.map((url) => {
       if (url.startsWith('ipfs://')) {
         // Rewrite ipfs: URLs
         const ipfsHash = url.replace('ipfs://', '')
         return this.ipfsService.gatewayUrlForHash(ipfsHash)
-      } else if (url.startsWith('dweb://')) {
+      } else if (url.startsWith('dweb://ipfs/')) {
         // Rewrite dweb: URLs
-        const ipfsHash = url.replace('dweb://', '')
+        const ipfsHash = url.replace('dweb://ipfs/', '')
         return this.ipfsService.gatewayUrlForHash(ipfsHash)
       }
       // Leave data: URLs untouched
