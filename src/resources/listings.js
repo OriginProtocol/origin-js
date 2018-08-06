@@ -120,7 +120,7 @@ class Listings extends ResourceBase {
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(
       ipfsHashBytes32
     )
-    const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+    const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
     const ipfsData = ipfsJson ? ipfsJson.data : {}
 
     ipfsData.listingType = ipfsData.listingType || unitListingType
@@ -189,7 +189,7 @@ class Listings extends ResourceBase {
       String(ethToPay),
       'ether'
     )
-    const ipfsHash = await this.ipfsService.submitFile(ifpsData)
+    const ipfsHash = await this.ipfsService.saveObjAsFile(ifpsData)
     const ipfsBytes32 = this.contractService.getBytes32FromIpfsHash(ipfsHash)
     return await this.contractService.contractFn(
       this.contractService.fractionalListingContract,
@@ -262,7 +262,7 @@ class Listings extends ResourceBase {
     const formListing = { formData: data }
 
     // TODO: Why can't we take schematype from the formListing object?
-    const jsonBlob = {
+    const listingObj = {
       schema: `http://localhost:3000/schemas/${schemaType}.json`,
       data: formListing.formData
     }
@@ -270,7 +270,7 @@ class Listings extends ResourceBase {
     let ipfsHash
     try {
       // Submit to IPFS
-      ipfsHash = await this.ipfsService.submitFile(jsonBlob)
+      ipfsHash = await this.ipfsService.saveObjAsFile(listingObj)
     } catch (error) {
       throw new Error(`IPFS Failure: ${error}`)
     }
@@ -311,12 +311,13 @@ class Listings extends ResourceBase {
 
   async createFractional(data, confirmationCallback) {
     validate(validateFractionalListing, data, fractionalListingSchema)
-    const json = { data }
+
+    const listingObj = { data }
 
     // Submit to IPFS
     let ipfsHash
     try {
-      ipfsHash = await this.ipfsService.submitFile(json)
+      ipfsHash = await this.ipfsService.saveObjAsFile(listingObj)
     } catch (error) {
       throw new Error(`IPFS Failure: ${error}`)
     }
@@ -324,7 +325,10 @@ class Listings extends ResourceBase {
     // Submit to ETH contract
     let transactionReceipt
     try {
-      transactionReceipt = await this.submitFractionalListing(ipfsHash, confirmationCallback)
+      transactionReceipt = await this.submitFractionalListing(
+        ipfsHash,
+        confirmationCallback
+      )
     } catch (error) {
       console.error(error)
       throw new Error(`ETH Failure: ${error}`)
@@ -335,12 +339,13 @@ class Listings extends ResourceBase {
 
   async updateFractional(address, data) {
     validate(validateFractionalListing, data, fractionalListingSchema)
-    const json = { data }
+
+    const listingObj = { data }
 
     // Submit to IPFS
     let ipfsHash
     try {
-      ipfsHash = await this.ipfsService.submitFile(json)
+      ipfsHash = await this.ipfsService.saveObjAsFile(listingObj)
     } catch (error) {
       throw new Error(`IPFS Failure: ${error}`)
     }
@@ -419,8 +424,8 @@ class Listings extends ResourceBase {
     return Promise.all(
       json.objects.map(async obj => {
         const ipfsData = obj['ipfs_data']
-        const indexedIpfsData = await this.ipfsService.getFile(obj['ipfs_hash'])
         const pictures = this.transformPictureUrls(indexedIpfsData.data.pictures)
+        const indexedIpfsData = await this.ipfsService.loadObjFromFile(obj['ipfs_hash'])
         return {
           address: obj['contract_address'],
           ipfsHash: obj['ipfs_hash'],
@@ -503,11 +508,11 @@ class Listings extends ResourceBase {
       if (url.startsWith('ipfs://')) {
         // Rewrite ipfs: URLs
         const ipfsHash = url.replace('ipfs://', '')
-        return `${this.ipfsService.gateway}/ipfs/${ipfsHash}`
+        return this.ipfsService.gatewayUrlForHash(ipfsHash)
       } else if (url.startsWith('dweb://')) {
         // Rewrite dweb: URLs
         const ipfsHash = url.replace('dweb://', '')
-        return `${this.ipfsService.gateway}/${ipfsHash}`
+        return this.ipfsService.gatewayUrlForHash(ipfsHash)
       }
       // Leave data: URLs untouched
       return url
