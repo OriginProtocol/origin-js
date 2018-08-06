@@ -7,6 +7,11 @@ import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol"
 // @title Key/value storage contract
 // @note Based on Rocket Pool's RocketStorage.
 contract EternalStorage {
+  event AdminAdded(address newAdmin);
+  event AdminRemoved(address removedAdmin);
+  event WriterAdded(address newWriter);
+  event WriterRemoved(address removedWriter);
+
   using SafeMath for uint256;
   using SafeMath for int256;
 
@@ -21,13 +26,10 @@ contract EternalStorage {
 
   mapping(address => bool) admins;
   mapping(address => bool) writers;
-  uint16 adminCount;
+  uint16 public adminCount;
+  uint16 public writerCount;
 
-  /*** Modifiers ************/
-
-  // TODO: implement ownership of this contract
-
-  /// @dev constructor
+  // @dev constructor
   constructor() public {
     // By default, the account that deployed this contract is the owner.
     admins[msg.sender] = true;
@@ -52,6 +54,7 @@ contract EternalStorage {
     if (!admins[_admin]) {
       admins[_admin] = true;
       adminCount++;
+      emit AdminAdded(_admin);
     }
   }
 
@@ -64,11 +67,16 @@ contract EternalStorage {
     if (admins[_admin]) {
       delete admins[_admin];
       adminCount--;
+      emit AdminRemoved(_admin);
     }
   }
 
   function addWriter(address _writer) external ifAdmin {
-    writers[_writer] = true;
+    if (!writers[_writer]) {
+      writers[_writer] = true;
+      writerCount++;
+      emit WriterAdded(_writer);
+    }
   }
 
   function isWriter(address _addr) public view returns (bool) {
@@ -76,39 +84,43 @@ contract EternalStorage {
   }
 
   function removeWriter(address _writer) external ifWriter {
-    delete writers[_writer];
+    if (!writers[_writer]) {
+      delete writers[_writer];
+      writerCount--;
+      emit WriterRemoved(_writer);
+    }
   }
 
   //
   // Get functions
   //
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function getAddress(bytes32 _key) external view returns (address) {
     return addressStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function getUint(bytes32 _key) external view returns (uint) {
     return uIntStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function getString(bytes32 _key) external view returns (string) {
     return stringStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function getBytes(bytes32 _key) external view returns (bytes) {
     return bytesStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function getBool(bytes32 _key) external view returns (bool) {
     return boolStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function getInt(bytes32 _key) external view returns (int) {
     return intStorage[_key];
   }
@@ -118,32 +130,32 @@ contract EternalStorage {
   //
   // TODO(cuongdo): implement access control for setters & deleters
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function setAddress(bytes32 _key, address _value) external ifWriter {
     addressStorage[_key] = _value;
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function setUint(bytes32 _key, uint _value) external ifWriter {
     uIntStorage[_key] = _value;
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function setString(bytes32 _key, string _value) external ifWriter {
     stringStorage[_key] = _value;
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function setBytes(bytes32 _key, bytes _value) external ifWriter {
     bytesStorage[_key] = _value;
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function setBool(bytes32 _key, bool _value) external ifWriter {
     boolStorage[_key] = _value;
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function setInt(bytes32 _key, int _value) external ifWriter {
     intStorage[_key] = _value;
   }
@@ -178,32 +190,32 @@ contract EternalStorage {
   // Delete functions
   //
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function deleteAddress(bytes32 _key) external ifWriter {
     delete addressStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function deleteUint(bytes32 _key) external ifWriter {
     delete uIntStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function deleteString(bytes32 _key) external ifWriter {
     delete stringStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function deleteBytes(bytes32 _key) external ifWriter {
     delete bytesStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function deleteBool(bytes32 _key) external ifWriter {
     delete boolStorage[_key];
   }
 
-  /// @param _key The key for the record
+  // @param _key The key for the record
   function deleteInt(bytes32 _key) external ifWriter {
     delete intStorage[_key];
   }
