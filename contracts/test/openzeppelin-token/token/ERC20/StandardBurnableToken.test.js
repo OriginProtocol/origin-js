@@ -3,8 +3,7 @@ import assertRevert from '../../helpers/assertRevert';
 import { inLogs } from '../../helpers/expectEvent';
 import shouldBehaveLikeBurnableToken from './BurnableToken.behaviour';
 
-const EternalStorage = artifacts.require('EternalStorage');
-const StandardBurnableTokenMock = artifacts.require('OriginTokenMock');
+import { newOriginToken } from '../../../token/helpers.js';
 const BigNumber = web3.BigNumber;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -17,11 +16,7 @@ contract('StandardBurnableToken', function ([owner, burner]) {
   const initialBalance = 1000;
 
   beforeEach(async function () {
-    const es = await EternalStorage.new();
-    this.token = await StandardBurnableTokenMock.new(es.address, {from: owner});
-    await es.addWriter(this.token.address);
-    await this.token.initialize(owner, initialBalance, {from: owner});
-
+    this.token = await newOriginToken(owner, initialBalance);
   });
 
   shouldBehaveLikeBurnableToken([owner], initialBalance);

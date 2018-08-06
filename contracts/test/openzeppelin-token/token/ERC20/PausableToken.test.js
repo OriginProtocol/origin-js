@@ -1,14 +1,10 @@
 /* eslint-disable semi,no-unused-vars,no-extra-semi */
 import assertRevert from '../../helpers/assertRevert';
-const EternalStorage = artifacts.require('EternalStorage');
-const PausableToken = artifacts.require('OriginTokenMock');
+import { newOriginToken } from '../../../token/helpers.js';
 
 contract('PausableToken', function ([_, owner, recipient, anotherAccount]) {
   beforeEach(async function () {
-    const es = await EternalStorage.new();
-    this.token = await PausableToken.new(es.address, { from: owner });
-    await es.addWriter(this.token.address);
-    await this.token.initialize(owner, 100, {from: owner});
+    this.token = await newOriginToken(owner, 100);
   });
 
   describe('pause', function () {

@@ -1,16 +1,12 @@
 /* eslint-disable semi,no-unused-vars,no-extra-semi */
 import assertRevert from '../../helpers/assertRevert';
-const EternalStorage = artifacts.require('EternalStorage');
-const StandardTokenMock = artifacts.require('OriginTokenMock');
+import { newOriginToken } from '../../../token/helpers.js';
 
 contract('StandardToken', function ([_, owner, recipient, anotherAccount]) {
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
   beforeEach(async function () {
-    const es = await EternalStorage.new();
-    this.token = await StandardTokenMock.new(es.address, {from: owner});
-    await es.addWriter(this.token.address);
-    await this.token.initialize(owner, 100, {from: owner});
+    this.token = await newOriginToken(owner, 100);
   });
 
   describe('total supply', function () {
