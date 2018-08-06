@@ -117,7 +117,8 @@ class Listings extends ResourceBase {
     let addresses = json.listings.map(listing => listing._id)
     console.log("Addresses:", addresses)
 
-    // HACK - FIX ONCE WE MOVE TO NEW CONTRACTS.
+    // AWFUL HACK !!!
+    // TODO(franck): Fix once we move to new contracts.
     // Currently the ListingGrids component manipulate Listing Ids.
     // The search API only returns addresses so we need to convert those into ids.
     // Since there is no method on the contract to handle this conversion,
@@ -126,14 +127,30 @@ class Listings extends ResourceBase {
     const listingsRegistry = await this.contractService.deployed(contract)
     const len = await listingsRegistry.methods.listingsLength().call()
     console.log("Listing len=", len)
-    let id
-    let addressToId = {}
-    for (id = 0; id < len; id++) {
-      const address = await listingsRegistry.methods.getListingAddress(id).call()
-      addressToId[address] = id
+    //let id
+    //let addressToId = {}
+    //for (id = 0; id < len; id++) {
+    //  const address = await listingsRegistry.methods.getListingAddress(id).call()
+    //  addressToId[address] = id
+    //}
+    let listingIds = []
+    for (let i = 0; i < len; i++) {
+      listingIds.push(i)
     }
+    console.log("listingIds=", listingIds)
+    let addressToId = {}
+    await Promise.all(
+      listingIds.map(async id => {
+        let address = await listingsRegistry.methods.getListingAddress(id).call()
+        addressToId[address] = id
+      } )
+    )
     console.log("addressToId=", addressToId)
-    let ids = addresses.map( address => addressToId[address])
+
+    // Lookup each address returned in the search result to get its id.
+    // As a precaution, filter undefined ids in case an address returned from serach result would have failed lookup.
+    let ids = addresses.map(address => addressToId[address]).filter(id => id !== undefined)
+
     console.log("ids=", ids)
     return ids
   }
