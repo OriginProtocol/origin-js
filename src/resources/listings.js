@@ -37,11 +37,18 @@ function validate(validateFn, data, schema) {
 }
 
 class Listings extends ResourceBase {
-  constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
+  constructor({
+    contractService,
+    ipfsService,
+    fetch,
+    indexingServerUrl,
+    purchases
+  }) {
     super({ contractService, ipfsService })
     this.contractDefinition = this.contractService.listingContract
     this.fetch = fetch
     this.indexingServerUrl = indexingServerUrl
+    this.purchases = purchases
   }
 
   /*
@@ -121,7 +128,7 @@ class Listings extends ResourceBase {
     if (ipfsData.listingType === unitListingType) {
       return await this.getUnitListing(address, ipfsData, ipfsHash)
     } else if (ipfsData.listingType === fractionalListingType) {
-      return this.getFractionalListing(address, ipfsData, ipfsHash)
+      return await this.getFractionalListing(address, ipfsData, ipfsHash)
     } else {
       throw new Error('Invalid listing type:', ipfsData.listingType)
     }
@@ -138,13 +145,13 @@ class Listings extends ResourceBase {
     return await this.get(listingAddress)
   }
 
-  async create(data, schemaType) {
+  async create(data, schemaType, confirmationCallback) {
     const listingType = data.listingType || unitListingType
     data.listingType = listingType // in case it wasn't set
     if (listingType === unitListingType) {
-      return await this.createUnit(data, schemaType)
+      return await this.createUnit(data, schemaType, confirmationCallback)
     } else if (listingType === fractionalListingType) {
-      return await this.createFractional(data)
+      return await this.createFractional(data, confirmationCallback)
     }
   }
 
@@ -157,7 +164,7 @@ class Listings extends ResourceBase {
     return await this.updateFractional(address, data)
   }
 
-  async buy(address, unitsToBuy, ethToPay) {
+  async buy(address, unitsToBuy, ethToPay, confirmationCallback) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
     const value = this.contractService.web3.utils.toWei(
       String(ethToPay),
@@ -171,7 +178,8 @@ class Listings extends ResourceBase {
       {
         value: value,
         gas: 850000
-      }
+      },
+      confirmationCallback
     )
   }
 
@@ -195,11 +203,14 @@ class Listings extends ResourceBase {
     )
   }
 
-  async close(address) {
+  async close(address, confirmationCallback) {
     return await this.contractService.contractFn(
       this.contractService.unitListingContract,
       address,
-      'close'
+      'close',
+      [],
+      {},
+      confirmationCallback
     )
   }
 
@@ -210,6 +221,25 @@ class Listings extends ResourceBase {
         address,
         'purchasesLength'
       )
+    )
+  }
+
+  async getPurchases(address) {
+    const purchasesLength = await this.purchasesLength(address)
+    const indices = []
+    for (let i = 0; i < purchasesLength; i++) {
+      indices.push(i)
+    }
+    return await Promise.all(
+      indices.map(async index => {
+        const purchaseAddress = await this.contractService.contractFn(
+          this.contractService.listingContract,
+          address,
+          'getPurchase',
+          [index]
+        )
+        return this.purchases.get(purchaseAddress)
+      })
     )
   }
 
@@ -226,7 +256,7 @@ class Listings extends ResourceBase {
       Private methods
   */
 
-  async createUnit(data, schemaType) {
+  async createUnit(data, schemaType, confirmationCallback) {
     validate(validateUnitListing, data, unitListingSchema)
 
     const formListing = { formData: data }
@@ -248,14 +278,22 @@ class Listings extends ResourceBase {
     console.log(`IPFS file created with hash: ${ipfsHash} for data:`)
     console.log(jsonBlob)
 
+    // For now, accept price in either wei or eth for backwards compatibility
+    // `price` is now deprecated. `priceWei` should be used instead.
+    const priceEth = String(formListing.formData.price)
+    const priceWei = formListing.formData.priceWei
+      ? String(formListing.formData.priceWei)
+      : this.contractService.web3.utils.toWei(priceEth, 'ether')
+
     // Submit to ETH contract
     const units = 1 // TODO: Allow users to set number of units in form
     let transactionReceipt
     try {
       transactionReceipt = await this.submitUnitListing(
         ipfsHash,
-        formListing.formData.price,
-        units
+        priceWei,
+        units,
+        confirmationCallback
       )
     } catch (error) {
       console.error(error)
@@ -271,7 +309,7 @@ class Listings extends ResourceBase {
     return transactionReceipt
   }
 
-  async createFractional(data) {
+  async createFractional(data, confirmationCallback) {
     validate(validateFractionalListing, data, fractionalListingSchema)
     const json = { data }
 
@@ -286,7 +324,10 @@ class Listings extends ResourceBase {
     // Submit to ETH contract
     let transactionReceipt
     try {
-      transactionReceipt = await this.submitFractionalListing(ipfsHash)
+      transactionReceipt = await this.submitFractionalListing(
+        ipfsHash,
+        confirmationCallback
+      )
     } catch (error) {
       console.error(error)
       throw new Error(`ETH Failure: ${error}`)
@@ -333,33 +374,31 @@ class Listings extends ResourceBase {
     return transactionReceipt
   }
 
-  async submitUnitListing(ipfsListing, ethPrice, units) {
+  async submitUnitListing(ipfsListing, priceWei, units, confirmationCallback) {
     try {
       const account = await this.contractService.currentAccount()
-      const instance = await this.contractService.deployed(
-        this.contractService.listingsRegistryContract
-      )
-
-      const weiToGive = this.contractService.web3.utils.toWei(
-        String(ethPrice),
-        'ether'
-      )
-      // Note we cannot get the listingId returned by our contract.
-      // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
-      return instance.methods
-        .create(
+      return await this.contractService.contractFn(
+        this.contractService.listingsRegistryContract,
+        null,
+        'create',
+        [
           this.contractService.getBytes32FromIpfsHash(ipfsListing),
-          weiToGive,
+          priceWei,
           units
-        )
-        .send({ from: account, gas: 4476768 })
+        ],
+        {
+          gas: 4476768,
+          from: account
+        },
+        confirmationCallback
+      )
     } catch (error) {
       console.error('Error submitting to the Ethereum blockchain: ' + error)
       throw error
     }
   }
 
-  async submitFractionalListing(ipfsListing) {
+  async submitFractionalListing(ipfsListing, confirmationCallback) {
     try {
       const account = await this.contractService.currentAccount()
       return await this.contractService.contractFn(
@@ -367,7 +406,8 @@ class Listings extends ResourceBase {
         null,
         'createFractional',
         [this.contractService.getBytes32FromIpfsHash(ipfsListing)],
-        { from: account, gas: 4476768 }
+        { from: account, gas: 4476768 },
+        confirmationCallback
       )
     } catch (error) {
       console.error('Error submitting to the Ethereum blockchain: ' + error)
@@ -379,29 +419,31 @@ class Listings extends ResourceBase {
     const url = appendSlash(this.indexingServerUrl) + 'listing'
     const response = await this.fetch(url, { method: 'GET' })
     const json = await response.json()
-    return Promise.all(json.objects.map(async obj => {
-      const ipfsData = obj['ipfs_data']
-      // While we wait on https://github.com/OriginProtocol/origin-bridge/issues/18
-      // we fetch the array of image data strings for each listing
-      const indexedIpfsData = await this.ipfsService.getFile(obj['ipfs_hash'])
-      const pictures = indexedIpfsData.data.pictures
-      return {
-        address: obj['contract_address'],
-        ipfsHash: obj['ipfs_hash'],
-        sellerAddress: obj['owner_address'],
-        price: Number(obj['price']),
-        unitsAvailable: Number(obj['units']),
-        created: obj['created_at'],
-        expiration: obj['expires_at'],
+    return Promise.all(
+      json.objects.map(async obj => {
+        const ipfsData = obj['ipfs_data']
+        // While we wait on https://github.com/OriginProtocol/origin-bridge/issues/18
+        // we fetch the array of image data strings for each listing
+        const indexedIpfsData = await this.ipfsService.getFile(obj['ipfs_hash'])
+        const pictures = indexedIpfsData.data.pictures
+        return {
+          address: obj['contract_address'],
+          ipfsHash: obj['ipfs_hash'],
+          sellerAddress: obj['owner_address'],
+          price: Number(obj['price']),
+          unitsAvailable: Number(obj['units']),
+          created: obj['created_at'],
+          expiration: obj['expires_at'],
 
-        name: ipfsData ? ipfsData['name'] : null,
-        category: ipfsData ? ipfsData['category'] : null,
-        description: ipfsData ? ipfsData['description'] : null,
-        location: ipfsData ? ipfsData['location'] : null,
-        listingType: ipfsData ? ipfsData['listingType'] : unitListingType,
-        pictures
-      }
-    }))
+          name: ipfsData ? ipfsData['name'] : null,
+          category: ipfsData ? ipfsData['category'] : null,
+          description: ipfsData ? ipfsData['description'] : null,
+          location: ipfsData ? ipfsData['location'] : null,
+          listingType: ipfsData ? ipfsData['listingType'] : unitListingType,
+          pictures
+        }
+      })
+    )
   }
 
   async getUnitListing(listingAddress, ipfsData, ipfsHash) {
@@ -425,7 +467,8 @@ class Listings extends ResourceBase {
       description: ipfsData.description,
       location: ipfsData.location,
       pictures: ipfsData.pictures,
-      listingType: ipfsData.listingType
+      listingType: ipfsData.listingType,
+      schemaType: ipfsData.schemaType
     }
   }
 
@@ -439,6 +482,7 @@ class Listings extends ResourceBase {
       location: ipfsData.location,
       pictures: ipfsData.pictures,
       listingType: ipfsData.listingType,
+      schemaType: ipfsData.schemaType,
       slots: ipfsData.slots
     }
   }

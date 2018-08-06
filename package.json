@@ -58,6 +58,7 @@
     "chai-string": "1.4.0",
     "chalk": "^2.4.1",
     "eth-gas-reporter": "^0.1.2",
+    "ethereumjs-wallet": "^0.6.0",
     "fetch-mock": "^6.3.0",
     "flow-bin": "^0.71.0",
     "ganache-core": "^2.1.0",

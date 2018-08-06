@@ -6,6 +6,7 @@ import Notifications from './resources/notifications'
 import Purchases from './resources/purchases'
 import Reviews from './resources/reviews'
 import Users from './resources/users'
+import Messaging from './resources/messaging'
 import fetch from 'cross-fetch'
 
 const defaultBridgeServer = 'https://bridge.originprotocol.com'
@@ -26,11 +27,19 @@ class Origin {
     attestationServerUrl = defaultAttestationServerUrl,
     indexingServerUrl = defaultIndexingServerUrl,
     walletLinkerUrl = defaultWalletLinkerUrl,
-    contractAddresses,
     disableNotifications,
+    contractAddresses,
+    ipfsCreator,
+    OrbitDB,
+    ecies,
     web3
   } = {}) {
-    this.contractService = new ContractService({contractAddresses, web3, walletLinkerUrl, fetch})
+    this.contractService = new ContractService({
+      contractAddresses,
+      web3,
+      walletLinkerUrl,
+      fetch
+    })
     this.ipfsService = new IpfsService({
       ipfsDomain,
       ipfsApiPort,
@@ -44,14 +53,15 @@ class Origin {
       fetch
     })
 
-    this.listings = new Listings({
+    this.purchases = new Purchases({
       contractService: this.contractService,
       ipfsService: this.ipfsService,
       indexingServerUrl,
       fetch
     })
 
-    this.purchases = new Purchases({
+    this.listings = new Listings({
+      purchases: this.purchases,
       contractService: this.contractService,
       ipfsService: this.ipfsService,
       indexingServerUrl,
@@ -60,7 +70,7 @@ class Origin {
 
     if (!disableNotifications) {
       const store = require('store')
-      
+
       this.notifications = new Notifications({
         listings: this.listings,
         purchases: this.purchases,
@@ -77,6 +87,13 @@ class Origin {
     this.users = new Users({
       contractService: this.contractService,
       ipfsService: this.ipfsService
+    })
+
+    this.messaging = new Messaging({
+      contractService: this.contractService,
+      ipfsCreator,
+      OrbitDB,
+      ecies
     })
   }
 }

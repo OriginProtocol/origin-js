@@ -2,7 +2,9 @@ import ClaimHolderRegisteredContract from './../../contracts/build/contracts/Cla
 import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
+import PurchaseLibrary from './../../contracts/build/contracts/PurchaseLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
+import ListingsRegistryStorageContract from './../../contracts/build/contracts/ListingsRegistryStorage.json'
 import ListingContract from './../../contracts/build/contracts/Listing.json'
 import UnitListingContract from './../../contracts/build/contracts/UnitListing.json'
 import FractionalListingContract from './../../contracts/build/contracts/FractionalListing.json'
@@ -29,6 +31,7 @@ class ContractService {
     const contracts = {
       listingContract: ListingContract,
       listingsRegistryContract: ListingsRegistryContract,
+      listingsRegistryStorageContract: ListingsRegistryStorageContract,
       unitListingContract: UnitListingContract,
       fractionalListingContract: FractionalListingContract,
       purchaseContract: PurchaseContract,
@@ -40,6 +43,7 @@ class ContractService {
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
     this.libraries.KeyHolderLibrary = KeyHolderLibrary
+    this.libraries.PurchaseLibrary = PurchaseLibrary
     for (const name in contracts) {
       this[name] = contracts[name]
       try {
@@ -62,20 +66,24 @@ class ContractService {
     // if there's no given provider
     // we do it the funny wallet way
     if (!Web3.givenProvider && this.opts.walletLinkerUrl) {
-      if(!this.walletLinker) {
-        this.walletLinker = new WalletLinker({linkerServerUrl:this.opts.walletLinkerUrl, fetch:this.opts.fetch, networkChangeCb:this.newWalletNetwork.bind(this), web3:this.web3})
+      if (!this.walletLinker) {
+        this.walletLinker = new WalletLinker({
+          linkerServerUrl: this.opts.walletLinkerUrl,
+          fetch: this.opts.fetch,
+          networkChangeCb: this.newWalletNetwork.bind(this),
+          web3: this.web3
+        })
         this.walletLinker.initSession()
       }
     }
   }
-  
+
   hasWalletLinker() {
     return this.walletLinker
   }
 
   showLinkPopUp() {
-    if (this.walletLinker)
-    {
+    if (this.walletLinker) {
       this.walletLinker.startLink()
     }
   }
@@ -117,7 +125,9 @@ class ContractService {
   async currentAccount() {
     const accounts = await this.web3.eth.getAccounts()
     const defaultAccount = this.web3.eth.defaultAccount
-    const walletAccount = this.web3.eth.accounts.wallet.length && this.web3.eth.accounts.wallet[0].address
+    const walletAccount =
+      this.web3.eth.accounts.wallet.length &&
+      this.web3.eth.accounts.wallet[0].address
     return walletAccount || defaultAccount || accounts[0]
   }
 
@@ -187,66 +197,46 @@ class ContractService {
     return txReceipt
   }
 
-  async waitTransactionFinished(
-    transactionHash,
-    pollIntervalMilliseconds = 1000
-  ) {
-    console.log('Waiting for transaction')
-    console.log(transactionHash)
-    const blockNumber = await new Promise((resolve, reject) => {
-      if (!transactionHash) {
-        reject(`Invalid transactionHash passed: ${transactionHash}`)
-        return
-      }
-      let txCheckTimer = null
-      const txCheckTimerCallback = () => {
-        this.web3.eth.getTransaction(transactionHash, (error, transaction) => {
-          if (transaction.blockNumber != null) {
-            console.log(`Transaction mined at block ${transaction.blockNumber}`)
-            // TODO: Wait maximum number of blocks
-            // TODO (Stan): Confirm transaction *sucessful* with getTransactionReceipt()
-
-            // // TODO (Stan): Metamask web3 doesn't have this method. Probably could fix by
-            // // by doing the "copy local web3 over metamask's" technique.
-            // this.web3.eth.getTransactionReceipt(this.props.transactionHash, (error, transactionHash) => {
-            //   console.log(transactionHash)
-            // })
-
-            clearInterval(txCheckTimer)
-            // Hack to wait two seconds, as results don't seem to be
-            // immediately available.
-            setTimeout(() => resolve(transaction.blockNumber), 2000)
-          }
-        })
-      }
-
-      txCheckTimer = setInterval(txCheckTimerCallback, pollIntervalMilliseconds)
-    })
-    return blockNumber
-  }
-
+  /**
+   * Runs a call or transaction on a this resource's smart contract.
+   *
+   * This handles getting the contract, using the correct account,
+   * and building our own response for origin transactions.
+   *
+   * If doing a blockchain call, this returns the data returned by
+   * the contract function.
+   *
+   * If running a transaction, this returns an object containing the block timestamp and the transaction receipt.
+   *
+   * @param {object} contractDefinition - JSON representation of the contract
+   * @param {string} address - address of the contract
+   * @param {string} functionName - contract function to be run
+   * @param {*[]} args - args for the transaction or call.
+   * @param {{gas: number, value:(number | BigNumber)}} options - transaction options for w3
+   * @param {function} confirmationCallback - an optional function that will be called on each block confirmation
+   */
   async contractFn(
     contractDefinition,
     address,
     functionName,
     args = [],
-    options = {}
+    options = {},
+    confirmationCallback
   ) {
     // Setup options
     const opts = Object.assign(options, {}) // clone options
-    opts.from = opts.from || await this.currentAccount()
+    opts.from = opts.from || (await this.currentAccount())
     opts.gas = options.gas || 50000 // Default gas
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
     contract.options.address = address || contract.options.address
-
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {
       return await method.call(opts)
     }
 
-    const transaction = await new Promise((resolve, reject) => {
-      if ((!opts.from) && this.walletLinker && !this.walletLinker.linked) {
+    const transactionReceipt = await new Promise((resolve, reject) => {
+      if (!opts.from && this.walletLinker && !this.walletLinker.linked) {
         opts.from = this.walletLinker.startPlaceholder()
       }
       method
@@ -259,16 +249,13 @@ class ContractService {
           this.walletLinker.endPlaceholder()
           reject(err)
         })
+        .on('confirmation', confirmationCallback)
     })
-
-    transaction.tx = transaction.transactionHash
-    // Decorate transaction with whenFinished promise
-    if (transaction.tx !== undefined) {
-      transaction.whenFinished = async () => {
-        await this.waitTransactionFinished(transaction.tx)
-      }
+    return {
+      created: (await this.web3.eth.getBlock(transactionReceipt.blockNumber))
+        .timestamp,
+      transactionReceipt
     }
-    return transaction
   }
 }
 

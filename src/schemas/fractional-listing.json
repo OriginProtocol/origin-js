@@ -13,7 +13,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["startDate", "isAvailable"],
+            "required": ["startDate", "endDate", "isAvailable"],
             "properties": {
               "startDate": {
                 "type": "string",
@@ -28,6 +28,9 @@
               },
               "priceWei": {
                 "type": "number"
+              },
+              "recurs": {
+                "type": "string"
               }
             }
           }

@@ -1,12 +1,12 @@
 import ZeroClientProvider from 'web3-provider-engine/zero'
 import uuidv1 from 'uuid/v1'
 
-const appendSlash = (url) => {
-  return (url.substr(-1) === '/') ? url : url + '/'
+const appendSlash = url => {
+  return url.substr(-1) === '/' ? url : url + '/'
 }
 
 class WalletLinker {
-  constructor({linkerServerUrl, fetch, networkChangeCb, web3}) {
+  constructor({ linkerServerUrl, fetch, networkChangeCb, web3 }) {
     this.serverUrl = linkerServerUrl
     this.fetch = fetch
     this.accounts = []
@@ -22,15 +22,18 @@ class WalletLinker {
   }
 
   logout() {
-    sessionStorage.setItem('walletLinkerData', JSON.stringify({
-      accounts: [],
-      session_token: ''
-    }))
+    sessionStorage.setItem(
+      'walletLinkerData',
+      JSON.stringify({
+        accounts: [],
+        session_token: ''
+      })
+    )
     this.loadSessionStorage()
     clearInterval(self.interval)
   }
 
-  startPlaceholder(){
+  startPlaceholder() {
     this.placeholder_on = true
     return this.PLACEHOLDER_ADDRESS
   }
@@ -55,19 +58,18 @@ class WalletLinker {
     let wallet_data = undefined
     try {
       wallet_data = JSON.parse(wallet_data_str)
-    } catch(err) {
-      // ignore
+    } catch (err) {
+      console.error(err)
     }
 
     if (wallet_data) {
       this.accounts = wallet_data.accounts
-      this.networkRpcUrl = wallet_data.networkRpcUrl,
-      this.session_token = wallet_data.session_token,
-      this.last_message_id = wallet_data.last_message_id
+      ;(this.networkRpcUrl = wallet_data.networkRpcUrl),
+      (this.session_token = wallet_data.session_token),
+      (this.last_message_id = wallet_data.last_message_id)
       this.linked = wallet_data.linked
     }
   }
-
 
   syncSessionStorage() {
     const wallet_data = {
@@ -80,10 +82,12 @@ class WalletLinker {
     sessionStorage.setItem('walletLinkerData', JSON.stringify(wallet_data))
   }
 
-
   getProvider() {
     const provider = ZeroClientProvider({
-      rpcUrl:this.networkRpcUrl && this.linked ? this.networkRpcUrl : this.web3.currentProvider.host,
+      rpcUrl:
+        this.networkRpcUrl && this.linked
+          ? this.networkRpcUrl
+          : this.web3.currentProvider.host,
       getAccounts: this.getAccounts.bind(this),
       //signTransaction: this.signTransaction.bind(this)
 
@@ -95,16 +99,18 @@ class WalletLinker {
       console.log('The sub provider at [6] is NOT a hooked wallet.')
     } else {
       //we basically make validate a passthrough for now
-      hookedWallet.validateTransaction = (txParams, cb) => {cb()}
+      hookedWallet.validateTransaction = (txParams, cb) => {
+        cb()
+      }
     }
     return provider
   }
 
   getAccounts(callback) {
-    if (callback){
+    if (callback) {
       callback(undefined, this.accounts)
     } else {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         resolve(this.accounts)
       })
     }
@@ -118,19 +124,15 @@ class WalletLinker {
       session_token: this.session_token,
       call_id: call_id,
       accounts: this.accounts,
-      call: [
-        'signTransaction',
-        { txn_object }
-      ],
+      call: ['signTransaction', { txn_object }],
       return_url: this.getReturnUrl()
     })
 
-    this.callbacks[call_id] = (data) => {
+    this.callbacks[call_id] = data => {
       callback(undefined, data)
     }
 
-    result.then(() => {
-    }).catch((error_data) => {
+    result.then(() => {}).catch(error_data => {
       delete this.callbacks[call_id]
       callback(error_data, undefined)
     })
@@ -141,12 +143,15 @@ class WalletLinker {
     //translate gas to gasLimit
     txn_object['gasLimit'] = txn_object['gas']
     if (this.placeholder_on) {
-      if (txn_object['from'].toLowerCase() == this.PLACEHOLDER_ADDRESS.toLowerCase()) {
+      if (
+        txn_object['from'].toLowerCase() ==
+        this.PLACEHOLDER_ADDRESS.toLowerCase()
+      ) {
         txn_object['from'] = undefined
       }
     }
 
-    this.callbacks[call_id] = (data) => {
+    this.callbacks[call_id] = data => {
       callback(undefined, data.hash)
     }
 
@@ -154,10 +159,7 @@ class WalletLinker {
       this.pending_call = {
         call_id,
         session_token: this.session_token,
-        call: [
-          'processTransaction',
-          { txn_object }
-        ]
+        call: ['processTransaction', { txn_object }]
       }
       this.startLink()
     } else {
@@ -165,23 +167,18 @@ class WalletLinker {
         session_token: this.session_token,
         call_id: call_id,
         accounts: this.accounts,
-        call: [
-          'processTransaction',
-          { txn_object }
-        ],
+        call: ['processTransaction', { txn_object }],
         return_url: this.getReturnUrl()
       })
 
-      result.then(() => {
-      }).catch((error_data) => {
+      result.then(() => {}).catch(error_data => {
         delete this.callbacks[call_id]
         callback(error_data, undefined)
       })
     }
   }
 
-
-  async changeNetwork(networkRpcUrl, force=false) {
+  async changeNetwork(networkRpcUrl, force = false) {
     if (this.networkRpcUrl != networkRpcUrl || force) {
       this.networkRpcUrl = networkRpcUrl
       this.networkChangeCb()
@@ -190,8 +187,8 @@ class WalletLinker {
   }
 
   processMessages(messages) {
-    for(const message of messages) {
-      switch(message.type) {
+    for (const message of messages) {
+      switch (message.type) {
       case 'ACCOUNTS':
         this.accounts = message.accounts
         break
@@ -210,7 +207,7 @@ class WalletLinker {
         }
         break
       case 'LOGOUT':
-        if(this.linked) {
+        if (this.linked) {
           this.logout()
         }
         break
@@ -223,14 +220,17 @@ class WalletLinker {
   }
 
   startMessagesSync() {
-    if(!this.interval) {
+    if (!this.interval) {
       //5 second intervals for now
-      this.interval = setInterval(this.syncLinkMessages.bind(this), 5*1000)
+      this.interval = setInterval(this.syncLinkMessages.bind(this), 5 * 1000)
     }
   }
 
   getReturnUrl() {
-    if ((typeof window.orientation !== 'undefined') || (navigator.userAgent.indexOf('IEMobile') !== -1)) {
+    if (
+      typeof window.orientation !== 'undefined' ||
+      navigator.userAgent.indexOf('IEMobile') !== -1
+    ) {
       return window.location.href
     } else {
       return ''
@@ -263,7 +263,7 @@ class WalletLinker {
     }
   }
 
-  getLinkCode(){
+  getLinkCode() {
     return this.link_code
   }
 
@@ -272,7 +272,7 @@ class WalletLinker {
       session_token: this.session_token,
       last_message_id: this.last_message_id
     })
-    if (ret.session_token) {
+    if (ret && ret.session_token) {
       this.session_token = ret.session_token
 
       if (!ret.linked && this.linked) {
@@ -305,15 +305,12 @@ class WalletLinker {
   }
 
   async http(baseUrl, url, body, method) {
-    const response = await this.fetch(
-      appendSlash(baseUrl) + url,
-      {
-        method,
-        credentials: 'include',
-        body: body ? JSON.stringify(body) : undefined,
-        headers: { 'content-type': 'application/json' },
-      }
-    )
+    const response = await this.fetch(appendSlash(baseUrl) + url, {
+      method,
+      credentials: 'include',
+      body: body ? JSON.stringify(body) : undefined,
+      headers: { 'content-type': 'application/json' }
+    })
     const json = await response.json()
     if (response.ok) {
       return json
@@ -322,7 +319,12 @@ class WalletLinker {
   }
 
   async post(url, body) {
-    return this.http(this.serverUrl, url, body, 'POST')
+    try {
+      return await this.http(this.serverUrl, url, body, 'POST')
+    } catch (error) {
+      console.log('Error posting to bridge server:', error)
+      return
+    }
   }
 
   async get(url) {
