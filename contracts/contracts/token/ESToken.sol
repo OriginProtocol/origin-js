@@ -210,7 +210,7 @@ contract ESToken is ERC20, ESPausable {
     bytes32 spenderAllowedKey = allowedKey(msg.sender, _spender);
     uint oldValue = allowed(msg.sender, _spender);
     uint newValue = 0;
-    if (_subtractedValue > oldValue) {
+    if (_subtractedValue >= oldValue) {
       es.setUint(spenderAllowedKey, 0);
     } else {
       newValue = es.decrementUint(spenderAllowedKey, _subtractedValue);
