@@ -52,7 +52,7 @@ class Listings extends ResourceBase {
   }
 
   /*
-      Public mehods
+      Public methods
   */
 
   // fetches all listings (all data included)
@@ -276,7 +276,7 @@ class Listings extends ResourceBase {
     }
 
     console.log(`IPFS file created with hash: ${ipfsHash} for data:`)
-    console.log(jsonBlob)
+    console.log(listingObj)
 
     // For now, accept price in either wei or eth for backwards compatibility
     // `price` is now deprecated. `priceWei` should be used instead.
