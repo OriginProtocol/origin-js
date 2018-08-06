@@ -17,7 +17,7 @@ contract ESPausable is Ownable {
   EternalStorage es;
 
   bytes32 constant pausedKey = keccak256("token.paused");
-  
+
   constructor(EternalStorage es_) public {
     es = es_;
     // We intentionally do not set the value for pausedKey here, because this
@@ -34,7 +34,7 @@ contract ESPausable is Ownable {
    * @dev Modifier to make a function callable only when the contract is not paused.
    */
   modifier whenNotPaused() {
-    require(!paused());
+    require(!paused(), "cannot execute while paused");
     _;
   }
 
@@ -42,7 +42,7 @@ contract ESPausable is Ownable {
    * @dev Modifier to make a function callable only when the contract is paused.
    */
   modifier whenPaused() {
-    require(paused());
+    require(paused(), "can only execute while paused");
     _;
   }
 
