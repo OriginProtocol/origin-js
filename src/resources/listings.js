@@ -83,7 +83,7 @@ class Listings extends ResourceBase {
         this.contractService.listingsRegistryContract
       )
     } catch (error) {
-      console.log('Contract not deployed', error)
+      console.log('Contract not deployed')
       throw error
     }
 
@@ -101,43 +101,41 @@ class Listings extends ResourceBase {
   }
 
   async search(query) {
-    console.log("****** ORIGINJS - Issuing search query:", query)
+    // Issues an API call to the bridge server for searching listings.
+    // Args:
+    //   query(string): search query.
+    // Returns:
+    //   list(int): listing ids that match the query.
 
+    // Make the search API call to the bridge server.
     const url = appendSlash(this.indexingServerUrl) + 'api/search/listings?query=' + query
-    console.log("search API call:", url)
     const response = await this.fetch(url, { method: 'GET' })
     if (response.status != 200) {
-      console.log('Search API call failed')
-      throw error
+      throw new Error('Search API call failed with status ', response.status)
     }
     const json = await response.json()
-    console.log("search API returned:", json)
 
-    // Extract addresses from search results.
+    // Extract listing addresses returned in the "_id" field of the search results.
     let addresses = json.listings.map(listing => listing._id)
-    console.log("Addresses:", addresses)
 
-    // AWFUL HACK !!!
     // TODO(franck): Fix once we move to new contracts.
-    // Currently the ListingGrids component manipulate Listing Ids.
-    // The search API only returns addresses so we need to convert those into ids.
-    // Since there is no method on the contract to handle this conversion,
-    // we very inefficiently build a map of id -> address and use that as a lookup table.
+    // Currently the React ListingGrids component manipulates listing ids.
+    // But the search API only returns addresses so we need to convert those into ids.
+    // There is no method on the listing registry contract to handle this conversion.
+    // As a workaround we build a lookup table of address -> id.
+    // While fine in a development environment with a few listings, it won't scale in production
+    // since it involves calling listingsRegistryContract as many times as there are listings...
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Search not supported yet in production.')
+    }
+
+    const listingIds = await this.allIds()
+
+    // Get the listing registry contract deployed on the blockchain.
     const contract = this.contractService.listingsRegistryContract
     const listingsRegistry = await this.contractService.deployed(contract)
-    const len = await listingsRegistry.methods.listingsLength().call()
-    console.log("Listing len=", len)
-    //let id
-    //let addressToId = {}
-    //for (id = 0; id < len; id++) {
-    //  const address = await listingsRegistry.methods.getListingAddress(id).call()
-    //  addressToId[address] = id
-    //}
-    let listingIds = []
-    for (let i = 0; i < len; i++) {
-      listingIds.push(i)
-    }
-    console.log("listingIds=", listingIds)
+
+    // Build a map of address -> id.
     let addressToId = {}
     await Promise.all(
       listingIds.map(async id => {
@@ -145,14 +143,14 @@ class Listings extends ResourceBase {
         addressToId[address] = id
       } )
     )
-    console.log("addressToId=", addressToId)
 
-    // Lookup each address returned in the search result to get its id.
-    // As a precaution, filter undefined ids in case an address returned from serach result would have failed lookup.
-    let ids = addresses.map(address => addressToId[address]).filter(id => id !== undefined)
+    // Lookup each address returned in the search results to get its id.
+    // Note: the search indexer aggressively indexes listings without waiting for block
+    // confirmation. Therefore in rare cases a search may return an address that is not recorded
+    // in the listing registry. To guard against that we filter out address that fail lookup.
+    let searchIds = addresses.map(address => addressToId[address]).filter(id => id !== undefined)
 
-    console.log("ids=", ids)
-    return ids
+    return searchIds
   }
 
   async allAddresses() {
