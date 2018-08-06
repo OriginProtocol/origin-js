@@ -3,6 +3,11 @@ pragma solidity 0.4.23;
 import "../eternalstorage/ESInitializable.sol";
 import "./ESToken.sol";
 
+/**
+ * @title Origin token
+ * @dev This token is an ERC-20 compliant token that stores its state in an
+ * EternalStorage contract.
+ */
 contract OriginToken is ESToken, ESInitializable {
   string public constant name = "OriginToken"; // solium-disable-line uppercase
   string public constant symbol = "OGN"; // solium-disable-line uppercase
@@ -16,7 +21,7 @@ contract OriginToken is ESToken, ESInitializable {
   constructor(EternalStorage es_) public ESToken(es_) {
     owner = msg.sender;
   }
-  
+
   // @notice Perform initial minting and grant of tokens to contract owner.
   function initialize() public isInitializer {
     es.setUint(totalSupplyKey, INITIAL_SUPPLY);

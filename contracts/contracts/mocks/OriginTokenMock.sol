@@ -4,9 +4,7 @@ import "../eternalstorage/ESInitializable.sol";
 import "../token/ESToken.sol";
 
 
-// mock class using OriginToken
-//
-// used by OpenZeppelin token tests
+// @title Adapter for  OpenZeppelin token tests.
 contract OriginTokenMock is ESToken, ESInitializable {
   constructor(
     EternalStorage es_
@@ -17,13 +15,13 @@ contract OriginTokenMock is ESToken, ESInitializable {
   {
     // The real work is done in initialize().
   }
-  
+
   function initialize(
     address initialAccount,
     uint256 initialBalance
   )
     public
-    isInitializer 
+    isInitializer
   {
     require(!es.getBool(initializedKey), "cannot initialize more than once");
     owner = initialAccount;

@@ -12,7 +12,7 @@ import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.
  * @notice Based on OpenZeppelin's ERC-20 contracts, this token provides
  * features not specified by ERC-20, such as minting, burning, and pausing of
  * tokens.
- * @dev All storage, except the owner of the contract, is stored in an external
+ * @dev All state, except the owner of the contract, is stored in an external
  * EternalStorage contract, providing upgradability of the token contract logic.
  * When applicable, functions and state are grouped according to the
  * OpenZeppelin token contract upon which they are based. This eases the porting
