@@ -38,7 +38,7 @@ const populateIpfs = async () => {
       throw error
     }
 
-    listingDirectories.forEach((listingDirectoryName, index) => {
+    listingDirectories.forEach((listingDirectoryName) => {
       // Iterate over each directory in the fixtures dir
       const listingDirectory = fixturesDir + '/' + listingDirectoryName
       fs.stat(listingDirectory, async (err, stat) => {
@@ -70,7 +70,7 @@ const populateIpfs = async () => {
           }
 
           // Upload schema JSON to ipfs
-          let stream = new ReadableStream
+          const stream = new ReadableStream
           stream.push(JSON.stringify(schemaJson))
           stream.push(null)
           await ipfs.add(stream)
