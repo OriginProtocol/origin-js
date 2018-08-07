@@ -130,9 +130,12 @@ class MarkeplaceAdapter {
         ipfsHash = e.returnValues.ipfsHash
       }
     })
+    const createdAt = (events && events.length)
+      ? await this.contractService.getTimestamp(events[0])
+      : undefined
 
     // Return the raw listing along with events and IPFS hash
-    return Object.assign({}, rawOffer, { ipfsHash, events })
+    return Object.assign({}, rawOffer, { ipfsHash, events, createdAt })
   }
 }
 
