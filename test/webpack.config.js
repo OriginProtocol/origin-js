@@ -9,7 +9,7 @@ Object.assign(config, {
   devServer: {
     stats: "errors-only",
     host: "localhost",
-    port: 8081,
+    port: 8082,
     overlay: {
       errors: true,
       warnings: true
