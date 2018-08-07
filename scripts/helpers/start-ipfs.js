@@ -33,51 +33,49 @@ const populateIpfs = async () => {
 
   console.log('Populating IPFS...')
 
-  fs.readdir(fixturesDir, (error, listingDirectories) => {
-    if (error) {
-      throw error
-    }
+  // fs.readdirSync always returns results sorted on unix based platforms
+  // so the IPFS hashes will always be the same
+  const listingDirectories = fs.readdirSync(fixuresDir)
 
-    listingDirectories.forEach((listingDirectoryName) => {
-      // Iterate over each directory in the fixtures dir
-      const listingDirectory = fixturesDir + '/' + listingDirectoryName
-      fs.stat(listingDirectory, async (err, stat) => {
-        // Make sure the listing is a directory
-        if (stat.isDirectory()) {
-          // Grab the schema filename
-          const schemaFilename = fs.readdirSync(listingDirectory).find((file) => {
-            return file.endsWith('json')
-          })
-          if (!schemaFilename) {
-            // No schema, don't proceed
-            throw new Error(`Schema not found in ${listingDirectory}`)
-          }
+  for (const listingDirectoryName of listingDirectories) {
+    // Iterate over each directory in the fixtures dir
+    const listingDirectory = fixturesDir + '/' + listingDirectoryName
+    const stat = fs.statSync(listingDirectory)
 
-          // Get all the images from the listing directory
-          const imagePaths = fs.readdirSync(listingDirectory).filter((file) => {
-            return file.endsWith('jpg') || file.endsWith('png')
-          }).map((imageFilename) => {
-            return listingDirectory + '/' + imageFilename
-          })
-
-          // Read the schema JSON
-          const schema = fs.readFileSync(listingDirectory + '/' + schemaFilename)
-          const schemaJson = JSON.parse(schema)
-          // Preserve order of uploaded images to maintain IPFS hash
-          for (const imagePath of imagePaths) {
-            const imageUpload = await ipfs.util.addFromFs(imagePath)
-            schemaJson['data']['pictures'].push(`ipfs://${imageUpload[0]['hash']}`)
-          }
-
-          // Upload schema JSON to ipfs
-          const stream = new ReadableStream
-          stream.push(JSON.stringify(schemaJson))
-          stream.push(null)
-          await ipfs.add(stream)
-        }
+    // Only process directories in the fixtures directory
+    if (stat.isDirectory()) {
+      // Grab the schema filename
+      const schemaFilename = fs.readdirSync(listingDirectory).find((file) => {
+        return file.endsWith('json')
       })
-    })
-  })
+      if (!schemaFilename) {
+        // No schema, don't proceed
+        throw new Error(`Schema not found in ${listingDirectory}`)
+      }
+
+      // Get all the images from the listing directory
+      const imagePaths = fs.readdirSync(listingDirectory).filter((file) => {
+        return file.endsWith('jpg') || file.endsWith('png')
+      }).map((imageFilename) => {
+        return listingDirectory + '/' + imageFilename
+      })
+
+      // Read the schema JSON
+      const schema = fs.readFileSync(listingDirectory + '/' + schemaFilename)
+      const schemaJson = JSON.parse(schema)
+      // Preserve order of uploaded images to maintain IPFS hash
+      for (const imagePath of imagePaths) {
+        const imageUpload = await ipfs.util.addFromFs(imagePath)
+        schemaJson['data']['pictures'].push(`ipfs://${imageUpload[0]['hash']}`)
+      }
+
+      // Upload schema JSON to ipfs
+      const stream = new ReadableStream
+      stream.push(JSON.stringify(schemaJson))
+      stream.push(null)
+      await ipfs.add(stream)
+    }
+  }
 }
 
 module.exports = startIpfs
