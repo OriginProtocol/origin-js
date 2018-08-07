@@ -1,5 +1,5 @@
 var ListingsRegistry = artifacts.require("./ListingsRegistry.sol");
-var Listing = artifacts.require("./Listing.sol");
+var UnitListing = artifacts.require("./UnitListing.sol");
 var Purchase = artifacts.require("./Purchase.sol");
 
 module.exports = function(deployer, network) {
@@ -27,9 +27,8 @@ async function deploy_sample_contracts(network) {
 
   const getListingContract = async transaction => {
     const index = transaction.logs.find(x => x.event == "NewListing").args._index
-    const info = await listingsRegistry.getListing(index)
-    const address = info[0]
-    return Listing.at(address)
+    const address = await listingsRegistry.getListingAddress(index)
+    return UnitListing.at(address)
   }
 
   const buyListing = async (listing, qty, from) => {
@@ -88,11 +87,11 @@ async function deploy_sample_contracts(network) {
 
     purchase = await buyListing(ticketsListing, 1, another_buyer_account)
     await purchase.sellerConfirmShipped({ from: default_account })
-    await purchase.buyerConfirmReceipt({ from: another_buyer_account })
+    await purchase.buyerConfirmReceipt(5, "", { from: another_buyer_account })
 
     purchase = await buyListing(ticketsListing, 1, another_buyer_account)
     await purchase.sellerConfirmShipped({ from: default_account })
-    await purchase.buyerConfirmReceipt({ from: another_buyer_account })
-    await purchase.sellerCollectPayout({ from: default_account })
+    await purchase.buyerConfirmReceipt(3, "", { from: another_buyer_account })
+    await purchase.sellerCollectPayout(4,"",{ from: default_account })
   }
 }
