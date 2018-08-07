@@ -97,6 +97,17 @@ class MarkeplaceAdapter {
       return [...Array(Number(total)).keys()]
     }
   }
+
+  async getOffers(listingIndex, opts) {
+    await this.getContract()
+    if (opts.for) {
+      const events = await this.contract.getPastEvents('OfferCreated', {
+        filter: { party: opts.for },
+        fromBlock: 0
+      })
+      return events.map(e => Number(e.returnValues.offerID))
+    }
+  }
 }
 
 export default MarkeplaceAdapter
