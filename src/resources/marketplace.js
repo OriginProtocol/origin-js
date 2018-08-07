@@ -102,13 +102,14 @@ class Marketplace extends Adaptable {
   }
 
   async getOffer(offerId) {
-    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+    const { adapter, listingIndex, offerIndex, version, network } = this.parseOfferId(offerId)
     const offer = await adapter.getOffer(listingIndex, offerIndex)
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(offer.ipfsHash)
     const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+    const listingId = generateListingId({ version, network, listingIndex })
 
-    return Object.assign({}, offer, { ipfsData: ipfsJson || {} })
+    return Object.assign({}, offer, { ipfsData: ipfsJson || {}, listingId })
   }
 
   async createListing(ipfsData) {
