@@ -174,8 +174,16 @@ class Marketplace extends Adaptable {
 
   // updateOffer(listingId, offerId, data) {}
   // withdrawOffer(listingId, offerId, data) {}
-  //
-  // acceptOffer(listingId, offerId, data) {}
+
+  async acceptOffer(id, data, confirmationCallback) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
+
+    const ipfsHash = await this.ipfsService.submitFile({ data })
+    const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+
+    return await adapter.acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback)
+  }
+
   // finalizeOffer(listingId, offerId, data) {}
   // setOfferRefund(listingId, offerId, data) {}
   //
