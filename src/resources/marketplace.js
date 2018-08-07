@@ -7,7 +7,7 @@ import fractionalListingSchema from '../schemas/fractional-listing.json'
 import fractionalPurchaseSchema from '../schemas/fractional-purchase.json'
 import reviewSchema from '../schemas/review.json'
 
-import { generateListingId } from '../utils/id'
+import { generateListingId, generateOfferId } from '../utils/id'
 
 const unitListingType = 'unit'
 const fractionalListingType = 'fractional'
@@ -90,8 +90,15 @@ class Marketplace extends Adaptable {
     return Object.assign({}, listing, { ipfsData: ipfsJson || {} })
   }
   // async getOffersCount(listingId) {}
-  // async getOffers(listingId, opts) {}
   // async getOffer(listingId, offerId) {}
+  async getOffers(listingId, opts) {
+    const network = await this.contractService.web3.eth.net.getId()
+    const { adapter, listingIndex, version } = this.parseAdaptableId(listingId)
+    const offers = await adapter.getOffers(listingIndex, opts)
+    return offers.map(offerIndex => {
+      return generateOfferId({ network, version, listingIndex, offerIndex })
+    })
+  }
 
   async createListing(ipfsData) {
 
