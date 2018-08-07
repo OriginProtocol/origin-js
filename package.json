@@ -14,7 +14,7 @@
     "bridge:stop": "docker stop origin-bridge-container && docker rm origin-bridge-container",
     "format": "npx prettier-eslint --write 'src/**/*.js' 'test/**/*test.js' 'contracts/test/**/*.js' 'scripts/**/*.js'",
     "install:dev": "npm install && npm link",
-    "deploy:checklist": "node scripts/deploy_checklist.js"
+    "deploy:checklist": "node scripts/deploy_checklist.js",
     "prepare": "npm run build",
     "start": "node scripts/build.js serve",
     "start:no-ganache": "node scripts/build.js serve no-ganache",
