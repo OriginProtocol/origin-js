@@ -117,6 +117,32 @@ describe('Listing Resource', function() {
   })
 
   it('should upload data urls to ipfs', async () => {
+    const listingData = {
+      name: '1972 Geo Metro 255K',
+      category: 'Cars & Trucks',
+      location: 'New York City',
+      description: 'An amazing automobile.',
+      pictures: [
+        'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
+      ],
+      price: 3.3
+    }
+    const schema = 'for-sale'
+    await listings.create(listingData, schema)
+
+    const listingIds = await listings.allIds()
+    const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
+
+    const expectedHash = 'QmcjsPrt3VhTcBPg5F7eTSfxsnQTnKHtqEt7ZpAQBKumTV'
+
+    expect(JSON.stringify(listing.pictures)).to.equal(
+      JSON.stringify([
+        ipfsService.gatewayUrlForHash(expectedHash)
+      ])
+    )
+
+    const response = await ipfsService.loadFile(expectedHash)
+    expect(response._bodyBlob.type).to.equal('image/gif')
   })
 
   it('should close a listing', async () => {
