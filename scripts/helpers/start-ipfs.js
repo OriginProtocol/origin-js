@@ -35,7 +35,7 @@ const populateIpfs = async () => {
 
   // fs.readdirSync always returns results sorted on unix based platforms
   // so the IPFS hashes will always be the same
-  const listingDirectories = fs.readdirSync(fixuresDir)
+  const listingDirectories = fs.readdirSync(fixturesDir)
 
   for (const listingDirectoryName of listingDirectories) {
     // Iterate over each directory in the fixtures dir
