@@ -16,7 +16,7 @@ class Adaptable {
     this.currentAdapter = this.adapters[this.currentVersion]
   }
 
-  parseAdaptableId(listingId) {
+  parseListingId(listingId) {
     const { version, listingIndex } = parseListingId(listingId)
     // use appropriate adapter for version
     const adapter = this.adapters[version]

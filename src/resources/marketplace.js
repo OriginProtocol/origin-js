@@ -81,7 +81,7 @@ class Marketplace extends Adaptable {
   }
 
   async getListing(listingId) {
-    const { adapter, listingIndex } = this.parseAdaptableId(listingId)
+    const { adapter, listingIndex } = this.parseListingId(listingId)
     const listing = await adapter.getListing(listingIndex)
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(listing.ipfsHash)
@@ -94,7 +94,7 @@ class Marketplace extends Adaptable {
 
   async getOffers(listingId, opts) {
     const network = await this.contractService.web3.eth.net.getId()
-    const { adapter, listingIndex, version } = this.parseAdaptableId(listingId)
+    const { adapter, listingIndex, version } = this.parseListingId(listingId)
     const offers = await adapter.getOffers(listingIndex, opts)
     return offers.map(offerIndex => {
       return generateOfferId({ network, version, listingIndex, offerIndex })
@@ -149,7 +149,7 @@ class Marketplace extends Adaptable {
   // withdrawListing(listingId, data) {}
 
   async makeOffer(listingId, data) {
-    const { adapter, listingIndex } = this.parseAdaptableId(listingId)
+    const { adapter, listingIndex } = this.parseListingId(listingId)
 
     data.price = this.contractService.web3.utils.toWei(String(data.price), 'ether')
 
