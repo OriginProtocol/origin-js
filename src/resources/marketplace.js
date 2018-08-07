@@ -89,8 +89,9 @@ class Marketplace extends Adaptable {
 
     return Object.assign({}, listing, { ipfsData: ipfsJson || {} })
   }
+
   // async getOffersCount(listingId) {}
-  // async getOffer(listingId, offerId) {}
+
   async getOffers(listingId, opts) {
     const network = await this.contractService.web3.eth.net.getId()
     const { adapter, listingIndex, version } = this.parseAdaptableId(listingId)
@@ -98,6 +99,16 @@ class Marketplace extends Adaptable {
     return offers.map(offerIndex => {
       return generateOfferId({ network, version, listingIndex, offerIndex })
     })
+  }
+
+  async getOffer(offerId) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+    const offer = await adapter.getOffer(listingIndex, offerIndex)
+
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(offer.ipfsHash)
+    const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+
+    return Object.assign({}, offer, { ipfsData: ipfsJson || {} })
   }
 
   async createListing(ipfsData) {
