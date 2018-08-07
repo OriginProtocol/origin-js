@@ -7,7 +7,7 @@ import fractionalListingSchema from '../schemas/fractional-listing.json'
 import fractionalPurchaseSchema from '../schemas/fractional-purchase.json'
 import reviewSchema from '../schemas/review.json'
 
-import { generateListingId } from '../utils/id'
+import { generateListingId, generateOfferId } from '../utils/id'
 
 const unitListingType = 'unit'
 const fractionalListingType = 'fractional'
@@ -81,7 +81,7 @@ class Marketplace extends Adaptable {
   }
 
   async getListing(listingId) {
-    const { adapter, listingIndex } = this.parseAdaptableId(listingId)
+    const { adapter, listingIndex } = this.parseListingId(listingId)
     const listing = await adapter.getListing(listingIndex)
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(listing.ipfsHash)
@@ -89,9 +89,27 @@ class Marketplace extends Adaptable {
 
     return Object.assign({}, listing, { ipfsData: ipfsJson || {} })
   }
+
   // async getOffersCount(listingId) {}
-  // async getOffers(listingId, opts) {}
-  // async getOffer(listingId, offerId) {}
+
+  async getOffers(listingId, opts) {
+    const network = await this.contractService.web3.eth.net.getId()
+    const { adapter, listingIndex, version } = this.parseListingId(listingId)
+    const offers = await adapter.getOffers(listingIndex, opts)
+    return offers.map(offerIndex => {
+      return generateOfferId({ network, version, listingIndex, offerIndex })
+    })
+  }
+
+  async getOffer(offerId) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+    const offer = await adapter.getOffer(listingIndex, offerIndex)
+
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(offer.ipfsHash)
+    const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+
+    return Object.assign({}, offer, { ipfsData: ipfsJson || {} })
+  }
 
   async createListing(ipfsData) {
 
@@ -131,7 +149,7 @@ class Marketplace extends Adaptable {
   // withdrawListing(listingId, data) {}
 
   async makeOffer(listingId, data) {
-    const { adapter, listingIndex } = this.parseAdaptableId(listingId)
+    const { adapter, listingIndex } = this.parseListingId(listingId)
 
     data.price = this.contractService.web3.utils.toWei(String(data.price), 'ether')
 

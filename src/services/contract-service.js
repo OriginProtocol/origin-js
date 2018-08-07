@@ -111,6 +111,11 @@ class ContractService {
     })
   }
 
+  async getTimestamp(event) {
+    const { timestamp } = await this.getBlock(event.blockHash)
+    return timestamp
+  }
+
   // async convenience method for getting transaction details
   getTransaction(transactionHash) {
     return new Promise((resolve, reject) => {
