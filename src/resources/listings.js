@@ -151,15 +151,19 @@ class Listings extends ResourceBase {
 
     if (data.pictures) {
       // Filter picture URLs and upload data: URLs to ipfs
-      data.pictures = this.filterPictureUrls(data.pictures).map((url) => {
+      const pictures = this.filterPictureUrls(data.pictures).map(async (url) => {
         if (url.startsWith('data:')) {
           // Upload data: URLs to IPFS and replace with IPFS URL
-          const ipfsHash = this.ipfsService.saveDataURIAsFile(url)
+          const ipfsHash = await this.ipfsService.saveDataURIAsFile(url)
           return this.ipfsService.gatewayUrlForHash(ipfsHash)
         }
-
         // Leave other URLs untouched
         return url
+      })
+
+      // Replace data.pictures with filtered/ipfs
+      await Promise.all(pictures).then((results) => {
+        data.pictures = results
       })
     }
 
