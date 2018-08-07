@@ -100,13 +100,18 @@ class MarkeplaceAdapter {
 
   async getOffers(listingIndex, opts) {
     await this.getContract()
-    if (opts.for) {
-      const events = await this.contract.getPastEvents('OfferCreated', {
-        filter: { party: opts.for },
-        fromBlock: 0
-      })
-      return events.map(e => Number(e.returnValues.offerID))
+    let filter = {}
+    if (listingIndex) {
+      filter = Object.assign(filter, { listingID: listingIndex })
     }
+    if (opts.for) {
+      filter = Object.assign(filter, { party: opts.for })
+    }
+    const events = await this.contract.getPastEvents('OfferCreated', {
+      filter,
+      fromBlock: 0
+    })
+    return events.map(e => Number(e.returnValues.offerID))
   }
 
   async getOffer(listingIndex, offerIndex) {
