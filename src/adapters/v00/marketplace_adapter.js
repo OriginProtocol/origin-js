@@ -49,6 +49,25 @@ class MarkeplaceAdapter {
     return this.contract.methods.makeOffer(...args).send(opts)
   }
 
+  async acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
+    await this.getContract()
+    const from = await this.contractService.currentAccount()
+
+    const args = [
+      listingIndex,
+      offerIndex,
+      ipfsBytes
+    ]
+    const opts = { gas: 4612388, from }
+    return await new Promise((resolve, reject) => {
+      this.contract.methods.acceptOffer(...args)
+        .send(opts)
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
+  }
+
   async getListing(listingId) {
     await this.getContract()
 
