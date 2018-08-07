@@ -108,6 +108,32 @@ class MarkeplaceAdapter {
       return events.map(e => Number(e.returnValues.offerID))
     }
   }
+
+  async getOffer(listingIndex, offerIndex) {
+    await this.getContract()
+
+    // Get the raw listing data from the contract
+    const rawOffer = await this.contract.methods.offers(listingIndex, offerIndex).call()
+
+    // Find all events related to this offer
+    const listingTopic = this.web3.utils.padLeft(web3.utils.numberToHex(listingIndex), 64)
+    const offerTopic = this.web3.utils.padLeft(web3.utils.numberToHex(offerIndex), 64)
+    const events = await this.contract.getPastEvents('allEvents', {
+      topics: [null, null, listingTopic, offerTopic],
+      fromBlock: 0
+    })
+
+    // Loop through the events looking and update the IPFS hash appropriately
+    let ipfsHash
+    events.forEach(e => {
+      if (e.event === 'OfferCreated') {
+        ipfsHash = e.returnValues.ipfsHash
+      }
+    })
+
+    // Return the raw listing along with events and IPFS hash
+    return Object.assign({}, rawOffer, { ipfsHash, events })
+  }
 }
 
 export default MarkeplaceAdapter
