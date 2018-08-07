@@ -119,6 +119,11 @@ class Marketplace extends Adaptable {
     return Object.assign({}, offer, { id, ipfsData: ipfsJson || {}, listingId })
   }
 
+  async getOfferLogs(id) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
+    return await adapter.getOfferLogs(listingIndex, offerIndex)
+  }
+
   async createListing(ipfsData) {
 
     if (!ipfsData.listingType) {
