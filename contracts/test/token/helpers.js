@@ -10,7 +10,7 @@ const newOriginToken = async (owner, initialSupply) => {
   let token = await OriginTokenMock.new(es.address, {from: owner})
   await es.addWriter(token.address, {from: owner})
   if (initialSupply !== undefined) {
-    await token.initialize(owner, initialSupply, {from: owner})
+    await token.initializeMock(owner, initialSupply, {from: owner})
   }
   return token
 }

@@ -1,14 +1,15 @@
 pragma solidity 0.4.23;
 
 import "../eternalstorage/ESInitializable.sol";
-import "./ESToken.sol";
+import "./ESBurnableToken.sol";
+import "./ESMintableToken.sol";
 
 /**
  * @title Origin token
  * @dev This token is an ERC-20 compliant token that stores its state in an
  * EternalStorage contract.
  */
-contract OriginToken is ESToken, ESInitializable {
+contract OriginToken is ESBurnableToken, ESMintableToken, ESInitializable {
   string public constant name = "OriginToken"; // solium-disable-line uppercase
   string public constant symbol = "OGN"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
@@ -18,7 +19,13 @@ contract OriginToken is ESToken, ESInitializable {
   // @dev Does not mint initial tokens. That is done in initialize(), which
   // allows EternalStorage permissions to be granted between constructor() and
   // initialize().
-  constructor(EternalStorage es_) public ESToken(es_) {
+  constructor(
+    EternalStorage _es
+  )
+    public
+    ESStandardToken(_es)
+    ESInitializable(_es, "token.initialized")
+  {
     owner = msg.sender;
   }
 

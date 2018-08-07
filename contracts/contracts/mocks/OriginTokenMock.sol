@@ -1,22 +1,22 @@
 pragma solidity ^0.4.23;
 
-import "../eternalstorage/ESInitializable.sol";
-import "../token/ESToken.sol";
+import "../token/OriginToken.sol";
+import "./EternalStorageMock.sol";
 
-
-// @title Adapter for  OpenZeppelin token tests.
-contract OriginTokenMock is ESToken, ESInitializable {
+/**
+ * @title Adapter for  OpenZeppelin token tests.
+ */
+contract OriginTokenMock is OriginToken {
   constructor(
-    EternalStorage es_
+    EternalStorage _es
   )
     public
-    ESToken(es_)
-    ESInitializable(es_, "token_mock.initialized")
+    OriginToken(_es)
   {
     // The real work is done in initialize().
   }
 
-  function initialize(
+  function initializeMock(
     address initialAccount,
     uint256 initialBalance
   )
@@ -29,4 +29,14 @@ contract OriginTokenMock is ESToken, ESInitializable {
     es.setUint(balanceOfKey(owner), initialBalance);
     emit Transfer(address(0), owner, initialBalance);
   }
+}
+
+/**
+ * @title Easy-to-use mock for Origin token. Intended for use with Remix.
+ * 
+ * NOTE: You'll need to increase Remix's gas limit to at least 7,000,000 to
+ * successfully deploy this contract.
+ */
+contract EasyOriginTokenMock is OriginTokenMock {
+  constructor() public OriginTokenMock(new EternalStorageMock()) { }
 }

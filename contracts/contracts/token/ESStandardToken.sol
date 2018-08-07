@@ -1,6 +1,5 @@
 pragma solidity ^0.4.23;
 
-
 import "../eternalstorage/ESPausable.sol";
 import "../eternalstorage/EternalStorage.sol";
 import "../../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -10,18 +9,17 @@ import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.
 /**
  * @title ERC-20 compliant token using external EternalStorage contract
  * @notice Based on OpenZeppelin's ERC-20 contracts, this token provides
- * features not specified by ERC-20, such as minting, burning, and pausing of
- * tokens.
+ * standard ERC-20 functionality with the ability to pause all transfers.
  * @dev All state, except the owner of the contract, is stored in an external
  * EternalStorage contract, providing upgradability of the token contract logic.
  * When applicable, functions and state are grouped according to the
  * OpenZeppelin token contract upon which they are based. This eases the porting
  * of fixes from OpenZeppelin to this code.
  */
-contract ESToken is ERC20, ESPausable {
+contract ESStandardToken is ERC20, ESPausable {
   using SafeMath for uint256;
 
-  constructor(EternalStorage es_) public ESPausable(es_) { }
+  constructor(EternalStorage _es) public ESPausable(_es) { }
 
   //
   // Ported from OpenZeppelin's BasicToken to use EternalStorage
@@ -216,108 +214,6 @@ contract ESToken is ERC20, ESPausable {
       newValue = es.decrementUint(spenderAllowedKey, _subtractedValue);
     }
     emit Approval(msg.sender, _spender, newValue);
-    return true;
-  }
-
-  //
-  // Ported from OpenZeppelin's BurnableToken to use EternalStorage
-  //
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    // TODO: limit to owner?
-    require(_value <= balanceOf(_who));
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    es.decrementUint(totalSupplyKey, _value);
-    es.decrementUint(balanceOfKey(_who), _value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-
-  //
-  // Ported from OpenZeppelin's StandardBurnableToken to use EternalStorage
-  //
-
-  /**
-   * @dev Burns a specific amount of tokens from the target address and decrements allowance
-   * @param _from address The address which you want to send tokens from
-   * @param _value uint256 The amount of token to be burned
-   */
-  function burnFrom(address _from, uint256 _value) public {
-    // was: require(_value <= allowed[_from][msg.sender]);
-    require(_value <= es.getUint(allowedKey(_from, msg.sender)));
-    // Should https://github.com/OpenZeppelin/zeppelin-solidity/issues/707 be accepted,
-    // this function needs to emit an event with the updated approval.
-    // was: allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    es.decrementUint(allowedKey(_from, msg.sender), _value);
-    _burn(_from, _value);
-  }
-
-
-  //
-  // Functions from OpenZeppelin's MintableToken to use EternalStorage
-  //
-
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  // EternalStorage keys
-  bytes32 constant mintingFinishedKey = keccak256("token.mintingfinished");
-
-  modifier canMint() {
-    require(!mintingFinished());
-    _;
-  }
-
-  function mintingFinished() public view returns (bool) {
-    return es.getBool(mintingFinishedKey);
-  }
-
-  modifier hasMintPermission() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(
-    address _to,
-    uint256 _amount
-  )
-    hasMintPermission
-    canMint
-    public
-    returns (bool)
-  {
-    es.incrementUint(totalSupplyKey, _amount);
-    es.incrementUint(balanceOfKey(_to), _amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    es.setBool(mintingFinishedKey, true);
-    emit MintFinished();
     return true;
   }
 }
