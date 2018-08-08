@@ -51,7 +51,7 @@ class Marketplace extends Adaptable {
 
   // async getOffersCount(listingId) {}
 
-  async getOffers(listingId, opts) {
+  async getOffers(listingId, opts = {}) {
     const network = await this.contractService.web3.eth.net.getId()
     const { adapter, listingIndex, version } = this.parseListingId(listingId)
     const offers = await adapter.getOffers(listingIndex, opts)
