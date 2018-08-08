@@ -140,6 +140,12 @@ class MarkeplaceAdapter {
         }
       })
       return listingIds
+    } else if (opts.listingsFor) {
+      const events = await this.contract.getPastEvents('ListingCreated', {
+        filter: { party: opts.listingsFor },
+        fromBlock: 0
+      })
+      return events.map(e => Number(e.returnValues.listingID))
     } else {
       const total = await this.contract.methods.totalListings().call()
       return [...Array(Number(total)).keys()]
