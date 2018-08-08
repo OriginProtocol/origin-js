@@ -7,7 +7,7 @@ const OriginTokenMock = artifacts.require('OriginTokenMock')
 const newOriginToken = async (owner, initialSupply) => {
   owner = Object.is(owner, undefined) ? web3.eth.accounts[0] : owner
   const es = await EternalStorage.new({from: owner})
-  let token = await OriginTokenMock.new(es.address, {from: owner})
+  const token = await OriginTokenMock.new(es.address, {from: owner})
   await es.addWriter(token.address, {from: owner})
   if (initialSupply !== undefined) {
     await token.initializeMock(owner, initialSupply, {from: owner})
