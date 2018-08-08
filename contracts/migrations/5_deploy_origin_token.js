@@ -24,9 +24,14 @@ async function deployOriginTokenContracts(deployer) {
   await eternalStorage.removeWriter(V000_originToken.address)
   // V001 is now deployed, maintaining the token supply created by V000
 
-  const initialSupply = (await V001_originToken.totalSupply()) / 10**18
+  const initialSupplyWei = await V001_originToken.totalSupply()
+  const initialSupplyTokens = initialSupplyWei / 1e18
   const owner = await V001_originToken.owner()
-  console.log('token deployed with initial supply of ' + initialSupply + ' tokens')
+  console.log('token deployed with initial supply of ' + initialSupplyTokens + ' tokens')
+  const expectedInitialSupplyWei = 1e9 * 1e18
+  if (initialSupplyWei != expectedInitialSupplyWei) {
+    throw new Error('initial supply ' + initialSupplyWei + ' != expected ' + expectedInitialSupplyWei)
+  }
   console.log('token owner: ' + owner)
   console.log('EternalStorage used by token contract: ' + eternalStorage.address)
 }
