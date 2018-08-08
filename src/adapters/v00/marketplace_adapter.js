@@ -49,6 +49,25 @@ class MarkeplaceAdapter {
     return this.contract.methods.makeOffer(...args).send(opts)
   }
 
+  async acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
+    await this.getContract()
+    const from = await this.contractService.currentAccount()
+
+    const args = [
+      listingIndex,
+      offerIndex,
+      ipfsBytes
+    ]
+    const opts = { gas: 4612388, from }
+    return await new Promise((resolve, reject) => {
+      this.contract.methods.acceptOffer(...args)
+        .send(opts)
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
+  }
+
   async getListing(listingId) {
     await this.getContract()
 
@@ -100,13 +119,18 @@ class MarkeplaceAdapter {
 
   async getOffers(listingIndex, opts) {
     await this.getContract()
-    if (opts.for) {
-      const events = await this.contract.getPastEvents('OfferCreated', {
-        filter: { party: opts.for },
-        fromBlock: 0
-      })
-      return events.map(e => Number(e.returnValues.offerID))
+    let filter = {}
+    if (listingIndex) {
+      filter = Object.assign(filter, { listingID: listingIndex })
     }
+    if (opts.for) {
+      filter = Object.assign(filter, { party: opts.for })
+    }
+    const events = await this.contract.getPastEvents('OfferCreated', {
+      filter,
+      fromBlock: 0
+    })
+    return events.map(e => Number(e.returnValues.offerID))
   }
 
   async getOffer(listingIndex, offerIndex) {
@@ -136,6 +160,28 @@ class MarkeplaceAdapter {
 
     // Return the raw listing along with events and IPFS hash
     return Object.assign({}, rawOffer, { ipfsHash, events, createdAt })
+  }
+
+  async getOfferLogs(listingIndex, offerIndex) {
+    await this.getContract()
+
+    // Get the raw listing data from the contract
+    const rawOffer = await this.contract.methods.offers(listingIndex, offerIndex).call()
+
+    // Find all events related to this offer
+    const listingTopic = this.web3.utils.padLeft(web3.utils.numberToHex(listingIndex), 64)
+    const offerTopic = this.web3.utils.padLeft(web3.utils.numberToHex(offerIndex), 64)
+    const logs = await this.contract.getPastEvents('allEvents', {
+      topics: [null, null, listingTopic, offerTopic],
+      fromBlock: 0
+    })
+    const withTimestampPromise = logs.map(log => {
+      return new Promise(async resolve => {
+        const createdAt = await this.contractService.getTimestamp(log)
+        resolve({ log, createdAt })
+      })
+    })
+    return await Promise.all(withTimestampPromise)
   }
 }
 

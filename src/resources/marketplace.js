@@ -96,19 +96,32 @@ class Marketplace extends Adaptable {
     const network = await this.contractService.web3.eth.net.getId()
     const { adapter, listingIndex, version } = this.parseListingId(listingId)
     const offers = await adapter.getOffers(listingIndex, opts)
-    return offers.map(offerIndex => {
+    const offerIds = offers.map(offerIndex => {
       return generateOfferId({ network, version, listingIndex, offerIndex })
     })
+    if (opts.idsOnly) {
+      return offerIds
+    } else {
+      return await Promise.all(offerIds.map(offerId => {
+        return this.getOffer(offerId)
+      }))
+    }
   }
 
-  async getOffer(offerId) {
-    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+  async getOffer(id) {
+    const { adapter, listingIndex, offerIndex, version, network } = this.parseOfferId(id)
     const offer = await adapter.getOffer(listingIndex, offerIndex)
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(offer.ipfsHash)
     const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+    const listingId = generateListingId({ version, network, listingIndex })
 
-    return Object.assign({}, offer, { ipfsData: ipfsJson || {} })
+    return Object.assign({}, offer, { id, ipfsData: ipfsJson || {}, listingId })
+  }
+
+  async getOfferLogs(id) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
+    return await adapter.getOfferLogs(listingIndex, offerIndex)
   }
 
   async createListing(ipfsData) {
@@ -161,8 +174,16 @@ class Marketplace extends Adaptable {
 
   // updateOffer(listingId, offerId, data) {}
   // withdrawOffer(listingId, offerId, data) {}
-  //
-  // acceptOffer(listingId, offerId, data) {}
+
+  async acceptOffer(id, data, confirmationCallback) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
+
+    const ipfsHash = await this.ipfsService.submitFile({ data })
+    const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+
+    return await adapter.acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback)
+  }
+
   // finalizeOffer(listingId, offerId, data) {}
   // setOfferRefund(listingId, offerId, data) {}
   //

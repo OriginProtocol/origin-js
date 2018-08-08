@@ -17,23 +17,23 @@ class Adaptable {
   }
 
   parseListingId(listingId) {
-    const { version, listingIndex } = parseListingId(listingId)
+    const { version, network, listingIndex } = parseListingId(listingId)
     // use appropriate adapter for version
     const adapter = this.adapters[version]
     if (!adapter) {
       throw new Error(`Adapter not found for version ${version}`)
     }
-    return { adapter, listingIndex, version }
+    return { adapter, listingIndex, version, network }
   }
 
   parseOfferId(offerId) {
-    const { version, listingIndex, offerIndex } = parseOfferId(offerId)
+    const { version, network, listingIndex, offerIndex } = parseOfferId(offerId)
     // use appropriate adapter for version
     const adapter = this.adapters[version]
     if (!adapter) {
       throw new Error(`Adapter not found for version ${version}`)
     }
-    return { adapter, listingIndex, offerIndex , version }
+    return { adapter, listingIndex, offerIndex , version, network }
   }
 }
 
