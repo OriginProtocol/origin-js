@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 import "./StandardToken.sol";
 
-contract BurnableToken is StandardToken {
+contract V001_BurnableToken is V001_StandardToken {
   //
   // Ported from OpenZeppelin's BurnableToken to use EternalStorage
   //

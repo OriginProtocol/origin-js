@@ -1,15 +1,14 @@
 pragma solidity 0.4.23;
 
-import "../eternalstorage/Initializable.sol";
-import "./BurnableToken.sol";
-import "./MintableToken.sol";
+import "../../eternalstorage/Initializable.sol";
+import "./StandardToken.sol";
 
 /**
  * @title Origin token
  * @dev This token is an ERC-20 compliant token that stores its state in an
  * EternalStorage contract.
  */
-contract OriginToken is BurnableToken, MintableToken, Initializable {
+contract V000_OriginToken is V000_StandardToken, Initializable {
   string public constant name = "OriginToken"; // solium-disable-line uppercase
   string public constant symbol = "OGN"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
@@ -23,7 +22,7 @@ contract OriginToken is BurnableToken, MintableToken, Initializable {
     EternalStorage _es
   )
     public
-    StandardToken(_es)
+    V000_StandardToken(_es)
     Initializable(_es, "token.initialized")
   {
     owner = msg.sender;

@@ -1,5 +1,6 @@
 var EternalStorage = artifacts.require("./EternalStorage.sol")
-var OriginToken = artifacts.require("./OriginToken.sol")
+var V000_OriginToken = artifacts.require("./token/V000/OriginToken.sol")
+var V001_OriginToken = artifacts.require("./token/V001/OriginToken.sol")
 
 // TODO: sequence this before the marketplace deployment, which seems to depend
 // on this
@@ -14,7 +15,18 @@ async function deployOriginTokenContracts(deployer) {
   // Deploy token
   // TODO: Avoid doing this with every deploy
   const eternalStorage = await deployer.deploy(EternalStorage)
-  const originToken = await deployer.deploy(OriginToken, eternalStorage.address)
-  await eternalStorage.addWriter(originToken.address)
-  await originToken.initialize()
+  const V000_originToken = await deployer.deploy(V000_OriginToken, eternalStorage.address)
+  await eternalStorage.addWriter(V000_originToken.address)
+  await V000_originToken.initialize()
+  // at this point, V000 is deployed with an initial supply of tokens
+  const V001_originToken = await deployer.deploy(V001_OriginToken, eternalStorage.address)
+  await eternalStorage.addWriter(V001_originToken.address)
+  await eternalStorage.removeWriter(V000_originToken.address)
+  // V001 is now deployed, maintaining the token supply created by V000
+
+  const initialSupply = (await V001_originToken.totalSupply()) / 10**18
+  const owner = await V001_originToken.owner()
+  console.log('token deployed with initial supply of ' + initialSupply + ' tokens')
+  console.log('token owner: ' + owner)
+  console.log('EternalStorage used by token contract: ' + eternalStorage.address)
 }

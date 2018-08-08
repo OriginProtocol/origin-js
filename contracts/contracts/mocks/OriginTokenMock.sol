@@ -1,17 +1,17 @@
 pragma solidity ^0.4.23;
 
-import "../token/OriginToken.sol";
+import "../token/V001/OriginToken.sol";
 import "./EternalStorageMock.sol";
 
 /**
  * @title Adapter for  OpenZeppelin token tests.
  */
-contract OriginTokenMock is OriginToken {
+contract OriginTokenMock is V001_OriginToken {
   constructor(
     EternalStorage _es
   )
     public
-    OriginToken(_es)
+    V001_OriginToken(_es)
   {
     // The real work is done in initialize().
   }
@@ -33,7 +33,7 @@ contract OriginTokenMock is OriginToken {
 
 /**
  * @title Easy-to-use mock for Origin token. Intended for use with Remix.
- * 
+ *
  * NOTE: You'll need to increase Remix's gas limit to at least 7,000,000 to
  * successfully deploy this contract.
  */

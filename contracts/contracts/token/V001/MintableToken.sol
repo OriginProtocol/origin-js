@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 import "./StandardToken.sol";
 
-contract MintableToken is StandardToken {
+contract V001_MintableToken is V001_StandardToken {
   //
   // Functions from OpenZeppelin's MintableToken to use EternalStorage
   //
