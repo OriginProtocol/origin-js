@@ -9,7 +9,7 @@ import "../../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  * Uses EternalStorage to persist pause status across logic contract upgrades.
  */
-contract ESPausable is Ownable {
+contract Pausable is Ownable {
 
   event Pause();
   event Unpause();

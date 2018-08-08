@@ -1,6 +1,6 @@
 pragma solidity ^0.4.23;
 
-import "../eternalstorage/ESPausable.sol";
+import "../eternalstorage/Pausable.sol";
 import "../eternalstorage/EternalStorage.sol";
 import "../../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -16,10 +16,10 @@ import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.
  * OpenZeppelin token contract upon which they are based. This eases the porting
  * of fixes from OpenZeppelin to this code.
  */
-contract ESStandardToken is ERC20, ESPausable {
+contract StandardToken is ERC20, Pausable {
   using SafeMath for uint256;
 
-  constructor(EternalStorage _es) public ESPausable(_es) { }
+  constructor(EternalStorage _es) public Pausable(_es) { }
 
   //
   // Ported from OpenZeppelin's BasicToken to use EternalStorage

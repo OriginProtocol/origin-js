@@ -1,8 +1,8 @@
 pragma solidity ^0.4.23;
 
-import "./ESStandardToken.sol";
+import "./StandardToken.sol";
 
-contract ESMintableToken is ESStandardToken {
+contract MintableToken is StandardToken {
   //
   // Functions from OpenZeppelin's MintableToken to use EternalStorage
   //
@@ -12,7 +12,7 @@ contract ESMintableToken is ESStandardToken {
 
   // EternalStorage keys
   bytes32 constant mintingFinishedKey = keccak256("token.mintingfinished");
-  
+
   modifier canMint() {
     require(!mintingFinished());
     _;

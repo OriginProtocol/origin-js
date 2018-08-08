@@ -7,7 +7,7 @@ import "./EternalStorage.sol";
  * @dev Add isInitializer to the contract function that you want to make into an
  * initializer that will only run once.
  */
-contract ESInitializable {
+contract Initializable {
   EternalStorage es;
   bytes32 internal initializedKey;
 
