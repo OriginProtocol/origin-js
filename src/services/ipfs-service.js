@@ -57,17 +57,21 @@ class IpfsService {
    */
   async saveDataURIAsFile(dataURI) {
     // Extract the mime type
-    const mimeType = dataURI.split(',')[0].split(':')[1].split(';')[0]
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
     // Decode b64 encoded component
-    const byteString = atob(dataURI.split(',')[1])
-    // Write it to a buffer
-    const buffer = new ArrayBuffer(byteString.length)
-    const view = new DataView(buffer)
-    for (let i = 0; i < byteString.length; i++) {
-      view.setUint8(i, byteString.charCodeAt(i))
+    const binary = new Buffer(dataURI.split(',')[1], 'base64').toString('binary')
+
+    const buffer = new Array()
+    for (let i = 0; i < binary.length; i++) {
+      buffer[i] = binary.charCodeAt(i)
     }
-    // Convert to a blob
-    const file = new Blob([buffer], { type: mimeType })
+
+    let file
+    if (typeof Blob === 'undefined') {
+      file = new Buffer([new Uint8Array(buffer)])
+    } else {
+      file = new Blob([new Uint8Array(buffer)], { type: mimeString })
+    }
 
     return await this.saveFile(file)
   }

@@ -133,7 +133,17 @@ describe('Listing Resource', function() {
     const listingIds = await listings.allIds()
     const listing = await listings.getByIndex(listingIds[listingIds.length - 1])
 
-    const expectedHash = 'QmcjsPrt3VhTcBPg5F7eTSfxsnQTnKHtqEt7ZpAQBKumTV'
+    // Expected hashes of the file uploaded to IPFS are different when running in
+    // browser or running in node. Node doesn't have a Blob implementation so a
+    // Buffer is used resulting in a different hash.
+    let expectedHash
+    if (typeof Blob === 'undefined') {
+      // Node
+      expectedHash = 'QmS9JArPwa55ePgDnyg6TzX24mYTS1b1vLqWNebyVotKxQ'
+    } else {
+      // Browser
+      expectedHash = 'QmcjsPrt3VhTcBPg5F7eTSfxsnQTnKHtqEt7ZpAQBKumTV'
+    }
 
     expect(JSON.stringify(listing.pictures)).to.equal(
       JSON.stringify([
@@ -142,7 +152,11 @@ describe('Listing Resource', function() {
     )
 
     const response = await ipfsService.loadFile(expectedHash)
-    expect(response._bodyBlob.type).to.equal('image/gif')
+    expect(response.status).to.equal(200)
+    if (typeof Blob !== 'undefined') {
+      // In browser, check file type of the Blob
+      expect(response._bodyBlob.type).to.equal('image/gif')
+    }
   })
 
   it('should close a listing', async () => {
