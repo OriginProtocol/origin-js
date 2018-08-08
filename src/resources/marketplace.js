@@ -136,16 +136,16 @@ class Marketplace extends Adaptable {
   // disputeRuling(listingId, offerId, data) {}
   // manageListingDeposit(listingId, data) {}
 
-  async addData(data, listingId, offerId) {
+  async addData(listingId, offerId, data, confirmationCallback) {
     const ipfsHash = await this.ipfsService.submitFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     if (offerId) {
       const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
-      return await adapter.addData(ipfsBytes, listingIndex, offerIndex)
+      return await adapter.addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback)
     } else if (listingId) {
       const { adapter, listingIndex } = this.parseListingId(listingId)
-      return await adapter.addData(ipfsBytes, listingIndex)
+      return await adapter.addData(ipfsBytes, listingIndex, null, confirmationCallback)
     }
   }
 }

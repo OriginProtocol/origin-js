@@ -197,12 +197,17 @@ class MarkeplaceAdapter {
     return Object.assign({}, rawOffer, { ipfsHash, events, createdAt })
   }
 
-  async addData(ipfsBytes, listingIndex, offerIndex) {
+  async addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
-    return this.contract.methods
-      .addData(listingIndex, offerIndex, ipfsBytes)
-      .send({ gas: 4612388, from })
+    return await new Promise((resolve, reject) => {
+      return this.contract.methods
+        .addData(listingIndex, offerIndex, ipfsBytes)
+        .send({ gas: 4612388, from })
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
   }
 
   padTopic(id) {
