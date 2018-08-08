@@ -30,12 +30,19 @@ class MarkeplaceAdapter {
   async makeOffer(listingId, ipfsBytes, data) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
-    const { finalizes, affiliate, commission, price, arbitrator, currencyAddr } = data
+    const {
+      finalizes,
+      affiliate,
+      commission,
+      price,
+      arbitrator,
+      currencyAddr
+    } = data
 
     const args = [
       listingId,
       ipfsBytes,
-      finalizes || Math.round(+new Date() / 1000) + (60 * 60 * 24), // 24 hrs
+      finalizes || Math.round(+new Date() / 1000) + 60 * 60 * 24, // 24 hrs
       affiliate || '0x0',
       commission || '0',
       price,
@@ -53,14 +60,32 @@ class MarkeplaceAdapter {
     await this.getContract()
     const from = await this.contractService.currentAccount()
 
-    const args = [
-      listingIndex,
-      offerIndex,
-      ipfsBytes
-    ]
+    const args = [listingIndex, offerIndex, ipfsBytes]
     const opts = { gas: 4612388, from }
     return await new Promise((resolve, reject) => {
-      this.contract.methods.acceptOffer(...args)
+      this.contract.methods
+        .acceptOffer(...args)
+        .send(opts)
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
+  }
+
+  async finalizeOffer(
+    listingIndex,
+    offerIndex,
+    ipfsBytes,
+    confirmationCallback
+  ) {
+    await this.getContract()
+    const from = await this.contractService.currentAccount()
+
+    const args = [listingIndex, offerIndex, ipfsBytes]
+    const opts = { gas: 4612388, from }
+    return await new Promise((resolve, reject) => {
+      this.contract.methods
+        .finalize(...args)
         .send(opts)
         .on('receipt', resolve)
         .on('confirmation', confirmationCallback)
@@ -75,7 +100,7 @@ class MarkeplaceAdapter {
     const rawListing = await this.contract.methods.listings(listingId).call()
 
     // Find all events related to this listing
-    const listingTopic = this.web3.utils.padLeft(web3.utils.numberToHex(listingId), 64)
+    const listingTopic = this.padTopic(listingId)
     const events = await this.contract.getPastEvents('allEvents', {
       topics: [null, null, listingTopic, null],
       fromBlock: 0
@@ -137,51 +162,51 @@ class MarkeplaceAdapter {
     await this.getContract()
 
     // Get the raw listing data from the contract
-    const rawOffer = await this.contract.methods.offers(listingIndex, offerIndex).call()
+    const rawOffer = await this.contract.methods
+      .offers(listingIndex, offerIndex)
+      .call()
 
     // Find all events related to this offer
-    const listingTopic = this.web3.utils.padLeft(web3.utils.numberToHex(listingIndex), 64)
-    const offerTopic = this.web3.utils.padLeft(web3.utils.numberToHex(offerIndex), 64)
+    const listingTopic = this.padTopic(listingIndex)
+    const offerTopic = this.padTopic(offerIndex)
     const events = await this.contract.getPastEvents('allEvents', {
       topics: [null, null, listingTopic, offerTopic],
       fromBlock: 0
     })
 
     // Loop through the events looking and update the IPFS hash appropriately
-    let ipfsHash
-    events.forEach(e => {
+    let ipfsHash, createdAt
+    for (const e of events) {
+      const timestamp = await this.contractService.getTimestamp(e)
       if (e.event === 'OfferCreated') {
         ipfsHash = e.returnValues.ipfsHash
+        createdAt = timestamp
       }
-    })
-    const createdAt = (events && events.length)
-      ? await this.contractService.getTimestamp(events[0])
-      : undefined
+      // Override status if offer was deleted from blockchain state
+      if (e.event === 'OfferFinalized') {
+        rawOffer.status = '3'
+      }
+      // TODO: Assumes OfferData event is a seller review
+      if (e.event === 'OfferData') {
+        rawOffer.status = '4'
+      }
+      e.timestamp = timestamp
+    }
 
     // Return the raw listing along with events and IPFS hash
     return Object.assign({}, rawOffer, { ipfsHash, events, createdAt })
   }
 
-  async getOfferLogs(listingIndex, offerIndex) {
+  async addData(ipfsBytes, listingIndex, offerIndex) {
     await this.getContract()
+    const from = await this.contractService.currentAccount()
+    return this.contract.methods
+      .addData(listingIndex, offerIndex, ipfsBytes)
+      .send({ gas: 4612388, from })
+  }
 
-    // Get the raw listing data from the contract
-    const rawOffer = await this.contract.methods.offers(listingIndex, offerIndex).call()
-
-    // Find all events related to this offer
-    const listingTopic = this.web3.utils.padLeft(web3.utils.numberToHex(listingIndex), 64)
-    const offerTopic = this.web3.utils.padLeft(web3.utils.numberToHex(offerIndex), 64)
-    const logs = await this.contract.getPastEvents('allEvents', {
-      topics: [null, null, listingTopic, offerTopic],
-      fromBlock: 0
-    })
-    const withTimestampPromise = logs.map(log => {
-      return new Promise(async resolve => {
-        const createdAt = await this.contractService.getTimestamp(log)
-        resolve({ log, createdAt })
-      })
-    })
-    return await Promise.all(withTimestampPromise)
+  padTopic(id) {
+    return this.web3.utils.padLeft(web3.utils.numberToHex(id), 64)
   }
 }
 
