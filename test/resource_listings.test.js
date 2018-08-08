@@ -272,7 +272,7 @@ describe('Listing Resource', function() {
           })
         })
 
-      const query = new SearchQuery('testing')
+      const query = new SearchQuery({rawQuery: 'testing'})
       const searchIds = await listings.search(query)
       expect(searchIds).to.eql([0, 1])
     })
