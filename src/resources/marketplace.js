@@ -46,7 +46,7 @@ class Marketplace extends Adaptable {
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(listing.ipfsHash)
     const ipfsJson = await this.ipfsService.getFile(ipfsHash)
 
-    return Object.assign({}, listing, { ipfsData: ipfsJson || {} })
+    return Object.assign({}, listing, { id: listingId, ipfsData: ipfsJson || {} })
   }
 
   // async getOffersCount(listingId) {}
