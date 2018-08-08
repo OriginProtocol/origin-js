@@ -62,7 +62,7 @@ class MarkeplaceAdapter {
 
     const args = [listingIndex, offerIndex, ipfsBytes]
     const opts = { gas: 4612388, from }
-    return await new Promise((resolve, reject) => {
+    const transactionReceipt = await new Promise((resolve, reject) => {
       this.contract.methods
         .acceptOffer(...args)
         .send(opts)
@@ -70,6 +70,8 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
+    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    return Object.assign({ timestamp }, transactionReceipt)
   }
 
   async finalizeOffer(
@@ -83,7 +85,7 @@ class MarkeplaceAdapter {
 
     const args = [listingIndex, offerIndex, ipfsBytes]
     const opts = { gas: 4612388, from }
-    return await new Promise((resolve, reject) => {
+    const transactionReceipt = await new Promise((resolve, reject) => {
       this.contract.methods
         .finalize(...args)
         .send(opts)
@@ -91,6 +93,8 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
+    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    return Object.assign({ timestamp }, transactionReceipt)
   }
 
   async getListing(listingId) {
@@ -200,7 +204,7 @@ class MarkeplaceAdapter {
   async addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
-    return await new Promise((resolve, reject) => {
+    const transactionReceipt = await new Promise((resolve, reject) => {
       return this.contract.methods
         .addData(listingIndex, offerIndex, ipfsBytes)
         .send({ gas: 4612388, from })
@@ -208,6 +212,8 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
+    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    return Object.assign({ timestamp }, transactionReceipt)
   }
 
   padTopic(id) {
