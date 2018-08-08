@@ -4,6 +4,7 @@
 import ResourceBase from './_resource-base'
 import Ajv from 'ajv'
 import ajvEnableMerge from 'ajv-merge-patch/keywords/merge'
+import URL from 'url-parse'
 import listingSchema from '../schemas/listing.json'
 import unitListingSchema from '../schemas/unit-listing.json'
 import fractionalListingSchema from '../schemas/fractional-listing.json'
