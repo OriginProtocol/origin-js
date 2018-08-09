@@ -12,6 +12,7 @@ const newOriginToken = async (owner, initialSupply) => {
   if (initialSupply !== undefined) {
     await token.initializeMock(owner, initialSupply, {from: owner})
   }
+  // TODO: exercise token upgrade
   return token
 }
 
