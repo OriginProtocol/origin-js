@@ -27,7 +27,9 @@ class Marketplace extends Adaptable {
     for (const version of this.versions) {
       const listingIndexes = await this.adapters[version].getListings(opts)
       listingIndexes.forEach(listingIndex => {
-        listingIds.unshift(generateListingId({ version, network, listingIndex }))
+        listingIds.unshift(
+          generateListingId({ version, network, listingIndex })
+        )
       })
     }
 
@@ -43,10 +45,15 @@ class Marketplace extends Adaptable {
     const { adapter, listingIndex } = this.parseListingId(listingId)
     const listing = await adapter.getListing(listingIndex)
 
-    const ipfsHash = this.contractService.getIpfsHashFromBytes32(listing.ipfsHash)
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(
+      listing.ipfsHash
+    )
     const ipfsJson = await this.ipfsService.getFile(ipfsHash)
 
-    return Object.assign({}, listing, { id: listingId, ipfsData: ipfsJson || {} })
+    return Object.assign({}, listing, {
+      id: listingId,
+      ipfsData: ipfsJson || {}
+    })
   }
 
   // async getOffersCount(listingId) {}
@@ -61,14 +68,22 @@ class Marketplace extends Adaptable {
     if (opts.idsOnly) {
       return offerIds
     } else {
-      return await Promise.all(offerIds.map(offerId => {
-        return this.getOffer(offerId)
-      }))
+      return await Promise.all(
+        offerIds.map(offerId => {
+          return this.getOffer(offerId)
+        })
+      )
     }
   }
 
   async getOffer(offerId) {
-    const { adapter, listingIndex, offerIndex, version, network } = this.parseOfferId(offerId)
+    const {
+      adapter,
+      listingIndex,
+      offerIndex,
+      version,
+      network
+    } = this.parseOfferId(offerId)
     const offer = await adapter.getOffer(listingIndex, offerIndex)
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(offer.ipfsHash)
@@ -76,11 +91,19 @@ class Marketplace extends Adaptable {
     const listingId = generateListingId({ version, network, listingIndex })
 
     // Use data from IPFS is offer no longer in active blockchain state
-    if (offer.buyer.indexOf('0x00000') === 0 && ipfsJson.data && ipfsJson.data.buyer) {
+    if (
+      offer.buyer.indexOf('0x00000') === 0 &&
+      ipfsJson.data &&
+      ipfsJson.data.buyer
+    ) {
       offer.buyer = ipfsJson.data.buyer
     }
 
-    return Object.assign({}, offer, { id: offerId, ipfsData: ipfsJson || {}, listingId })
+    return Object.assign({}, offer, {
+      id: offerId,
+      ipfsData: ipfsJson || {},
+      listingId
+    })
   }
 
   async createListing(ipfsData) {
@@ -100,7 +123,10 @@ class Marketplace extends Adaptable {
 
     const buyer = await this.contractService.currentAccount()
 
-    data.price = this.contractService.web3.utils.toWei(String(data.price), 'ether')
+    data.price = this.contractService.web3.utils.toWei(
+      String(data.price),
+      'ether'
+    )
     data.buyer = buyer
 
     const ipfsHash = await this.ipfsService.submitFile({ data })
@@ -118,7 +144,12 @@ class Marketplace extends Adaptable {
     const ipfsHash = await this.ipfsService.submitFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await adapter.acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback)
+    return await adapter.acceptOffer(
+      listingIndex,
+      offerIndex,
+      ipfsBytes,
+      confirmationCallback
+    )
   }
 
   async finalizeOffer(id, data, confirmationCallback) {
@@ -127,7 +158,12 @@ class Marketplace extends Adaptable {
     const ipfsHash = await this.ipfsService.submitFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await adapter.finalizeOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback)
+    return await adapter.finalizeOffer(
+      listingIndex,
+      offerIndex,
+      ipfsBytes,
+      confirmationCallback
+    )
   }
 
   // setOfferRefund(listingId, offerId, data) {}
@@ -142,10 +178,20 @@ class Marketplace extends Adaptable {
 
     if (offerId) {
       const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
-      return await adapter.addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback)
+      return await adapter.addData(
+        ipfsBytes,
+        listingIndex,
+        offerIndex,
+        confirmationCallback
+      )
     } else if (listingId) {
       const { adapter, listingIndex } = this.parseListingId(listingId)
-      return await adapter.addData(ipfsBytes, listingIndex, null, confirmationCallback)
+      return await adapter.addData(
+        ipfsBytes,
+        listingIndex,
+        null,
+        confirmationCallback
+      )
     }
   }
 
@@ -154,10 +200,14 @@ class Marketplace extends Adaptable {
   async getListingReviews(listingId) {
     const { adapter, listingIndex } = this.parseListingId(listingId)
     const listing = await adapter.getListing(listingIndex)
-    const reviewEvents = listing.events.filter(e => e.event === 'OfferFinalized')
+    const reviewEvents = listing.events.filter(
+      e => e.event === 'OfferFinalized'
+    )
     const reviews = []
     for (const event of reviewEvents) {
-      const ipfsHash = this.contractService.getIpfsHashFromBytes32(event.returnValues.ipfsHash)
+      const ipfsHash = this.contractService.getIpfsHashFromBytes32(
+        event.returnValues.ipfsHash
+      )
       const ipfsJson = await this.ipfsService.getFile(ipfsHash)
       const timestamp = await this.contractService.getTimestamp(event)
       reviews.push({
@@ -176,7 +226,9 @@ class Marketplace extends Adaptable {
     const party = await this.contractService.currentAccount()
     let notifications = []
     for (const version of this.versions) {
-      const rawNotifications = await this.adapters[version].getNotifications(party)
+      const rawNotifications = await this.adapters[version].getNotifications(
+        party
+      )
 
       for (const notification of rawNotifications) {
         if (notification.resources.listingId) {
@@ -186,7 +238,9 @@ class Marketplace extends Adaptable {
         }
         if (notification.resources.offerId) {
           notification.resources.purchase = await this.getOffer(
-            `${network}-${version}-${notification.resources.listingId}-${notification.resources.offerId}`
+            `${network}-${version}-${notification.resources.listingId}-${
+              notification.resources.offerId
+            }`
           )
         }
       }

@@ -158,22 +158,29 @@ class Messaging extends ResourceBase {
     this.events.emit('new', this.account_key)
     // just start it up here
     if (await this.initRemote()) {
-      this.pub_sig = localStorage.getItem(`${PUB_MESSAGING_SIG}:${this.account_key}`)
-      this.pub_msg = localStorage.getItem(`${PUB_MESSAGING}:${this.account_key}`)
+      this.pub_sig = localStorage.getItem(
+        `${PUB_MESSAGING_SIG}:${this.account_key}`
+      )
+      this.pub_msg = localStorage.getItem(
+        `${PUB_MESSAGING}:${this.account_key}`
+      )
 
       this.initConvs()
       this.events.emit('initialized', this.account_key)
       if (this.convs_enabled || this.getMessagingKey()) {
         this.initKeys()
       }
-    } 
-    // bootstrap read status
-    const scopedSubStartKeyName = `${storeKeys.messageSubscriptionStart}:${this.account_key}`
-    if (!localStorage.getItem(scopedSubStartKeyName)) {
-      localStorage.setItem(scopedSubStartKeyName, JSON.stringify(Date.now())
-      )
     }
-    const scopedStatusesKeyName = `${storeKeys.messageStatuses}:${this.account_key}`
+    // bootstrap read status
+    const scopedSubStartKeyName = `${storeKeys.messageSubscriptionStart}:${
+      this.account_key
+    }`
+    if (!localStorage.getItem(scopedSubStartKeyName)) {
+      localStorage.setItem(scopedSubStartKeyName, JSON.stringify(Date.now()))
+    }
+    const scopedStatusesKeyName = `${storeKeys.messageStatuses}:${
+      this.account_key
+    }`
     if (!localStorage.getItem(scopedStatusesKeyName)) {
       localStorage.setItem(scopedStatusesKeyName, JSON.stringify({}))
     }
@@ -183,8 +190,8 @@ class Messaging extends ResourceBase {
     this.ipfs.swarm.peers().then(peers => {
       const peer_ids = peers.map(x => x.peer._idB58String)
       if (
-        peer_ids && !this.last_peers ||
-        peer_ids && peer_ids.sort().join() !== this.last_peers.sort().join()
+        (peer_ids && !this.last_peers) ||
+        (peer_ids && peer_ids.sort().join() !== this.last_peers.sort().join())
       ) {
         this.last_peers = peer_ids
       }
@@ -290,7 +297,8 @@ class Messaging extends ResourceBase {
     const set_key = message.payload.key
     const verify_address = web3.eth.accounts.recover(value.msg, signature)
     if (verify_address == set_key && value.msg.includes(value.address)) {
-      const extracted_address = '0x' + web3.utils.sha3(value.pub_key).substr(-40)
+      const extracted_address =
+        '0x' + web3.utils.sha3(value.pub_key).substr(-40)
       if (extracted_address == value.address.toLowerCase()) {
         const verify_ph_address = web3.eth.accounts.recover(value.ph, value.phs)
         return verify_ph_address == value.address
@@ -517,7 +525,9 @@ class Messaging extends ResourceBase {
     )
     // convert stored timestamp string to date
     const subscriptionStart = new Date(
-      +localStorage.getItem(`${storeKeys.messageSubscriptionStart}:${this.account_key}`)
+      +localStorage.getItem(
+        `${storeKeys.messageSubscriptionStart}:${this.account_key}`
+      )
     )
 
     ops.forEach((entry, index) => {
@@ -764,7 +774,9 @@ class Messaging extends ResourceBase {
   // we allow the entire message to be passed in (for consistency with other resources + convenience)
   // however all we are updating is the status
   set({ hash, status }) {
-    const scopedStatusesKeyName = `${storeKeys.messageStatuses}:${this.account_key}`
+    const scopedStatusesKeyName = `${storeKeys.messageStatuses}:${
+      this.account_key
+    }`
     const messageStatuses = JSON.parse(
       localStorage.getItem(scopedStatusesKeyName)
     )

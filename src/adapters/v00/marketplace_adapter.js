@@ -70,7 +70,9 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
-    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    const timestamp = await this.contractService.getTimestamp(
+      transactionReceipt
+    )
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
@@ -93,7 +95,9 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
-    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    const timestamp = await this.contractService.getTimestamp(
+      transactionReceipt
+    )
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
@@ -227,7 +231,9 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
-    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    const timestamp = await this.contractService.getTimestamp(
+      transactionReceipt
+    )
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
@@ -248,7 +254,10 @@ class MarkeplaceAdapter {
         partyListingIds.push(event.returnValues.listingID)
       }
       if (event.event === 'OfferCreated') {
-        partyOfferIds.push([event.returnValues.listingID, event.returnValues.offerID])
+        partyOfferIds.push([
+          event.returnValues.listingID,
+          event.returnValues.offerID
+        ])
       }
     }
 

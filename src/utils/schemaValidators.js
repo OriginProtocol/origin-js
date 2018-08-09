@@ -53,7 +53,10 @@ export function validateListing(ipfsData) {
     ipfsData.unitsAvailable = 1
   }
   if (!ipfsData.priceWei && ipfsData.price) {
-    ipfsData.priceWei = this.contractService.web3.utils.toWei(String(ipfsData.price), 'ether')
+    ipfsData.priceWei = this.contractService.web3.utils.toWei(
+      String(ipfsData.price),
+      'ether'
+    )
   }
 
   const listingType = ipfsData.listingType || unitListingType
@@ -66,5 +69,4 @@ export function validateListing(ipfsData) {
     schema = fractionalListingSchema
   }
   validate(validateFn, schema, ipfsData)
-
 }

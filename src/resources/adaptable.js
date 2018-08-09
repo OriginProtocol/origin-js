@@ -33,7 +33,7 @@ class Adaptable {
     if (!adapter) {
       throw new Error(`Adapter not found for version ${version}`)
     }
-    return { adapter, listingIndex, offerIndex , version, network }
+    return { adapter, listingIndex, offerIndex, version, network }
   }
 }
 
