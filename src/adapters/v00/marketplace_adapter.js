@@ -223,7 +223,7 @@ class MarkeplaceAdapter {
   }
 
   padTopic(id) {
-    return this.web3.utils.padLeft(web3.utils.numberToHex(id), 64)
+    return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
   }
 }
 
