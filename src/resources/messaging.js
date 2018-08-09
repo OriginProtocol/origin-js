@@ -675,11 +675,25 @@ class Messaging extends ResourceBase {
     }
   }
 
-  canConverse(remote_eth_address) {
-    if (remote_eth_address != this.account_key) {
-      return this.global_keys && this.global_keys.get(remote_eth_address)
-    }
-    return false
+  canConverseWith(remote_eth_address) {
+    const { account_key, global_keys } = this
+
+    return this.canSendMessages() &&
+           account_key !== remote_eth_address &&
+           global_keys && global_keys.get(remote_eth_address)
+  }
+
+  canReceiveMessages(remote_eth_address) {
+    const { global_keys } = this
+
+    return global_keys &&
+           global_keys.get(remote_eth_address)
+  }
+
+  canSendMessages() {
+    const { account, account_key } = this
+
+    return account && account_key
   }
 
   async startConv(remote_eth_address) {
@@ -769,6 +783,24 @@ class Messaging extends ResourceBase {
     ])
     this._sending_message = false
     return room_id
+  }
+
+  // messages supplied by the 'msg' event have status included
+  // this is a convenience method for tracking status on spoofed messages
+  getStatus({ created, hash }) {
+    const messageStatuses = JSON.parse(
+      localStorage.getItem(`${storeKeys.messageStatuses}:${this.account_key}`)
+    )
+    // convert stored timestamp string to date
+    const subscriptionStart = new Date(
+      +localStorage.getItem(`${storeKeys.messageSubscriptionStart}:${this.account_key}`)
+    )
+    const isWatched = created > subscriptionStart
+    const status =
+      isWatched && messageStatuses && messageStatuses[hash] === READ_STATUS
+        ? READ_STATUS
+        : UNREAD_STATUS
+    return status
   }
 
   // we allow the entire message to be passed in (for consistency with other resources + convenience)
