@@ -430,7 +430,7 @@ class Messaging extends ResourceBase {
     }
     if (this.sharedRooms[key]) {
       if (this.sharedRooms[key] == 'wait') {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           this.events.on('SharedRoom.' + key, room => {
             console.log('Returning shared room:', key)
             resolve(room)
