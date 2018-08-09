@@ -46,12 +46,12 @@ class Marketplace extends Adaptable {
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(listing.ipfsHash)
     const ipfsJson = await this.ipfsService.getFile(ipfsHash)
 
-    return Object.assign({}, listing, { ipfsData: ipfsJson || {} })
+    return Object.assign({}, listing, { id: listingId, ipfsData: ipfsJson || {} })
   }
 
   // async getOffersCount(listingId) {}
 
-  async getOffers(listingId, opts) {
+  async getOffers(listingId, opts = {}) {
     const network = await this.contractService.web3.eth.net.getId()
     const { adapter, listingIndex, version } = this.parseListingId(listingId)
     const offers = await adapter.getOffers(listingIndex, opts)
@@ -136,16 +136,16 @@ class Marketplace extends Adaptable {
   // disputeRuling(listingId, offerId, data) {}
   // manageListingDeposit(listingId, data) {}
 
-  async addData(data, listingId, offerId) {
+  async addData(listingId, offerId, data, confirmationCallback) {
     const ipfsHash = await this.ipfsService.submitFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     if (offerId) {
       const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
-      return await adapter.addData(ipfsBytes, listingIndex, offerIndex)
+      return await adapter.addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback)
     } else if (listingId) {
       const { adapter, listingIndex } = this.parseListingId(listingId)
-      return await adapter.addData(ipfsBytes, listingIndex)
+      return await adapter.addData(ipfsBytes, listingIndex, null, confirmationCallback)
     }
   }
 }
