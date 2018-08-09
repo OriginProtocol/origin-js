@@ -116,7 +116,14 @@ class Marketplace extends Adaptable {
   }
 
   // updateListing(listingId, data) {}
-  // withdrawListing(listingId, data) {}
+
+  async withdrawListing(listingId, ipfsData, confirmationCallback) {
+    const { adapter, listingIndex } = this.parseListingId(listingId)
+    const ipfsHash = await this.ipfsService.submitFile({ data: ipfsData })
+    const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+
+    return await adapter.withdrawListing(listingIndex, ipfsBytes, confirmationCallback)
+  }
 
   async makeOffer(listingId, data) {
     const { adapter, listingIndex } = this.parseListingId(listingId)

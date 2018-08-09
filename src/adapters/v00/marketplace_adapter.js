@@ -27,6 +27,23 @@ class MarkeplaceAdapter {
       .send({ gas: 4612388, from })
   }
 
+  async withdrawListing(listingId, ipfsBytes, confirmationCallback) {
+    await this.getContract()
+    const from = await this.contractService.currentAccount()
+
+    const opts = { gas: 4612388, from }
+    const transactionReceipt = await new Promise((resolve, reject) => {
+      this.contract.methods
+        .withdrawListing(listingId, from, ipfsBytes)
+        .send(opts)
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
+    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
   async makeOffer(listingId, ipfsBytes, data) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
@@ -114,6 +131,8 @@ class MarkeplaceAdapter {
       fromBlock: 0
     })
 
+    const status = rawListing.seller.indexOf('0x00000') === 0 ? 'inactive' : 'active'
+
     // Loop through the events looking and update the IPFS hash appropriately
     let ipfsHash
     const offers = {}
@@ -134,7 +153,7 @@ class MarkeplaceAdapter {
     })
 
     // Return the raw listing along with events and IPFS hash
-    return Object.assign({}, rawListing, { ipfsHash, events, offers })
+    return Object.assign({}, rawListing, { ipfsHash, events, offers, status })
   }
 
   async getListings(opts) {
