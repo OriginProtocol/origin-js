@@ -31,7 +31,8 @@ class Origin {
     web3,
     ipfsCreator,
     OrbitDB,
-    ecies
+    ecies,
+    messagingNamespace
   } = {}) {
     this.contractService = new ContractService({ contractAddresses, web3 })
     this.ipfsService = new IpfsService({
@@ -90,7 +91,8 @@ class Origin {
       contractService: this.contractService,
       ipfsCreator,
       OrbitDB,
-      ecies
+      ecies,
+      messagingNamespace
     })
   }
 }
