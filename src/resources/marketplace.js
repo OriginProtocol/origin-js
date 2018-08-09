@@ -148,6 +148,28 @@ class Marketplace extends Adaptable {
       return await adapter.addData(ipfsBytes, listingIndex, null, confirmationCallback)
     }
   }
+
+  // Convenience methods
+
+  async getListingReviews(listingId) {
+    const { adapter, listingIndex } = this.parseListingId(listingId)
+    const listing = await adapter.getListing(listingIndex)
+    const reviewEvents = listing.events.filter(e => e.event === 'OfferFinalized')
+    const reviews = []
+    for (const event of reviewEvents) {
+      const ipfsHash = this.contractService.getIpfsHashFromBytes32(event.returnValues.ipfsHash)
+      const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+      const timestamp = await this.contractService.getTimestamp(event)
+      reviews.push({
+        transactionHash: event.transactionHash,
+        rating: ipfsJson.data.rating,
+        reviewText: ipfsJson.data.reviewText,
+        timestamp,
+        reviewerAddress: event.returnValues.party
+      })
+    }
+    return reviews
+  }
 }
 
 module.exports = Marketplace

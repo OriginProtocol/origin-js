@@ -5,7 +5,7 @@ function parseListingId(listingId) {
     throw new Error(`Listing id ${listingId} must be a string`)
   }
   const exploded = listingId.split(separator)
-  if (exploded.length !== 3) {
+  if (exploded.length < 3) {
     throw new Error(`Invalid listing id: ${listingId}`)
   }
   const [ network, version, listingIndex ] = exploded
@@ -18,10 +18,10 @@ function generateListingId({ version, network, listingIndex }) {
 
 function parseOfferId(offerId) {
   if (typeof offerId !== 'string') {
-    throw new Error(`Listing id ${listingId} must be a string`)
+    throw new Error(`Offer id ${offerId} must be a string`)
   }
   const exploded = offerId.split(separator)
-  if (exploded.length !== 4) {
+  if (exploded.length < 4) {
     throw new Error(`Invalid offer id: ${offerId}`)
   }
   const [ network, version, listingIndex, offerIndex ] = exploded
