@@ -3,11 +3,12 @@ const EternalStorage = artifacts.require('EternalStorage')
 const V000_OriginToken = artifacts.require('V000_OriginTokenMock')
 const Latest_OriginToken = artifacts.require('OriginTokenMock')
 
-const upgradeContract = async (test, tokenOwner, esOwner) => {
-  const oldToken = test.token
-  test.token = await Latest_OriginToken.new(test.es.address, {from: esOwner})
-  await test.es.removeWriter(oldToken.address, {from: esOwner})
-  await test.es.addWriter(test.token.address, {from: esOwner})
+// Returns new contract
+async function upgradeTokenContract(oldToken, tokenOwner, es, esOwner) {
+  const newToken = await Latest_OriginToken.new(es.address, {from: tokenOwner})
+  await es.addWriter(newToken.address, {from: esOwner})
+  await es.removeWriter(oldToken.address, {from: esOwner})
+  return newToken
 }
 
 // Tests retention of state when upgrading from the earliest version of the
@@ -16,78 +17,74 @@ contract('ContractUpgrade', function([tokenOwner, esOwner, otherAccount]) {
   const initialSupply = 100
   const transferAmount = 10
   const approvalAmount = 20
+  let es
+  let token
 
-  beforeEach(async function () {
-    this.es = await EternalStorage.new({from: esOwner})
-    this.token = await V000_OriginToken.new(this.es.address, {from: tokenOwner})
-    console.log('* test owner = ' + tokenOwner)
-    console.log('* token owner = ' + await this.token.owner())
-    await this.es.addWriter(this.token.address, {from: esOwner})
-    await this.token.initializeMock(tokenOwner, initialSupply)
+  beforeEach(async function() {
+    es = await EternalStorage.new({from: esOwner})
+    token = await V000_OriginToken.new(es.address, {from: tokenOwner})
+    await es.addWriter(token.address, {from: esOwner})
+    await token.initializeMock(tokenOwner, initialSupply)
 
-    await this.token.transfer(otherAccount, transferAmount)
-    await this.token.approve(otherAccount, approvalAmount)
+    await token.transfer(otherAccount, transferAmount)
+    await token.approve(otherAccount, approvalAmount)
   })
 
-  describe('before contract upgrade', function () {
+  describe('before contract upgrade', async function () {
     it('returns the total amount of tokens', async function () {
-      const totalSupply = await this.token.totalSupply();
+      const totalSupply = await token.totalSupply()
       assert.equal(totalSupply, initialSupply)
     })
 
     it('returns balance of token owner', async function() {
-      const balance = await this.token.balanceOf(tokenOwner)
+      const balance = await token.balanceOf(tokenOwner)
       assert.equal(balance, initialSupply - transferAmount)
     })
 
     it('returns balance of other account', async function() {
-      const balance = await this.token.balanceOf(otherAccount)
+      const balance = await token.balanceOf(otherAccount)
       assert.equal(balance, transferAmount)
     })
   })
 
-  describe('after contract upgrade', function() {
+  describe('after contract upgrade', async function() {
     it('retains total supply', async function() {
-      await upgradeContract(this, tokenOwner, esOwner)
-      const totalSupply = await this.token.totalSupply();
+      token = await upgradeTokenContract(token, tokenOwner, es, esOwner)
+      const totalSupply = await token.totalSupply()
       assert.equal(totalSupply, initialSupply)
     })
 
     it('retains balance of token owner', async function() {
-      await upgradeContract(this, tokenOwner, esOwner)
-      const balance = await this.token.balanceOf(tokenOwner)
+      token = await upgradeTokenContract(token, tokenOwner, es, esOwner)
+      const balance = await token.balanceOf(tokenOwner)
       assert.equal(balance, initialSupply - transferAmount)
     })
 
     it('retains balance of other account', async function() {
-      await upgradeContract(this, tokenOwner, esOwner)
-      const balance = await this.token.balanceOf(otherAccount)
+      token = await upgradeTokenContract(token, tokenOwner, es, esOwner)
+      const balance = await token.balanceOf(otherAccount)
       assert.equal(balance, transferAmount)
     })
 
-    it('retains approval', async function () {
-      await upgradeContract(this, tokenOwner, esOwner)
+    it('retains approval', async function() {
+      token = await upgradeTokenContract(token, tokenOwner, es, esOwner)
       await assertRevert(
-        this.token.transferFrom(tokenOwner, otherAccount, approvalAmount + 1, {from: otherAccount})
+        token.transferFrom(tokenOwner, otherAccount, approvalAmount + 1, {from: otherAccount})
       )
-      await this.token.transferFrom(tokenOwner, otherAccount, approvalAmount, {from: otherAccount})
+      await token.transferFrom(tokenOwner, otherAccount, approvalAmount, {from: otherAccount})
 
-      const ownerBalance = await this.token.balanceOf(tokenOwner)
+      const ownerBalance = await token.balanceOf(tokenOwner)
       assert.equal(ownerBalance, initialSupply - transferAmount - approvalAmount)
-      const otherBalance = await this.token.balanceOf(otherAccount)
+      const otherBalance = await token.balanceOf(otherAccount)
       assert.equal(otherBalance, transferAmount + approvalAmount)
     })
 
     it('retains paused status', async function() {
-      /*
-      // TODO: fix this, because something is actually broken here
-      console.log('test owner = ' + tokenOwner)
-      console.log('token owner = ' + await this.token.owner())
-      await this.token.pause()
-      //upgradeContract(this, tokenOwner, esOwner)
-      //assert.isTrue(await this.token.paused())
-      //await this.token.unpause()
-      */
+      await token.pause()
+      token = await upgradeTokenContract(token, tokenOwner, es, esOwner)
+      assert.isTrue(await token.paused())
+      await token.unpause()
+      assert.isFalse(await token.paused())
     })
   })
 })
