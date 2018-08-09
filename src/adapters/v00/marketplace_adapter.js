@@ -112,16 +112,25 @@ class MarkeplaceAdapter {
 
     // Loop through the events looking and update the IPFS hash appropriately
     let ipfsHash
-    events.forEach(e => {
-      if (e.event === 'ListingCreated') {
-        ipfsHash = e.returnValues.ipfsHash
-      } else if (e.event === 'ListingUpdated') {
-        ipfsHash = e.returnValues.ipfsHash
+    const offers = {}
+    events.forEach(event => {
+      if (event.event === 'ListingCreated') {
+        ipfsHash = event.returnValues.ipfsHash
+      } else if (event.event === 'ListingUpdated') {
+        ipfsHash = event.returnValues.ipfsHash
+      } else if (event.event === 'OfferCreated') {
+        offers[event.returnValues.offerID] = { status: 'created', event }
+      } else if (event.event === 'OfferAccepted') {
+        offers[event.returnValues.offerID] = { status: 'accepted', event }
+      } else if (event.event === 'OfferFinalized') {
+        offers[event.returnValues.offerID] = { status: 'finalized', event }
+      } else if (event.event === 'OfferData') {
+        offers[event.returnValues.offerID] = { status: 'buyerReviewed', event }
       }
     })
 
     // Return the raw listing along with events and IPFS hash
-    return Object.assign({}, rawListing, { ipfsHash, events })
+    return Object.assign({}, rawListing, { ipfsHash, events, offers })
   }
 
   async getListings(opts) {
@@ -220,6 +229,67 @@ class MarkeplaceAdapter {
     })
     const timestamp = await this.contractService.getTimestamp(transactionReceipt)
     return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  async getNotifications(party) {
+    await this.getContract()
+    const notifications = []
+
+    const partyListingIds = []
+    const partyOfferIds = []
+
+    const events = await this.contract.getPastEvents('allEvents', {
+      topics: [null, this.padTopic(party), null, null],
+      fromBlock: 0
+    })
+
+    for (const event of events) {
+      if (event.event === 'ListingCreated') {
+        partyListingIds.push(event.returnValues.listingID)
+      }
+      if (event.event === 'OfferCreated') {
+        partyOfferIds.push([event.returnValues.listingID, event.returnValues.offerID])
+      }
+    }
+
+    // Find pending offers and pending reviews
+    for (const listingId of partyListingIds) {
+      const listing = await this.getListing(listingId)
+      for (const offerId in listing.offers) {
+        const offer = listing.offers[offerId]
+        if (offer.status === 'created') {
+          notifications.push({
+            id: offer.event.transactionHash,
+            type: 'seller_listing_purchased',
+            status: 'unread',
+            resources: { listingId, offerId }
+          })
+        }
+        if (offer.status === 'finalized') {
+          notifications.push({
+            id: offer.event.transactionHash,
+            type: 'seller_review_received',
+            status: 'unread',
+            resources: { listingId, offerId }
+          })
+        }
+      }
+    }
+    // Find pending offers and pending reviews
+    for (const [listingId, offerId] of partyOfferIds) {
+      const listing = await this.getListing(listingId)
+      const offer = listing.offers[offerId]
+      if (offer.status === 'accepted') {
+        notifications.push({
+          id: offer.event.transactionHash,
+          type: 'buyer_listing_shipped',
+          status: 'unread',
+          resources: { listingId, offerId }
+        })
+      }
+    }
+
+    return notifications
   }
 
   padTopic(id) {

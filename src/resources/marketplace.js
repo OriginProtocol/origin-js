@@ -170,6 +170,31 @@ class Marketplace extends Adaptable {
     }
     return reviews
   }
+
+  async getNotifications() {
+    const network = await this.contractService.web3.eth.net.getId()
+    const party = await this.contractService.currentAccount()
+    let notifications = []
+    for (const version of this.versions) {
+      const rawNotifications = await this.adapters[version].getNotifications(party)
+
+      for (const notification of rawNotifications) {
+        if (notification.resources.listingId) {
+          notification.resources.listing = await this.getListing(
+            `${network}-${version}-${notification.resources.listingId}`
+          )
+        }
+        if (notification.resources.offerId) {
+          notification.resources.purchase = await this.getOffer(
+            `${network}-${version}-${notification.resources.listingId}-${notification.resources.offerId}`
+          )
+        }
+      }
+
+      notifications = notifications.concat(rawNotifications)
+    }
+    return notifications
+  }
 }
 
 module.exports = Marketplace
