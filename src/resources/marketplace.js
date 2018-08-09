@@ -107,7 +107,7 @@ class Marketplace extends Adaptable {
   }
 
   async createListing(ipfsData) {
-    validateListing(ipfsData)
+    validateListing(ipfsData, this.contractService)
 
     const ipfsHash = await this.ipfsService.submitFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)

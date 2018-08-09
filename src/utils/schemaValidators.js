@@ -40,7 +40,7 @@ function validate(validateFn, schema, data) {
   }
 }
 
-export function validateListing(ipfsData) {
+export function validateListing(ipfsData, contractService) {
   if (!ipfsData.listingType) {
     console.warn('Please specify a listing type. Assuming unit listing type.')
   } else if (!validListingTypes.includes(ipfsData.listingType)) {
@@ -53,7 +53,7 @@ export function validateListing(ipfsData) {
     ipfsData.unitsAvailable = 1
   }
   if (!ipfsData.priceWei && ipfsData.price) {
-    ipfsData.priceWei = this.contractService.web3.utils.toWei(
+    ipfsData.priceWei = contractService.web3.utils.toWei(
       String(ipfsData.price),
       'ether'
     )
