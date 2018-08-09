@@ -19,12 +19,21 @@ class MarkeplaceAdapter {
     return Number(total)
   }
 
-  async createListing(ipfsBytes, { deposit = '0', arbitrator }) {
+  async createListing(ipfsBytes, { deposit = '0', arbitrator }, confirmationCallback) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
-    return this.contract.methods
-      .createListing(ipfsBytes, deposit, arbitrator || from)
-      .send({ gas: 4612388, from })
+
+    const transactionReceipt = await new Promise((resolve, reject) => {
+      this.contract.methods
+        .createListing(ipfsBytes, deposit, arbitrator || from)
+        .send({ gas: 4612388, from })
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
+    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    const listingIndex = transactionReceipt.events['ListingCreated'].returnValues.listingID
+    return Object.assign({ timestamp, listingIndex }, transactionReceipt)
   }
 
   async withdrawListing(listingId, ipfsBytes, confirmationCallback) {

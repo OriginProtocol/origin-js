@@ -106,13 +106,18 @@ class Marketplace extends Adaptable {
     })
   }
 
-  async createListing(ipfsData) {
+  async createListing(ipfsData, confirmationCallback) {
     validateListing(ipfsData, this.contractService)
 
     const ipfsHash = await this.ipfsService.submitFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await this.currentAdapter.createListing(ipfsBytes, ipfsData)
+    const transactionReceipt = await this.currentAdapter.createListing(ipfsBytes, ipfsData, confirmationCallback)
+    const version = this.currentVersion
+    const network = await this.contractService.web3.eth.net.getId()
+    const { listingIndex } = transactionReceipt
+    const listingId = generateOfferId({ network, version, listingIndex })
+    return Object.assign({ listingId }, transactionReceipt)
   }
 
   // updateListing(listingId, data) {}
