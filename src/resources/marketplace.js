@@ -125,9 +125,8 @@ class Marketplace extends Adaptable {
     return await adapter.withdrawListing(listingIndex, ipfsBytes, confirmationCallback)
   }
 
-  async makeOffer(listingId, data) {
-    const { adapter, listingIndex } = this.parseListingId(listingId)
-
+  async makeOffer(listingId, data, confirmationCallback) {
+    const { adapter, listingIndex, version, network } = this.parseListingId(listingId)
     const buyer = await this.contractService.currentAccount()
 
     data.price = this.contractService.web3.utils.toWei(
@@ -139,7 +138,10 @@ class Marketplace extends Adaptable {
     const ipfsHash = await this.ipfsService.submitFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await adapter.makeOffer(listingIndex, ipfsBytes, data)
+    const transactionReceipt = await adapter.makeOffer(listingIndex, ipfsBytes, data, confirmationCallback)
+    const { offerIndex } = transactionReceipt
+    const offerId = generateOfferId({ network, version, listingIndex, offerIndex })
+    return Object.assign({ listingId, offerId }, transactionReceipt)
   }
 
   // updateOffer(listingId, offerId, data) {}

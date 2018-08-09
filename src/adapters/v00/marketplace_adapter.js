@@ -44,7 +44,7 @@ class MarkeplaceAdapter {
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
-  async makeOffer(listingId, ipfsBytes, data) {
+  async makeOffer(listingId, ipfsBytes, data, confirmationCallback) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
     const {
@@ -70,7 +70,20 @@ class MarkeplaceAdapter {
     if (!currencyAddr) {
       opts.value = price
     }
-    return this.contract.methods.makeOffer(...args).send(opts)
+
+    const transactionReceipt = await new Promise((resolve, reject) => {
+      this.contract.methods
+        .makeOffer(...args)
+        .send(opts)
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
+    })
+    const timestamp = await this.contractService.getTimestamp(
+      transactionReceipt
+    )
+    const offerIndex = transactionReceipt.events['OfferCreated'].returnValues.offerID
+    return Object.assign({ timestamp, offerIndex }, transactionReceipt)
   }
 
   async acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
