@@ -62,11 +62,12 @@ contract EternalStorage {
 
   // @notice Adds an admin for this contract
   function addAdmin(address _admin) external ifAdmin {
-    if (!admins[_admin]) {
-      admins[_admin] = true;
-      adminCount++;
-      emit AdminAdded(_admin);
+    if (admins[_admin]) {
+      return;
     }
+    admins[_admin] = true;
+    adminCount++;
+    emit AdminAdded(_admin);
   }
 
   function isAdmin(address _admin) public view returns (bool) {
@@ -76,21 +77,23 @@ contract EternalStorage {
   // @notice Removes an admin for this contract
   // @dev Reverts if attempting to remove last admin
   function removeAdmin(address _admin) external ifAdmin {
-    require(adminCount > 1, "cannot remove last admin");
-    if (admins[_admin]) {
-      delete admins[_admin];
-      adminCount--;
-      emit AdminRemoved(_admin);
+    if (!admins[_admin]) {
+      return;
     }
+    require(adminCount > 1, "cannot remove last admin");
+    delete admins[_admin];
+    adminCount--;
+    emit AdminRemoved(_admin);
   }
 
   // @notice Adds an address that is authorized modify records in this contract
   function addWriter(address _writer) external ifAdmin {
-    if (!writers[_writer]) {
-      writers[_writer] = true;
-      writerCount++;
-      emit WriterAdded(_writer);
+    if (writers[_writer]) {
+      return;
     }
+    writers[_writer] = true;
+    writerCount++;
+    emit WriterAdded(_writer);
   }
 
   function isWriter(address _addr) public view returns (bool) {
@@ -100,11 +103,12 @@ contract EternalStorage {
   // @notice Removes an address that is authorized modify records in this
   // contract
   function removeWriter(address _writer) external ifWriter {
-    if (writers[_writer]) {
-      delete writers[_writer];
-      writerCount--;
-      emit WriterRemoved(_writer);
+    if (!writers[_writer]) {
+      return;
     }
+    delete writers[_writer];
+    writerCount--;
+    emit WriterRemoved(_writer);
   }
 
   //
