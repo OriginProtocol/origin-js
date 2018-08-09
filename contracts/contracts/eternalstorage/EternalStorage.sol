@@ -4,8 +4,19 @@ pragma solidity 0.4.23;
 import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
-// @title Key/value storage contract
-// @note Based on Rocket Pool's RocketStorage.
+/**
+ * @title Key/value storage contract
+ * @notice Maintains a set of key/value mappings for the
+ * @dev Based on Rocket Pool's RocketStorage.
+ *
+ * Security model:
+ * - Admins may add or remove admins or writers
+ * - Admins and writers may mutate storage
+ * - At least one admin always exists
+ * - Anyone may read any key
+ * - Because of Solidity/EVM limitations, there is no way to iterate through
+ *   all keys.
+ */
 contract EternalStorage {
   event AdminAdded(address newAdmin);
   event AdminRemoved(address removedAdmin);
@@ -13,10 +24,8 @@ contract EternalStorage {
   event WriterRemoved(address removedWriter);
 
   using SafeMath for uint256;
-  using SafeMath for int256;
 
   // Key/value mappings
-
   mapping(bytes32 => uint256)    private uIntStorage;
   mapping(bytes32 => string)     private stringStorage;
   mapping(bytes32 => address)    private addressStorage;
@@ -24,6 +33,7 @@ contract EternalStorage {
   mapping(bytes32 => bool)       private boolStorage;
   mapping(bytes32 => int256)     private intStorage;
 
+  // Access control
   mapping(address => bool) admins;
   mapping(address => bool) writers;
   uint16 public adminCount;
@@ -37,7 +47,7 @@ contract EternalStorage {
   }
 
   //
-  // Ownership functions
+  // Access control functions
   //
 
   modifier ifAdmin() {
@@ -50,6 +60,7 @@ contract EternalStorage {
     _;
   }
 
+  // @notice Adds an admin for this contract
   function addAdmin(address _admin) external ifAdmin {
     if (!admins[_admin]) {
       admins[_admin] = true;
@@ -62,6 +73,8 @@ contract EternalStorage {
     return admins[_admin];
   }
 
+  // @notice Removes an admin for this contract
+  // @dev Reverts if attempting to remove last admin
   function removeAdmin(address _admin) external ifAdmin {
     require(adminCount > 1, "cannot remove last admin");
     if (admins[_admin]) {
@@ -71,6 +84,7 @@ contract EternalStorage {
     }
   }
 
+  // @notice Adds an address that is authorized modify records in this contract
   function addWriter(address _writer) external ifAdmin {
     if (!writers[_writer]) {
       writers[_writer] = true;
@@ -83,8 +97,10 @@ contract EternalStorage {
     return writers[_addr] || admins[_addr];
   }
 
+  // @notice Removes an address that is authorized modify records in this
+  // contract
   function removeWriter(address _writer) external ifWriter {
-    if (!writers[_writer]) {
+    if (writers[_writer]) {
       delete writers[_writer];
       writerCount--;
       emit WriterRemoved(_writer);
@@ -128,7 +144,6 @@ contract EternalStorage {
   //
   // Set functions
   //
-  // TODO(cuongdo): implement access control for setters & deleters
 
   // @param _key The key for the record
   function setAddress(bytes32 _key, address _value) external ifWriter {
@@ -164,25 +179,44 @@ contract EternalStorage {
   // Increment & decrement functions
   //
 
+  // @notice Increments value corresponding to key
+  // @dev Reverts on overflow or underflow
   function incrementUint(bytes32 _key, uint i) external ifWriter returns (uint) {
     uIntStorage[_key] = uIntStorage[_key].add(i);
     return uIntStorage[_key];
   }
 
+  // @notice Decrements value corresponding to key
+  // @dev Reverts on overflow or underflow
   function decrementUint(bytes32 _key, uint i) external ifWriter returns (uint) {
     uIntStorage[_key] = uIntStorage[_key].sub(i);
     return uIntStorage[_key];
   }
 
+  // @notice Increments value corresponding to key
+  // @dev Reverts on overflow or underflow
   function incrementInt(bytes32 _key, int i) external ifWriter returns (int) {
-    // TODO: make this use some SafeMath-equivalent for int256's
-    intStorage[_key] += i;
+    // SafeMath has nothing for signed numbers
+    int256 oldValue = intStorage[_key];
+    intStorage[_key] = oldValue + i;
+    if (i >= 0) {
+      require(intStorage[_key] >= oldValue, "overflow");
+    } else {
+      require(intStorage[_key] < oldValue, "underflow");
+    }
     return intStorage[_key];
   }
 
+  // @notice Decrements value corresponding to key
+  // @dev Reverts on overflow or underflow
   function decrementInt(bytes32 _key, int i) external ifWriter returns (int) {
-    // TODO: make this use some SafeMath-equivalent for int256's
-    intStorage[_key] -= i;
+    int256 oldValue = intStorage[_key];
+    intStorage[_key] = oldValue - i;
+    if (i >= 0) {
+      require(intStorage[_key] <= oldValue, "underflow");
+    } else {
+      require(intStorage[_key] > oldValue, "overflow");
+    }
     return intStorage[_key];
   }
 
@@ -219,4 +253,19 @@ contract EternalStorage {
   function deleteInt(bytes32 _key) external ifWriter {
     delete intStorage[_key];
   }
+}
+
+contract Tester {
+    EternalStorage es;
+    bytes32 constant key = keccak256("key");
+    int256 int256_min = int256((uint256(1) << 255));
+    int256 int256_max = int256(~((uint256(1) << 255)));
+    constructor() public {
+        es = new EternalStorage();
+    }
+
+    function test() public returns (int256) {
+        es.setInt(key, int256_min);
+        return es.decrementInt(key, 1);
+    }
 }
