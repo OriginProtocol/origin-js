@@ -1,3 +1,4 @@
+/* eslint-disable semi,no-unused-vars,no-extra-semi */
 async function assertJump (promise) {
   try {
     await promise;

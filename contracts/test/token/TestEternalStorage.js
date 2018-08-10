@@ -1,6 +1,5 @@
-const { assertJump } = require('../openzeppelin-token/helpers/assertJump');
+const { assertJump } = require('../openzeppelin-token/helpers/assertJump')
 import assertRevert from '../openzeppelin-token/helpers/assertRevert'
-import { EISCONN } from 'constants';
 const EternalStorage = artifacts.require('EternalStorage')
 
 const BigNumber = web3.BigNumber
@@ -158,13 +157,16 @@ contract('EternalStorage', function(accounts) {
   })
 
   describe('ints', async function() {
-    const value = 65535;
+    const value = 65535
     const int256Min = new BigNumber(
       '-57896044618658097711785492504343953926634992332820282019728792003956564819968'
     )
+    /*
+    Reinstate this when the corresponding test works
     const int256Max = new BigNumber(
       '57896044618658097711785492504343953926634992332820282019728792003956564819967'
     )
+    */
 
     it('can be set, get, and deleted', async function() {
       await es.setInt(key, value)
@@ -231,5 +233,7 @@ contract('EternalStorage', function(accounts) {
       await assertJump(es.decrementInt(key, -1))
     })
     */
+
+
   })
 })
