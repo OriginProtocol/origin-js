@@ -108,7 +108,7 @@ class InsertOnlyKeystore {
     } catch (error) {
       console.error(error)
     }
-    throw new Error("Cannot verify signature")
+    throw new Error('Cannot verify signature')
   }
 }
 
@@ -306,21 +306,18 @@ class Messaging extends ResourceBase {
 
   postVerifyRegistry(message) {
     const set_key = message.payload.key
-    this.events.emit("registered-" + set_key, message.payload.value)
+    this.events.emit('registered-' + set_key, message.payload.value)
   }
 
   async getRegisteredKey(key) {
     const entry = this.global_keys.get(key)
-    if(entry)
-    {
+    if (entry) {
       return entry
-    }
-    else
-    {
-      return new Promise((resolve) => {
+    } else {
+      return new Promise(resolve => {
         //resolve to nothing after a second
         setTimeout(resolve, 5000)
-        this.events.on("registered-" + key, (entry) => {
+        this.events.on('registered-' + key, entry => {
           resolve(entry)
         })
       })
@@ -452,7 +449,7 @@ class Messaging extends ResourceBase {
     }
     if (this.sharedRooms[key]) {
       if (this.sharedRooms[key] == 'wait') {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           this.events.on('SharedRoom.' + key, room => {
             console.log('Returning shared room:', key)
             resolve(room)
@@ -682,7 +679,7 @@ class Messaging extends ResourceBase {
           this.processMessage(room_id, room)
         })
         room.events.on('replicated', (/* dbname */) => {
-          console.log("process Message from replicated")
+          console.log('process Message from replicated')
           this.processMessage(room_id, room)
         })
       }
@@ -729,17 +726,18 @@ class Messaging extends ResourceBase {
   canConverseWith(remote_eth_address) {
     const { account_key, global_keys } = this
 
-    return this.canSendMessages() &&
-           account_key !== remote_eth_address &&
-           global_keys &&
-           global_keys.get(remote_eth_address)
+    return (
+      this.canSendMessages() &&
+      account_key !== remote_eth_address &&
+      global_keys &&
+      global_keys.get(remote_eth_address)
+    )
   }
 
   canReceiveMessages(remote_eth_address) {
     const { global_keys } = this
 
-    return global_keys &&
-           global_keys.get(remote_eth_address)
+    return global_keys && global_keys.get(remote_eth_address)
   }
 
   canSendMessages() {
@@ -845,7 +843,9 @@ class Messaging extends ResourceBase {
     )
     // convert stored timestamp string to date
     const subscriptionStart = new Date(
-      +localStorage.getItem(`${storeKeys.messageSubscriptionStart}:${this.account_key}`)
+      +localStorage.getItem(
+        `${storeKeys.messageSubscriptionStart}:${this.account_key}`
+      )
     )
     const isWatched = created > subscriptionStart
     const status =
