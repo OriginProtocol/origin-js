@@ -141,7 +141,7 @@ contract EternalStorage {
   }
 
   // @param _key The key for the record
-  function getInt(bytes32 _key) external view returns (int) {
+  function getInt(bytes32 _key) external view returns (int256) {
     return intStorage[_key];
   }
 
@@ -175,7 +175,7 @@ contract EternalStorage {
   }
 
   // @param _key The key for the record
-  function setInt(bytes32 _key, int _value) external ifWriter {
+  function setInt(bytes32 _key, int256 _value) external ifWriter {
     intStorage[_key] = _value;
   }
 

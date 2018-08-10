@@ -196,6 +196,8 @@ contract('EternalStorage', function(accounts) {
     })
 
     // TODO: fix this test in which es.getInt(key) is not returning int256Max
+    // This is weird, because Remix lets me store int256Max using setInt and
+    // retrieve it just fine.
     /*
     it('increment reverts on overflow', async function() {
       await es.setInt(key, int256Max)
@@ -220,6 +222,14 @@ contract('EternalStorage', function(accounts) {
       await assertJump(es.decrementInt(key, 1))
     })
 
-    // TODO: test decrement overflow (negative decrement)
+    // TODO: fix and reenable this
+    /*
+    it('decrement reverts on overflow', async function() {
+      await es.setInt(key, int256Max)
+      const getValue = await es.getInt(key)
+      getValue.should.be.bignumber.equal(int256Max)
+      await assertJump(es.decrementInt(key, -1))
+    })
+    */
   })
 })
