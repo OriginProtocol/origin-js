@@ -108,7 +108,7 @@ async function liveTracking(config) {
   const checkIntervalSeconds = 5
   let start
 
-  check = async () => {
+  const check = async () => {
     start = new Date()
     const currentBlockNumber = await web3.eth.getBlockNumber()
     if (currentBlockNumber == lastCheckedBlock) {
@@ -123,9 +123,9 @@ async function liveTracking(config) {
     lastCheckedBlock = currentBlockNumber
     return scheduleNextCheck()
   }
-  scheduleNextCheck = async () => {
+  const scheduleNextCheck = async () => {
     const elapsed = new Date() - start
-    delay = Math.max(checkIntervalSeconds * 1000 - elapsed, 1)
+    const delay = Math.max(checkIntervalSeconds * 1000 - elapsed, 1)
     setTimeout(check, delay)
   }
 
@@ -198,7 +198,7 @@ async function handleLog(log, rule, contractVersion, context) {
 }
 
 async function postToWebhook(urlString, json) {
-  url = urllib.parse(urlString)
+  const url = urllib.parse(urlString)
   const postOptions = {
     host: url.host,
     port: url.port,
@@ -211,10 +211,13 @@ async function postToWebhook(urlString, json) {
   }
   return new Promise((resolve, reject) => {
     const req = http.request(postOptions, res => {
-      console.log(res.statusCode)
-      resolve()
+      if(res.statusCode == 200){
+        resolve()
+      } else {
+        reject()
+      }
     })
-    req.on('error', err => {
+    req.on('error', () => {
       reject()
     })
     req.write(json)
