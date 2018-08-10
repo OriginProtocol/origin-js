@@ -204,9 +204,9 @@ contract EternalStorage {
     int256 oldValue = intStorage[_key];
     intStorage[_key] = oldValue + i;
     if (i >= 0) {
-      require(intStorage[_key] >= oldValue, "overflow");
+      assert(intStorage[_key] >= oldValue);
     } else {
-      require(intStorage[_key] < oldValue, "underflow");
+      assert(intStorage[_key] < oldValue);
     }
     return intStorage[_key];
   }
@@ -217,9 +217,9 @@ contract EternalStorage {
     int256 oldValue = intStorage[_key];
     intStorage[_key] = oldValue - i;
     if (i >= 0) {
-      require(intStorage[_key] <= oldValue, "underflow");
+      assert(intStorage[_key] <= oldValue);
     } else {
-      require(intStorage[_key] > oldValue, "overflow");
+      assert(intStorage[_key] > oldValue);
     }
     return intStorage[_key];
   }
