@@ -1,15 +1,16 @@
-import RLP from "rlp"
-import Web3 from "web3"
+import RLP from 'rlp'
+import Web3 from 'web3'
 
 const claimTypeMapping = {
-  3: "facebook",
-  4: "twitter",
-  10: "phone",
-  11: "email"
+  3: 'facebook',
+  4: 'twitter',
+  5: 'airbnb',
+  10: 'phone',
+  11: 'email'
 }
 
-const appendSlash = (url) => {
-  return (url.substr(-1) === "/") ? url : url + "/"
+const appendSlash = url => {
+  return url.substr(-1) === '/' ? url : url + '/'
 }
 
 class AttestationObject {
@@ -22,7 +23,7 @@ class AttestationObject {
   }
 }
 
-let responseToUrl = (resp = {}) => {
+const responseToUrl = (resp = {}) => {
   return resp['url']
 }
 
@@ -42,11 +43,14 @@ class Attestations {
   }
 
   async getIdentityAddress(wallet) {
-    let currentAccount = await this.contractService.currentAccount()
+    const currentAccount = await this.contractService.currentAccount()
     wallet = wallet || currentAccount
-    let userRegistry = await this.contractService.deployed(this.contractService.userRegistryContract)
-    let identityAddress = await userRegistry.methods.users(wallet).call()
-    let hasRegisteredIdentity = identityAddress !== "0x0000000000000000000000000000000000000000"
+    const userRegistry = await this.contractService.deployed(
+      this.contractService.userRegistryContract
+    )
+    const identityAddress = await userRegistry.methods.users(wallet).call()
+    const hasRegisteredIdentity =
+      identityAddress !== '0x0000000000000000000000000000000000000000'
     if (hasRegisteredIdentity) {
       return Web3.utils.toChecksumAddress(identityAddress)
     } else {
@@ -54,16 +58,22 @@ class Attestations {
     }
   }
 
-  async phoneGenerateCode({ phone }) {
-    return await this.post("phone/generate-code", { phone })
+  async phoneGenerateCode({ countryCallingCode, phone, method, locale }) {
+    return await this.post('phone/generate-code', {
+      country_calling_code: countryCallingCode,
+      phone,
+      method,
+      locale
+    })
   }
 
-  async phoneVerify({ wallet, phone, code }) {
-    let identity = await this.getIdentityAddress(wallet)
+  async phoneVerify({ wallet, countryCallingCode, phone, code }) {
+    const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "phone/verify",
+      'phone/verify',
       {
         identity,
+        country_calling_code: countryCallingCode,
         phone,
         code
       },
@@ -72,13 +82,13 @@ class Attestations {
   }
 
   async emailGenerateCode({ email }) {
-    return await this.post("email/generate-code", { email })
+    return await this.post('email/generate-code', { email })
   }
 
   async emailVerify({ wallet, email, code }) {
-    let identity = await this.getIdentityAddress(wallet)
+    const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "email/verify",
+      'email/verify',
       {
         identity,
         email,
@@ -89,16 +99,13 @@ class Attestations {
   }
 
   async facebookAuthUrl() {
-    return await this.get(
-      `facebook/auth-url`,
-      responseToUrl
-    )
+    return await this.get(`facebook/auth-url`, {}, responseToUrl)
   }
 
   async facebookVerify({ wallet, code }) {
-    let identity = await this.getIdentityAddress(wallet)
+    const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "facebook/verify",
+      'facebook/verify',
       {
         identity,
         code
@@ -108,35 +115,50 @@ class Attestations {
   }
 
   async twitterAuthUrl() {
-    return await this.get(
-      `twitter/auth-url`,
-      responseToUrl
-    )
+    return await this.get(`twitter/auth-url`, {}, responseToUrl)
   }
 
   async twitterVerify({ wallet, code }) {
-    let identity = await this.getIdentityAddress(wallet)
+    const identity = await this.getIdentityAddress(wallet)
     return await this.post(
-      "twitter/verify",
+      'twitter/verify',
       {
         identity,
-        "oauth-verifier": code
+        'oauth-verifier': code
+      },
+      this.responseToAttestation
+    )
+  }
+
+  async airbnbGenerateCode({ wallet, airbnbUserId }) {
+    const identity = await this.getIdentityAddress(wallet)
+
+    return await this.get(`airbnb/generate-code`, {
+      identity: identity,
+      airbnbUserId: airbnbUserId
+    })
+  }
+
+  async airbnbVerify({ wallet, airbnbUserId }) {
+    const identity = await this.getIdentityAddress(wallet)
+    return await this.post(
+      'airbnb/verify',
+      {
+        identity,
+        airbnbUserId
       },
       this.responseToAttestation
     )
   }
 
   async http(baseUrl, url, body, successFn, method) {
-    let response = await this.fetch(
-      appendSlash(baseUrl) + url,
-      {
-        method,
-        body: body ? JSON.stringify(body) : undefined,
-        headers: { "content-type": "application/json" },
-        credentials: 'include'
-      }
-    )
-    let json = await response.json()
+    const response = await this.fetch(appendSlash(baseUrl) + url, {
+      method,
+      body: body ? JSON.stringify(body) : undefined,
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include'
+    })
+    const json = await response.json()
     if (response.ok) {
       return successFn ? successFn(json) : json
     }
@@ -147,18 +169,31 @@ class Attestations {
     return await this.http(this.serverUrl, url, body, successFn, 'POST')
   }
 
-  async get(url, successFn) {
-    return await this.http(this.serverUrl, url, undefined, successFn, 'GET')
+  async get(url, parameters, successFn) {
+    const objectKeys = Object.keys(parameters)
+    let stringParams = objectKeys
+      .map(key => key + '=' + parameters[key])
+      .join('&')
+    stringParams = (objectKeys.length === 0 ? '' : '?') + stringParams
+
+    return await this.http(
+      this.serverUrl,
+      url + stringParams,
+      undefined,
+      successFn,
+      'GET'
+    )
   }
 
   async predictIdentityAddress(wallet) {
-    let web3 = this.contractService.web3
-    let nonce = await new Promise((resolve, reject) => {
+    const web3 = this.contractService.web3
+    const nonce = await new Promise(resolve => {
       web3.eth.getTransactionCount(wallet, (err, count) => {
         resolve(count)
       })
     })
-    let address = "0x" + Web3.utils.sha3(RLP.encode([wallet, nonce])).substring(26, 66)
+    const address =
+      '0x' + Web3.utils.sha3(RLP.encode([wallet, nonce])).substring(26, 66)
     return Web3.utils.toChecksumAddress(address)
   }
 }
