@@ -203,7 +203,7 @@ class Listings extends ResourceBase {
     )
   }
 
-  async request(address, ifpsData, ethToPay) {
+  async request(address, ifpsData, ethToPay, confirmationCallback) {
     // TODO: ethToPay should really be replaced by something that takes Wei.
     const value = this.contractService.web3.utils.toWei(
       String(ethToPay),
@@ -219,7 +219,8 @@ class Listings extends ResourceBase {
       {
         value: value,
         gas: 850000
-      }
+      },
+      confirmationCallback
     )
   }
 
