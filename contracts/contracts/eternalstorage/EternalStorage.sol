@@ -55,7 +55,7 @@ contract EternalStorage {
     _;
   }
 
-  modifier ifWriter() {
+  modifier canWrite() {
     require(isWriter(msg.sender), "sender not authorized to write to this contract");
     _;
   }
@@ -102,7 +102,7 @@ contract EternalStorage {
 
   // @notice Removes an address that is authorized modify records in this
   // contract
-  function removeWriter(address _writer) external ifWriter {
+  function removeWriter(address _writer) external canWrite {
     if (!writers[_writer]) {
       return;
     }
@@ -150,32 +150,32 @@ contract EternalStorage {
   //
 
   // @param _key The key for the record
-  function setAddress(bytes32 _key, address _value) external ifWriter {
+  function setAddress(bytes32 _key, address _value) external canWrite {
     addressStorage[_key] = _value;
   }
 
   // @param _key The key for the record
-  function setUint(bytes32 _key, uint _value) external ifWriter {
+  function setUint(bytes32 _key, uint _value) external canWrite {
     uintStorage[_key] = _value;
   }
 
   // @param _key The key for the record
-  function setString(bytes32 _key, string _value) external ifWriter {
+  function setString(bytes32 _key, string _value) external canWrite {
     stringStorage[_key] = _value;
   }
 
   // @param _key The key for the record
-  function setBytes(bytes32 _key, bytes _value) external ifWriter {
+  function setBytes(bytes32 _key, bytes _value) external canWrite {
     bytesStorage[_key] = _value;
   }
 
   // @param _key The key for the record
-  function setBool(bytes32 _key, bool _value) external ifWriter {
+  function setBool(bytes32 _key, bool _value) external canWrite {
     boolStorage[_key] = _value;
   }
 
   // @param _key The key for the record
-  function setInt(bytes32 _key, int256 _value) external ifWriter {
+  function setInt(bytes32 _key, int256 _value) external canWrite {
     intStorage[_key] = _value;
   }
 
@@ -185,21 +185,21 @@ contract EternalStorage {
 
   // @notice Increments value corresponding to key
   // @dev Reverts on overflow or underflow
-  function incrementUint(bytes32 _key, uint i) external ifWriter returns (uint) {
+  function incrementUint(bytes32 _key, uint i) external canWrite returns (uint) {
     uintStorage[_key] = uintStorage[_key].add(i);
     return uintStorage[_key];
   }
 
   // @notice Decrements value corresponding to key
   // @dev Reverts on overflow or underflow
-  function decrementUint(bytes32 _key, uint i) external ifWriter returns (uint) {
+  function decrementUint(bytes32 _key, uint i) external canWrite returns (uint) {
     uintStorage[_key] = uintStorage[_key].sub(i);
     return uintStorage[_key];
   }
 
   // @notice Increments value corresponding to key
   // @dev Reverts on overflow or underflow
-  function incrementInt(bytes32 _key, int i) external ifWriter returns (int) {
+  function incrementInt(bytes32 _key, int i) external canWrite returns (int) {
     // SafeMath has nothing for signed numbers
     int256 oldValue = intStorage[_key];
     intStorage[_key] = oldValue + i;
@@ -213,7 +213,7 @@ contract EternalStorage {
 
   // @notice Decrements value corresponding to key
   // @dev Reverts on overflow or underflow
-  function decrementInt(bytes32 _key, int i) external ifWriter returns (int) {
+  function decrementInt(bytes32 _key, int i) external canWrite returns (int) {
     int256 oldValue = intStorage[_key];
     intStorage[_key] = oldValue - i;
     if (i >= 0) {
@@ -229,32 +229,32 @@ contract EternalStorage {
   //
 
   // @param _key The key for the record
-  function deleteAddress(bytes32 _key) external ifWriter {
+  function deleteAddress(bytes32 _key) external canWrite {
     delete addressStorage[_key];
   }
 
   // @param _key The key for the record
-  function deleteUint(bytes32 _key) external ifWriter {
+  function deleteUint(bytes32 _key) external canWrite {
     delete uintStorage[_key];
   }
 
   // @param _key The key for the record
-  function deleteString(bytes32 _key) external ifWriter {
+  function deleteString(bytes32 _key) external canWrite {
     delete stringStorage[_key];
   }
 
   // @param _key The key for the record
-  function deleteBytes(bytes32 _key) external ifWriter {
+  function deleteBytes(bytes32 _key) external canWrite {
     delete bytesStorage[_key];
   }
 
   // @param _key The key for the record
-  function deleteBool(bytes32 _key) external ifWriter {
+  function deleteBool(bytes32 _key) external canWrite {
     delete boolStorage[_key];
   }
 
   // @param _key The key for the record
-  function deleteInt(bytes32 _key) external ifWriter {
+  function deleteInt(bytes32 _key) external canWrite {
     delete intStorage[_key];
   }
 }
