@@ -26,7 +26,7 @@ contract EternalStorage {
   using SafeMath for uint256;
 
   // Key/value mappings
-  mapping(bytes32 => uint256)    private uIntStorage;
+  mapping(bytes32 => uint256)    private uintStorage;
   mapping(bytes32 => string)     private stringStorage;
   mapping(bytes32 => address)    private addressStorage;
   mapping(bytes32 => bytes)      private bytesStorage;
@@ -122,7 +122,7 @@ contract EternalStorage {
 
   // @param _key The key for the record
   function getUint(bytes32 _key) external view returns (uint) {
-    return uIntStorage[_key];
+    return uintStorage[_key];
   }
 
   // @param _key The key for the record
@@ -156,7 +156,7 @@ contract EternalStorage {
 
   // @param _key The key for the record
   function setUint(bytes32 _key, uint _value) external ifWriter {
-    uIntStorage[_key] = _value;
+    uintStorage[_key] = _value;
   }
 
   // @param _key The key for the record
@@ -186,15 +186,15 @@ contract EternalStorage {
   // @notice Increments value corresponding to key
   // @dev Reverts on overflow or underflow
   function incrementUint(bytes32 _key, uint i) external ifWriter returns (uint) {
-    uIntStorage[_key] = uIntStorage[_key].add(i);
-    return uIntStorage[_key];
+    uintStorage[_key] = uintStorage[_key].add(i);
+    return uintStorage[_key];
   }
 
   // @notice Decrements value corresponding to key
   // @dev Reverts on overflow or underflow
   function decrementUint(bytes32 _key, uint i) external ifWriter returns (uint) {
-    uIntStorage[_key] = uIntStorage[_key].sub(i);
-    return uIntStorage[_key];
+    uintStorage[_key] = uintStorage[_key].sub(i);
+    return uintStorage[_key];
   }
 
   // @notice Increments value corresponding to key
@@ -235,7 +235,7 @@ contract EternalStorage {
 
   // @param _key The key for the record
   function deleteUint(bytes32 _key) external ifWriter {
-    delete uIntStorage[_key];
+    delete uintStorage[_key];
   }
 
   // @param _key The key for the record
@@ -257,19 +257,4 @@ contract EternalStorage {
   function deleteInt(bytes32 _key) external ifWriter {
     delete intStorage[_key];
   }
-}
-
-contract Tester {
-    EternalStorage es;
-    bytes32 constant key = keccak256("key");
-    int256 int256_min = int256((uint256(1) << 255));
-    int256 int256_max = int256(~((uint256(1) << 255)));
-    constructor() public {
-        es = new EternalStorage();
-    }
-
-    function test() public returns (int256) {
-        es.setInt(key, int256_min);
-        return es.decrementInt(key, 1);
-    }
 }
