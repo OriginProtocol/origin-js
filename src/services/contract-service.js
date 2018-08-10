@@ -2,11 +2,20 @@ import ClaimHolderRegisteredContract from './../../contracts/build/contracts/Cla
 import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
+import PurchaseLibrary from './../../contracts/build/contracts/PurchaseLibrary.json'
 import ListingsRegistryContract from './../../contracts/build/contracts/ListingsRegistry.json'
+import ListingsRegistryStorageContract from './../../contracts/build/contracts/ListingsRegistryStorage.json'
 import ListingContract from './../../contracts/build/contracts/Listing.json'
+import UnitListingContract from './../../contracts/build/contracts/UnitListing.json'
+import FractionalListingContract from './../../contracts/build/contracts/FractionalListing.json'
 import PurchaseContract from './../../contracts/build/contracts/Purchase.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
+import OriginTokenContract from './../../contracts/build/contracts/Token.json'
+
+import V00_MarketplaceContract from './../../contracts/build/contracts/V00_Marketplace.json'
+import V01_MarketplaceContract from './../../contracts/build/contracts/V01_Marketplace.json'
+
 import bs58 from 'bs58'
 import Web3 from 'web3'
 
@@ -21,17 +30,24 @@ class ContractService {
     this.web3 = new Web3(externalWeb3.currentProvider)
 
     const contracts = {
-      listingsRegistryContract: ListingsRegistryContract,
       listingContract: ListingContract,
+      listingsRegistryContract: ListingsRegistryContract,
+      listingsRegistryStorageContract: ListingsRegistryStorageContract,
+      unitListingContract: UnitListingContract,
+      fractionalListingContract: FractionalListingContract,
       purchaseContract: PurchaseContract,
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
       claimHolderPresignedContract: ClaimHolderPresignedContract,
-      originIdentityContract: OriginIdentityContract
+      originIdentityContract: OriginIdentityContract,
+      originTokenContract: OriginTokenContract,
+      v00_MarketplaceContract: V00_MarketplaceContract,
+      v01_MarketplaceContract: V01_MarketplaceContract
     }
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
     this.libraries.KeyHolderLibrary = KeyHolderLibrary
+    this.libraries.PurchaseLibrary = PurchaseLibrary
     for (const name in contracts) {
       this[name] = contracts[name]
       try {
@@ -95,6 +111,11 @@ class ContractService {
     })
   }
 
+  async getTimestamp(event) {
+    const { timestamp } = await this.getBlock(event.blockHash)
+    return timestamp
+  }
+
   // async convenience method for getting transaction details
   getTransaction(transactionHash) {
     return new Promise((resolve, reject) => {
@@ -106,23 +127,6 @@ class ContractService {
         }
       })
     })
-  }
-
-  async submitListing(ipfsListing, ethPrice, units) {
-    try {
-      const account = await this.currentAccount()
-      const instance = await this.deployed(ListingsRegistryContract)
-
-      const weiToGive = this.web3.utils.toWei(String(ethPrice), 'ether')
-      // Note we cannot get the listingId returned by our contract.
-      // See: https://forum.ethereum.org/discussion/comment/31529/#Comment_31529
-      return instance.methods
-        .create(this.getBytes32FromIpfsHash(ipfsListing), weiToGive, units)
-        .send({ from: account, gas: 4476768 })
-    } catch (error) {
-      console.error('Error submitting to the Ethereum blockchain: ' + error)
-      throw error
-    }
   }
 
   async deployed(contract, addrs) {
@@ -165,101 +169,31 @@ class ContractService {
     return txReceipt
   }
 
-  async getAllListingIds() {
-    const range = (start, count) =>
-      Array.apply(0, Array(count)).map((element, index) => index + start)
-
-    let instance
-    try {
-      instance = await this.deployed(ListingsRegistryContract)
-    } catch (error) {
-      console.log('Contract not deployed')
-      throw error
-    }
-
-    // Get total number of listings
-    let listingsLength
-    try {
-      listingsLength = await instance.methods.listingsLength().call()
-    } catch (error) {
-      console.log(error)
-      console.log('Can\'t get number of listings.')
-      throw error
-    }
-
-    return range(0, Number(listingsLength))
-  }
-
-  async getListing(listingId) {
-    const instance = await this.deployed(ListingsRegistryContract)
-
-    let listing
-    try {
-      listing = await instance.methods.getListing(listingId).call()
-    } catch (error) {
-      console.log('Error fetching listingId: ' + listingId)
-      throw error
-    }
-
-    // Listing is returned as array of properties.
-    // IPFS hash (as bytes32 hex string) is in results[2]
-    // Convert it to regular IPFS base-58 encoded hash
-    // Address of Listing contract is in: listing[0]
-    const listingObject = {
-      index: listingId,
-      address: listing[0],
-      lister: listing[1],
-      ipfsHash: this.getIpfsHashFromBytes32(listing[2]),
-      price: this.web3.utils.fromWei(listing[3], 'ether'),
-      unitsAvailable: listing[4]
-    }
-    return listingObject
-  }
-
-  async waitTransactionFinished(
-    transactionHash,
-    pollIntervalMilliseconds = 1000
-  ) {
-    console.log('Waiting for transaction')
-    console.log(transactionHash)
-    const blockNumber = await new Promise((resolve, reject) => {
-      if (!transactionHash) {
-        reject(`Invalid transactionHash passed: ${transactionHash}`)
-        return
-      }
-      let txCheckTimer = null
-      const txCheckTimerCallback = () => {
-        this.web3.eth.getTransaction(transactionHash, (error, transaction) => {
-          if (transaction.blockNumber != null) {
-            console.log(`Transaction mined at block ${transaction.blockNumber}`)
-            // TODO: Wait maximum number of blocks
-            // TODO (Stan): Confirm transaction *sucessful* with getTransactionReceipt()
-
-            // // TODO (Stan): Metamask web3 doesn't have this method. Probably could fix by
-            // // by doing the "copy local web3 over metamask's" technique.
-            // this.web3.eth.getTransactionReceipt(this.props.transactionHash, (error, transactionHash) => {
-            //   console.log(transactionHash)
-            // })
-
-            clearInterval(txCheckTimer)
-            // Hack to wait two seconds, as results don't seem to be
-            // immediately available.
-            setTimeout(() => resolve(transaction.blockNumber), 2000)
-          }
-        })
-      }
-
-      txCheckTimer = setInterval(txCheckTimerCallback, pollIntervalMilliseconds)
-    })
-    return blockNumber
-  }
-
+  /**
+   * Runs a call or transaction on a this resource's smart contract.
+   *
+   * This handles getting the contract, using the correct account,
+   * and building our own response for origin transactions.
+   *
+   * If doing a blockchain call, this returns the data returned by
+   * the contract function.
+   *
+   * If running a transaction, this returns an object containing the block timestamp and the transaction receipt.
+   *
+   * @param {object} contractDefinition - JSON representation of the contract
+   * @param {string} address - address of the contract
+   * @param {string} functionName - contract function to be run
+   * @param {*[]} args - args for the transaction or call.
+   * @param {{gas: number, value:(number | BigNumber)}} options - transaction options for w3
+   * @param {function} confirmationCallback - an optional function that will be called on each block confirmation
+   */
   async contractFn(
     contractDefinition,
     address,
     functionName,
     args = [],
-    options = {}
+    options = {},
+    confirmationCallback
   ) {
     // Setup options
     const opts = Object.assign(options, {}) // clone options
@@ -267,29 +201,23 @@ class ContractService {
     opts.gas = options.gas || 50000 // Default gas
     // Get contract and run trasaction
     const contract = await this.deployed(contractDefinition)
-    contract.options.address = address
-
+    contract.options.address = address || contract.options.address
     const method = contract.methods[functionName].apply(contract, args)
     if (method._method.constant) {
       return await method.call(opts)
     }
-    const transaction = await new Promise((resolve, reject) => {
+    const transactionReceipt = await new Promise((resolve, reject) => {
       method
         .send(opts)
-        .on('receipt', receipt => {
-          resolve(receipt)
-        })
-        .on('error', err => reject(err))
+        .on('receipt', resolve)
+        .on('confirmation', confirmationCallback)
+        .on('error', reject)
     })
-
-    transaction.tx = transaction.transactionHash
-    // Decorate transaction with whenFinished promise
-    if (transaction.tx !== undefined) {
-      transaction.whenFinished = async () => {
-        await this.waitTransactionFinished(transaction.tx)
-      }
+    return {
+      created: (await this.web3.eth.getBlock(transactionReceipt.blockNumber))
+        .timestamp,
+      transactionReceipt
     }
-    return transaction
   }
 }
 
