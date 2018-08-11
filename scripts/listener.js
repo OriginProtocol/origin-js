@@ -33,12 +33,12 @@ const o = new Origin({ web3 })
 // -----------------------------
 
 // Helper functions
-const listingId = log => {
+const generateListingId = log => {
   return [log.networkId, log.contractVersionKey, log.decoded.listingID].join(
     '-'
   )
 }
-const offerId = log => {
+const generateOfferId = log => {
   return [
     log.networkId,
     log.contractVersionKey,
@@ -48,13 +48,13 @@ const offerId = log => {
 }
 const getListingDetails = async log => {
   return {
-    listing: await o.marketplace.getListing(listingId(log))
+    listing: await o.marketplace.getListing(generateListingId(log))
   }
 }
 const getOfferDetails = async log => {
   return {
-    listing: await o.marketplace.getListing(listingId(log)),
-    offer: await o.marketplace.getOffer(offerId(log))
+    listing: await o.marketplace.getListing(generateListingId(log)),
+    offer: await o.marketplace.getOffer(generateOfferId(log))
   }
 }
 
@@ -99,9 +99,7 @@ const LISTEN_RULES = {
 // - checks for a new block every checkIntervalSeconds
 // - if new block appeared, look for all events after the last found event
 async function liveTracking(config) {
-  console.log('Lobs')
   const context = await new Context(config).init()
-  console.log('Lookup tables created')
 
   let lastLogBlock = 0
   let lastCheckedBlock = 0
@@ -250,6 +248,9 @@ function buildSignatureLookup() {
   for (const contractName in LISTEN_RULES) {
     const eventRules = LISTEN_RULES[contractName]
     const contract = o.contractService[contractName]
+    if(contract == undefined){
+      throw "Can't find contract "+contractName
+    }
     contract.abi.filter(x => x.type == 'event').forEach(eventAbi => {
       const ruleFn = eventRules[eventAbi.name]
       if (ruleFn == undefined) {
