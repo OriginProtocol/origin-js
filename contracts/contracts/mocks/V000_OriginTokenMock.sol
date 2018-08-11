@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "../token/V000/OriginToken.sol";
-import "./EternalStorageMock.sol";
+import "../eternalstorage/EternalStorage.sol";
 
 /**
  * @title Adapter for  OpenZeppelin token tests.
