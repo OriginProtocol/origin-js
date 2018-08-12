@@ -125,7 +125,7 @@ class IpfsService {
    *
    * @param {array} url - the url to be rewritten
    */
-  rewriteUrl(url) => {
+  rewriteUrl(url) {
     if (url.startsWith('ipfs://')) {
       // Rewrite ipfs: URLs
       const ipfsHash = url.replace('ipfs://', '')
