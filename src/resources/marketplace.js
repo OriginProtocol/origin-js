@@ -116,6 +116,33 @@ class Marketplace extends Adaptable {
   async createListing(ipfsData, confirmationCallback) {
     validateListing(ipfsData, this.contractService)
 
+    // Apply filtering to pictures and uploaded any data: URLs to IPFS
+    if (ipfsData.pictures) {
+      const pictures = ipfsData.pictures.filter((url) => {
+        try {
+          // Only allow data:, dweb:, and ipfs: URLs
+          return ['data:', 'dweb:', 'ipfs:'].includes((new URL(url).protocol))
+        } catch (error) {
+          // Invalid URL, filter it out
+          return false
+        }
+      }).map(async (url) => {
+        // Upload any data: URLs to IPFS
+        // TODO possible removal and only accept dweb: and ipfs: URLS from dapps
+        if (url.startsWith('data:')) {
+          const ipfsHash = await this.ipfsService.saveDataURIAsFile(url)
+          return this.ipfsService.gatewayUrlForHash(ipfsHash)
+        }
+        // Leave other URLs untouched
+        return url
+      })
+
+      // Replace data.pictures
+      await Promise.all(pictures).then((results) => {
+        ipfsData.pictures = results
+      })
+    }
+
     const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
