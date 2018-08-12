@@ -50,6 +50,13 @@ class Marketplace extends Adaptable {
     )
     const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
 
+    // Rewrite IPFS image URLs to use the configured IPFS gateway
+    if (ipfsJson && ipfsJson.data) {
+      ipfsJson.data.pictures = ipfsJson.data.pictures.map((url) => {
+        return this.ipfsService.rewriteUrl(url)
+      })
+    }
+
     return Object.assign({}, listing, {
       id: listingId,
       ipfsData: ipfsJson || {}
