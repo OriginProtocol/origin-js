@@ -119,6 +119,25 @@ class IpfsService {
   gatewayUrlForHash(ipfsHashStr) {
     return `${this.gateway}/ipfs/${ipfsHashStr}`
   }
+
+  /**
+   * Rewrites a URL to use the configured IPFS gateway.
+   *
+   * @param {array} url - the url to be rewritten
+   */
+  rewriteUrl(url) => {
+    if (url.startsWith('ipfs://')) {
+      // Rewrite ipfs: URLs
+      const ipfsHash = url.replace('ipfs://', '')
+      return this.gatewayUrlForHash(ipfsHash)
+    } else if (url.startsWith('dweb://ipfs/')) {
+      // Rewrite dweb://ipfs URLs
+      const ipfsHash = url.replace('dweb://ipfs/', '')
+      return this.gatewayUrlForHash(ipfsHash)
+    }
+    // Leave data: URLs untouched
+    return url
+  }
 }
 
 export default IpfsService
