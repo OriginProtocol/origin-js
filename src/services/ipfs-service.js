@@ -61,16 +61,16 @@ class IpfsService {
     // Decode b64 encoded component
     const binary = new Buffer(dataURI.split(',')[1], 'base64').toString('binary')
 
-    const buffer = new Array()
+    const buffer = new Uint8Array(binary.length)
     for (let i = 0; i < binary.length; i++) {
       buffer[i] = binary.charCodeAt(i)
     }
 
     let file
     if (typeof Blob === 'undefined') {
-      file = Buffer.from([new Uint8Array(buffer)])
+      file = Buffer.from([buffer])
     } else {
-      file = new Blob([new Uint8Array(buffer)], { type: mimeString })
+      file = new Blob([buffer], { type: mimeString })
     }
 
     return await this.saveFile(file)
