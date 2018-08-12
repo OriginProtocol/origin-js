@@ -48,7 +48,7 @@ class Marketplace extends Adaptable {
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(
       listing.ipfsHash
     )
-    const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+    const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
 
     return Object.assign({}, listing, {
       id: listingId,
@@ -87,7 +87,7 @@ class Marketplace extends Adaptable {
     const offer = await adapter.getOffer(listingIndex, offerIndex)
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(offer.ipfsHash)
-    const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+    const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
     const listingId = generateListingId({ version, network, listingIndex })
 
     // Use data from IPFS is offer no longer in active blockchain state
@@ -109,7 +109,7 @@ class Marketplace extends Adaptable {
   async createListing(ipfsData, confirmationCallback) {
     validateListing(ipfsData, this.contractService)
 
-    const ipfsHash = await this.ipfsService.submitFile({ data: ipfsData })
+    const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     const transactionReceipt = await this.currentAdapter.createListing(ipfsBytes, ipfsData, confirmationCallback)
@@ -124,7 +124,7 @@ class Marketplace extends Adaptable {
 
   async withdrawListing(listingId, ipfsData, confirmationCallback) {
     const { adapter, listingIndex } = this.parseListingId(listingId)
-    const ipfsHash = await this.ipfsService.submitFile({ data: ipfsData })
+    const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await adapter.withdrawListing(listingIndex, ipfsBytes, confirmationCallback)
@@ -140,7 +140,7 @@ class Marketplace extends Adaptable {
     )
     data.buyer = buyer
 
-    const ipfsHash = await this.ipfsService.submitFile({ data })
+    const ipfsHash = await this.ipfsService.saveObjAsFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     const transactionReceipt = await adapter.makeOffer(listingIndex, ipfsBytes, data, confirmationCallback)
@@ -155,7 +155,7 @@ class Marketplace extends Adaptable {
   async acceptOffer(id, data, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
 
-    const ipfsHash = await this.ipfsService.submitFile({ data })
+    const ipfsHash = await this.ipfsService.saveObjAsFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await adapter.acceptOffer(
@@ -169,7 +169,7 @@ class Marketplace extends Adaptable {
   async finalizeOffer(id, data, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
 
-    const ipfsHash = await this.ipfsService.submitFile({ data })
+    const ipfsHash = await this.ipfsService.saveObjAsFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await adapter.finalizeOffer(
@@ -187,7 +187,7 @@ class Marketplace extends Adaptable {
   // manageListingDeposit(listingId, data) {}
 
   async addData(listingId, offerId, data, confirmationCallback) {
-    const ipfsHash = await this.ipfsService.submitFile({ data })
+    const ipfsHash = await this.ipfsService.saveObjAsFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     if (offerId) {
@@ -222,7 +222,7 @@ class Marketplace extends Adaptable {
       const ipfsHash = this.contractService.getIpfsHashFromBytes32(
         event.returnValues.ipfsHash
       )
-      const ipfsJson = await this.ipfsService.getFile(ipfsHash)
+      const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
       const timestamp = await this.contractService.getTimestamp(event)
       reviews.push({
         transactionHash: event.transactionHash,
