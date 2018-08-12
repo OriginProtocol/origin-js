@@ -39,7 +39,7 @@ class IpfsService {
   async saveObjAsFile(obj) {
     let file
     if (typeof Blob === 'undefined') {
-      file = new Buffer(JSON.stringify(obj))
+      file = Buffer.from(JSON.stringify(obj))
     } else {
       file = new Blob([JSON.stringify(obj)])
     }
@@ -68,7 +68,7 @@ class IpfsService {
 
     let file
     if (typeof Blob === 'undefined') {
-      file = new Buffer([new Uint8Array(buffer)])
+      file = Buffer.from([new Uint8Array(buffer)])
     } else {
       file = new Blob([new Uint8Array(buffer)], { type: mimeString })
     }
