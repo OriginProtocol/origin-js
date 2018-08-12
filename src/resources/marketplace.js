@@ -1,3 +1,5 @@
+import URL from 'url-parse'
+
 import { generateListingId, generateOfferId } from '../utils/id'
 import { validateListing } from '../utils/schemaValidators'
 
