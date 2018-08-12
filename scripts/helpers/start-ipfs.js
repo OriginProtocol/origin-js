@@ -60,18 +60,19 @@ const populateIpfs = async () => {
         return listingDirectory + '/' + imageFilename
       })
 
-      // Read the schema JSON
-      const schema = fs.readFileSync(listingDirectory + '/' + schemaFilename)
-      const schemaJson = JSON.parse(schema)
+      // Read the listing data
+      const dataJson = fs.readFileSync(listingDirectory + '/' + schemaFilename)
+      const data = JSON.parse(dataJson)
       // Preserve order of uploaded images to maintain IPFS hash
+      // This is necessary because the hashes are hardcoded in contract migrations
       for (const imagePath of imagePaths) {
         const imageUpload = await ipfs.util.addFromFs(imagePath)
-        schemaJson['data']['pictures'].push(`ipfs://${imageUpload[0]['hash']}`)
+        data['data']['pictures'].push(`ipfs://${imageUpload[0]['hash']}`)
       }
 
-      // Upload schema JSON to ipfs
+      // Update listing data to IPFS
       const stream = new ReadableStream
-      stream.push(JSON.stringify(schemaJson))
+      stream.push(JSON.stringify(data))
       stream.push(null)
       await ipfs.add(stream)
     }
