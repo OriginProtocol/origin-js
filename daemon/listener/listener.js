@@ -112,6 +112,7 @@ async function liveTracking(config) {
     start = new Date()
     const currentBlockNumber = await web3.eth.getBlockNumber()
     if (currentBlockNumber == lastCheckedBlock) {
+      console.log('No new block.')
       return scheduleNextCheck()
     }
     console.log('New block: ' + currentBlockNumber)
@@ -149,6 +150,10 @@ async function runBatch(opts, context) {
     topics: [eventTopics]
   })
 
+  if (logs.length > 0) {
+    console.log('' + logs.length + ' logs found')
+  }
+
   for (const log of logs) {
     const contractVersion = context.addressToVersion[log.address]
     if (contractVersion == undefined) {
@@ -163,14 +168,12 @@ async function runBatch(opts, context) {
     // Process it
     await handleLog(log, rule, contractVersion, context)
   }
-  if (logs.length > 0) {
-    console.log('' + logs.length + ' logs found')
-  }
   return lastLogBlock
 }
 
 // handleLog - annotates, runs rule, and ouputs a particular log
 async function handleLog(log, rule, contractVersion, context) {
+  console.log(`Processing log blockNumber=${log.blockNumber} transactionIndex=${log.transactionIndex}`)
   log.decoded = web3.eth.abi.decodeLog(
     rule.eventAbi.inputs,
     log.data,

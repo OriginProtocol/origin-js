@@ -109,14 +109,6 @@ async function searchListings(query) {
   })
 }
 
-/* TESTING
-async function search() {
-  const listings = await searchListings('garage')
-  console.log("SEARCH FOUND\n", listings)
-}
-search()
-*/
-
 module.exports = {
   checkHealth,
   countListings,
