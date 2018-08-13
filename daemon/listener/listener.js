@@ -1,8 +1,10 @@
-const process = require('process')
 const http = require('http')
 const urllib = require('url')
-const Origin = require('../../dist/index') // Will eventualy be the origin npm package
 const Web3 = require('web3')
+
+const Origin = require('../../dist/index') // FIXME: replace with origin-js package
+const search = require ('./search.js')
+const db = require('./db.js')
 
 const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(web3Provider)
@@ -185,13 +187,26 @@ async function handleLog(log, rule, contractVersion, context) {
   }
 
   const json = JSON.stringify(output, null, 2)
+  if (context.config.verbose) {
+    console.log(json)
+    console.log('\n----\n')
+  }
+
+  //TODO(franck): remove binary data from pictures in a proper way.
+  let listing = output.related.listing
+  delete listing.ipfsData.data.pictures
+
+  if (context.config.search) {
+    await search.indexListing(listing.id, listing.ipfsData.data)
+  }
+
+  if (context.config.db) {
+    await db.insertListing(listing.id, listing.ipfsData.data)
+  }
 
   if (context.config.webhook) {
-    process.stdout.write('\n-- WEBHOOK to ' + context.config.webhook + ' --\n')
+    console.log('\n-- WEBHOOK to ' + context.config.webhook + ' --\n')
     await postToWebhook(context.config.webhook, json)
-  } else {
-    process.stdout.write(json)
-    process.stdout.write('\n----\n')
   }
 }
 
@@ -298,6 +313,13 @@ process.argv.forEach(arg => {
 })
 
 const config = {
-  webhook: args['--webhook']
+  // Call webhook to process event.
+  webhook: args['--webhook'],
+  // Index events in the search index.
+  search: args['--search'],
+  // Index events in the database.
+  db: args['--db'],
+  // Verbose mode, includes dumping events on the console.
+  verbose: args['--verbose'],
 }
 liveTracking(config)

@@ -1,0 +1,127 @@
+var elasticsearch = require('elasticsearch')
+
+/*
+  Module to interface with ElasticSearch.
+ */
+
+
+// TODO(franck): dynamically configure client.
+var client = new elasticsearch.Client( {
+  hosts: [
+    'localhost:9200/'
+  ]
+})
+
+// Name of the index used for storing Origin data.
+const indexName = 'origin'
+
+// Name of the index type used for storing listings data.
+const listingsType = 'listing'
+
+/*
+ * Gets cluster health and prints it.
+ * @returns A promise.
+ */
+async function checkHealth() {
+  return client.cluster.health({}).then((resp) => {
+    console.log('-- Search cluster health --\n', resp)
+  })
+}
+
+/*
+ * Creates the Origin index.
+ * @returns A promise.
+ */
+async function createIndex() {
+  return client.indices.create({index: indexName}).then((resp) => {
+    console.log(`Created search index ${indexName}`)
+  })
+}
+
+/*
+ * Deletes the Origin index.
+ * @returns A promise.
+ */
+function deleteIndex() {
+  return client.indices.delete({index: indexName}).then((resp) => {
+    console.log(`Deleted search index ${indexName}`)
+  })
+}
+
+/*
+ * Counts number of listings indexed.
+ * @returns A promise that resolves to the number of listings indexed.
+ */
+function countListings() {
+  return client.count({index: indexName, type: listingsType}).then((resp) => {
+    console.log(`Counted ${resp.count} listings in the search index.`)
+    return resp.count
+  })
+}
+
+/*
+ * Indexes a listing.
+ * @params {string} listingId - The unique ID of the listing.
+ * @params {object} listing - Listing to index.
+ * @throws Throws an error if indexing operation failed.
+ * @returns A promise that resolves to the listingId indexed.
+ */
+async function indexListing(listingId, listing) {
+  return client.index({
+    index: indexName,
+    id: listingId,
+    type: listingsType,
+    body: listing
+  }).then((resp) => {
+    console.log(`Indexed listing ${listingId} in search index.`)
+    return listingId
+  })
+}
+
+/*
+ * Searches for listings.
+ * @params {string} query - The search query.
+ * @throws Throws an error if the search operation failed.
+ * @returns A promise that resolves to a list of listings (can be empty).
+ */
+async function searchListings(query) {
+  return client.search({
+    index: indexName,
+    type: listingsType,
+    // TODO(franck): update query to search against other fields than just description.
+    body: {
+      query: {
+        match: { 'description': query }
+      },
+    }
+  }).then((resp) => {
+    const listings = []
+    resp.hits.hits.forEach((hit) => {
+      const listing = {
+        id: hit._id,
+        name: hit._source.name,
+        description: hit._source.description,
+        price: hit._source.price,
+      }
+      listings.push(listing)
+    })
+    return listings
+  })
+}
+
+/* TESTING
+async function search() {
+  const listings = await searchListings('garage')
+  console.log("SEARCH FOUND\n", listings)
+}
+search()
+*/
+
+module.exports = {
+  checkHealth,
+  countListings,
+  createIndex,
+  deleteIndex,
+  indexListing,
+  searchListings,
+}
