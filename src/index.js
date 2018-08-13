@@ -29,10 +29,11 @@ class Origin {
     walletLinkerUrl = defaultWalletLinkerUrl,
     disableNotifications,
     contractAddresses,
+    web3,
     ipfsCreator,
     OrbitDB,
     ecies,
-    web3
+    messagingNamespace
   } = {}) {
     this.contractService = new ContractService({
       contractAddresses,
@@ -93,7 +94,8 @@ class Origin {
       contractService: this.contractService,
       ipfsCreator,
       OrbitDB,
-      ecies
+      ecies,
+      messagingNamespace
     })
   }
 }
