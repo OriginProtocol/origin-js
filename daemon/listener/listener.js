@@ -1,7 +1,7 @@
 const process = require('process')
 const http = require('http')
 const urllib = require('url')
-const Origin = require('../dist/index') // Will eventualy be the origin npm package
+const Origin = require('../../dist/index') // Will eventualy be the origin npm package
 const Web3 = require('web3')
 
 const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
