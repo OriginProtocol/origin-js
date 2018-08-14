@@ -1,7 +1,7 @@
 const { ApolloServer, gql } = require('apollo-server')
 
-var search = require('../common/search.js')
-var db = require('../common/db.js')
+var search = require('../lib/search.js')
+var db = require('../lib/db.js')
 
 
 // Type definitions define the "shape" of your data and specify
@@ -19,19 +19,19 @@ const typeDefs = gql`
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    searchListings(query: String!): [Listing],
-    allListings: [Listing],
+    Listings(query: String): [Listing],
   }
 `
 
 // Resolvers define the technique for fetching the types in the schema.
 const resolvers = {
   Query: {
-    searchListings(root, args, context, info) {
-      return search.searchListings(args.query)
-    },
-    allListings(root, args, context, info) {
-      return db.getListings()
+    Listings(root, args, context, info) {
+      if (args.query) {
+        return search.Listing.search(args.query)
+      } else {
+        return db.Listing.all()
+      }
     },
   },
 }
