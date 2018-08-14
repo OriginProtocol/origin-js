@@ -3,8 +3,8 @@ const urllib = require('url')
 const Web3 = require('web3')
 
 const Origin = require('../../dist/index') // FIXME: replace with origin-js package
-const search = require ('./search.js')
-const db = require('./db.js')
+const search = require ('../lib/search.js')
+const db = require('../lib//db.js')
 
 const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(web3Provider)
@@ -199,12 +199,12 @@ async function handleLog(log, rule, contractVersion, context) {
   let listing = output.related.listing
   delete listing.ipfsData.data.pictures
 
-  if (context.config.search) {
-    await search.indexListing(listing.id, listing.ipfsData.data)
+  if (context.config.elasticsearch) {
+    await search.Listing.index(listing.id, listing.ipfsData.data)
   }
 
   if (context.config.db) {
-    await db.insertListing(listing.id, listing.ipfsData.data)
+    await db.Listing.insert(listing.id, listing.ipfsData.data)
   }
 
   if (context.config.webhook) {
@@ -312,14 +312,15 @@ async function buildVersionList() {
 const args = {}
 process.argv.forEach(arg => {
   const t = arg.split('=')
-  args[t[0]] = t[1]
+  const argVal = (t.length > 1) ? t[1] : true
+  args[t[0]] = argVal
 })
 
 const config = {
   // Call webhook to process event.
   webhook: args['--webhook'],
   // Index events in the search index.
-  search: args['--search'],
+  elasticsearch: args['--elasticsearch'],
   // Index events in the database.
   db: args['--db'],
   // Verbose mode, includes dumping events on the console.
