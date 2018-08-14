@@ -3,13 +3,15 @@ const { ApolloServer, gql } = require('apollo-server')
 var search = require('../lib/search.js')
 var db = require('../lib/db.js')
 
+/*
+ * Implentation of a GraphQL server using the Apollow framework.
+ * See https://www.apollographql.com/server
+ *
+ */
 
-// Type definitions define the "shape" of your data and specify
+// Type definitions define the "shape" of the data and specify
 // which ways the data can be fetched from the GraphQL server.
 const typeDefs = gql`
-  # Comments in GraphQL are defined with the hash (#) symbol.
-
-  # This "Listing" type can be used in other type declarations.
   type Listing {
     id: String
     name: String
@@ -36,8 +38,7 @@ const resolvers = {
   },
 }
 
-// In the most basic sense, the ApolloServer can be started
-// by passing type definitions (typeDefs) and the resolvers
+// Start ApolloServer by passing type definitions (typeDefs) and the resolvers
 // responsible for fetching the data for those types.
 const server = new ApolloServer({ typeDefs, resolvers })
 
