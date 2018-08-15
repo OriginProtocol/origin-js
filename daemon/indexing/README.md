@@ -5,42 +5,43 @@ This directory contains code for indexing servers:
 
 To start the listener:
 ======================
- - Use origin-box to start an origin-js container.
-    #> docker-compose up origin-js"
 
- - If you want to index data in Postgres, start the postgres container.
-   #> docker-compose up postgres
+Use origin-box to start an origin-js container.
 
- - [TODO: Automate this step as part of origin-box setup]
-   Create the postgres DB schema:
-   #> docker exec -ti origin-js /bin/bash
-   #> cd daemon/indexing
-   #> node node_modules/db-migrate/bin/db-migrate -e origin-box-genesis db:create indexing
-   #> node node_modules/db-migrate/bin/db-migrate up
+    docker-compose up origin-js
+    
+If you want to index data in Postgres:
 
- - If you want to index data in ELasticsearch, start the elasticsearch container.
-   #> docker-compose up elasticsearch
+    docker-compose up postgres  # start the postgres container.
 
- - Spawn a bash in the origin-js container and start the listener. Use --elasticsearch and/or --db options to pick the indexer(s).
-   #> docker exec -ti origin-js /bin/bash
-   #> cd daemon/indexing
-   #> node listener/listener-js --elasticsearch --db
- - You should see messages in the console indicating events are being indexed.
+    # create the postgres DB schema:
+    docker exec -ti -w /app/daemon/indexing origin-js node node_modules/db-migrate/bin/db-migrate -e origin-box-genesis db:create indexing
+    docker exec -ti -w /app/daemon/indexing origin-js node node_modules/db-migrate/bin/db-migrate up
+
+If you want to index data in Elasticsearch, start the elasticsearch container.
+
+    docker-compose up elasticsearch
+
+Start the listener in the the origin-js container. Use --elasticsearch and/or --db options to pick the indexer(s).
+
+    docker exec -ti origin-js node daemon/indexing/listener/listener.js --elasticsearch --db
+
+You should see messages in the console indicating events are being indexed.
 
 
 To start the Apollo GraphQL server:
 ===================================
- - [TODO: update origin-box config]
-   Update origin-box:docker-compose.yml, for image origin-js to proxy port 4000 which is used by Apollo server.
 
- - Use origin-box to start an origin-js container.
-    #> docker-compose up origin-js"
+You will need to update the origin-box:docker-compose.yml. For the image origin-js, proxy port 4000 to 4000 for the Apollo server. [TODO: update origin-box config]
 
- - Spawn a bash in the origin-js container and start the Apollo server.
-   #> docker exec -ti origin-js /bin/bash
-   #> cd daemon/indexing
-   #> node apollo/index.js
+Use origin-box to start an origin-js container.
 
- - The server should start and you can point your browser to http://localhost:4000 to access the GraphQL playground.
+    docker-compose up origin-js
+
+Start the Apollo server in the origin-js container
+
+    docker exec -ti origin-js node daemon/indexing/apollo/index.js
+
+ The server should start and you can point your browser to http://localhost:4000 to access the GraphQL playground.
 
 
