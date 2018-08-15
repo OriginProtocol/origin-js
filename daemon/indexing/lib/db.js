@@ -34,7 +34,17 @@ class Listing {
    */
   static async all() {
     const res = await pool.query(`SELECT * FROM ${Listing.table}`, [])
-    return res.rows
+    // Match the format of the data coming from elasticsearch
+    const results = res.rows.map((row)=>{
+      const json = JSON.parse(row.data)
+      return {
+        id: row.id,
+        name: json.name,
+        description: json.description,
+        price: json.price
+      }
+    })
+    return results
   }
 
   /*
