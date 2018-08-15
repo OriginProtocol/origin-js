@@ -4,7 +4,7 @@ var search = require('../lib/search.js')
 var db = require('../lib/db.js')
 
 /*
- * Implentation of a GraphQL server using the Apollow framework.
+ * Implentation of a GraphQL server using the Apollo framework.
  * See https://www.apollographql.com/server
  *
  */
