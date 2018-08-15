@@ -4,15 +4,13 @@ const { Pool } = require('pg')
   Module to interface with Postgres database.
  */
 
-const dbName = 'graphql'
-
 // TODO(franck): dynamically configure client.
 const pool = new Pool(
   {
-    host: 'localhost',
-    database: dbName,
-    //user: 'franck',
-    //password: 'franck',
+    host: 'postgres',
+    database: 'indexing',
+    user: 'origin',
+    password: 'origin',
   })
 
 
