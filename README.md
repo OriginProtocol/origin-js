@@ -6,8 +6,6 @@
 
 Head to https://www.originprotocol.com/developers to learn more about what we're building and how to get involved.
 
-Just getting started with Origin? We recommend using [Origin Box](https://github.com/OriginProtocol/origin-box) for development and testing on your local machine.
-
 # origin-js
 
 origin-js is a library of javascript code and Ethereum smart contracts which allow anyone to create decentralized marketplaces, including for fractional usage. It is an open source project created by [Origin Protocol](https://www.originprotocol.com/).
@@ -47,21 +45,26 @@ A browser-compatible plain javascript file `origin.js` is available in the [Rele
 
 ## Local development
 
-### 1. Clone this repo.
+### Origin Box
+We recommend using [Origin Box](https://github.com/OriginProtocol/origin-box) Docker container for development and testing on your local machine. [It has detailed instructions](https://github.com/OriginProtocol/origin-box#getting-started).
+
+### npm link
+
+#### 1. Clone this repo.
 ```
 git clone https://github.com/OriginProtocol/origin-js.git && cd origin-js
 ```
 
 If you would like to submit pull requests, you should instead fork this repo and then clone your fork. Note pull requests should always be made to the `develop` branch, which always has the latest commits.
 
-### 2. Install dependencies and link
+#### 2. Install dependencies and link
 ```
 npm run install:dev
 ```
 
 `install:dev` is shortcut for `npm install && npm link`. Linking means that changes to `origin-js` code are immediately available to local DApps without an `npm install`.
 
-### 3. Start the local blockchain and build origin-js
+#### 3. Start the local blockchain and build origin-js
 
 ```
 npm start
@@ -69,7 +72,7 @@ npm start
 
 Code changes will trigger a live rebuild.
 
-### 4. Use with local Demo DApp
+#### 4. Use with local Demo DApp
 
 To interact with your local origin-js and local blockahin, see [the instructions in our Demo DApp](https://github.com/OriginProtocol/origin-dapp#run-demo-dapp-with-local-origin-js-and-local-blockchain).
 
