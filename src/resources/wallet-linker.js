@@ -89,8 +89,8 @@ class WalletLinker {
           ? this.networkRpcUrl
           : this.web3.currentProvider.host,
       getAccounts: this.getAccounts.bind(this),
-      //signTransaction: this.signTransaction.bind(this)
-
+      //signTransaction: this.signTransaction.bind(this),
+      //signPersonalMessage: this.signPersonalMessage.bind(this),
       processTransaction: this.processTransaction.bind(this)
     })
     const hookedWallet = provider._providers[6]
@@ -103,6 +103,8 @@ class WalletLinker {
         cb()
       }
     }
+    //take out the block cache which is being stupid..
+    provider._providers.splice(3, 1)
     return provider
   }
 
@@ -136,6 +138,30 @@ class WalletLinker {
       delete this.callbacks[call_id]
       callback(error_data, undefined)
     })
+  }
+
+  registerCallback(call_id, handler) {
+    this.callbacks[call_id] = handler
+  }
+
+  customSignMessage(msg_params, call_id) {
+
+    if (!this.linked) {
+      this.pending_call = {
+        call_id,
+        session_token: this.session_token,
+        call: ['signMessage', msg_params]
+      }
+      this.startLink()
+    } else {
+      const result = this.post('call-wallet', {
+        session_token: this.session_token,
+        call_id: call_id,
+        accounts: this.accounts,
+        call: ['signMessage', msg_params],
+        return_url: this.getReturnUrl()
+      })
+    }
   }
 
   processTransaction(txn_object, callback) {

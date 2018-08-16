@@ -16,6 +16,8 @@ const PRE_CONV = ':conv'
 const UNREAD_STATUS = 'unread'
 const READ_STATUS = 'read'
 
+const SIGN_MESSAGE_CALL_ID = 'sign_message_call_id'
+
 const storeKeys = {
   messageSubscriptionStart: 'message_subscription_start',
   messageStatuses: 'message_statuses'
@@ -131,11 +133,41 @@ class Messaging extends ResourceBase {
     this.GLOBAL_KEYS = messagingNamespace + PRE_GLOBAL_KEYS
     this.CONV = messagingNamespace + PRE_CONV
     this.CONV_INIT_PREFIX = messagingNamespace + PRE_CONV_INIT_PREFIX
+    this.registerWalletLinker()
+  }
+
+  registerWalletLinker() {
+    const walletLinker = this.contractService.walletLinker
+    if(walletLinker) 
+    {
+      walletLinker.registerCallback(SIGN_MESSAGE_CALL_ID, this.onSignedAccount.bind(this))
+    }
   }
 
   onAccount(account_key) {
     if ((account_key && !this.account_key) || account_key != this.account_key) {
       this.init(account_key)
+    }
+  }
+
+  async onSignedAccount(data) {
+    const account_id = data.account
+    const signature = data.signature
+    const post_phrase = data.post_phrase
+    const post_signature = data.post_signature
+    if (account_id == await this.contractService.currentAccount())
+    {
+      console.log("settingAccount:", data)
+      const sig_key = signature.substring(0, 66)
+      localStorage.setItem(`${MESSAGING_KEY}:${account_id}`, sig_key)
+      localStorage.setItem(`${PUB_MESSAGING}:${account_id}`, post_phrase)
+      localStorage.setItem(`${PUB_MESSAGING_SIG}:${account_id}`, post_signature)
+      this.pub_sig = post_signature
+      this.pub_msg = post_phrase
+      if (account_id == this.account_key)
+      {
+        this.startConversing()
+      }
     }
   }
 
@@ -153,10 +185,15 @@ class Messaging extends ResourceBase {
   }
 
   startConversing() {
-    if (this.ipfs_bound_account == this.account_key && !this.account) {
+    if (this.account_key && this.ipfs_bound_account == this.account_key && !this.account) {
       // remote has been initialized
       this.initKeys()
     } else {
+      if (!this.account_key)
+      {
+        //there is no account setup try to setup the link
+        this.doWalletLink()
+      }
       this.convs_enabled = true
     }
   }
@@ -205,7 +242,23 @@ class Messaging extends ResourceBase {
         this.last_peers = peer_ids
         console.log('New peers:', this.last_peers)
       }
+      //let's do a 15 second reconnect policy
+      if (this.ipfs.__reconnect_peers && Date.now() - this.last_connect_time > 15000 && this.last_peers)
+      {
+        for (const peer of Object.keys(this.ipfs.__reconnect_peers))
+        {
+            if (!this.last_peers.includes(peer))
+            {
+              const peer_address = this.ipfs.__reconnect_peers[peer]
+              console.log('Reconnecting:', peer_address)
+              this.ipfs.swarm.connect(peer_address)
+              this.last_connect_time = Date.now()
+            }
+        }
+      }
+
     })
+    
   }
 
   initConvs() {
@@ -220,7 +273,7 @@ class Messaging extends ResourceBase {
           const remote_address = message.payload.key
           this.startConvoRoom(remote_address)
           // this is probably not needed
-          // this.getConvo(remote_address)
+          this.getConvo(remote_address)
         }
       }
     )
@@ -247,6 +300,7 @@ class Messaging extends ResourceBase {
             clearInterval(this.refreshIntervalId)
           }
 
+          this.last_connect_time = Date.now()
           this.refreshIntervalId = setInterval(
             this.refreshPeerList.bind(this),
             5000
@@ -417,7 +471,23 @@ class Messaging extends ResourceBase {
     this.initMessaging()
   }
 
+  doWalletLink() {
+    const walletLinker = this.contractService.walletLinker
+    if (walletLinker)
+    {
+      walletLinker.customSignMessage({msg:PROMPT_MESSAGE, post_phrase_prefix:PROMPT_PUB_KEY}, SIGN_MESSAGE_CALL_ID)
+      this.registerWalletLinker()
+    }
+  }
+
   async promptInit() {
+    const walletLinker = this.contractService.walletLinker
+    if (walletLinker && walletLinker.linked)
+    {
+      this.doWalletLink()
+      return
+    }
+
     const signature = await this.web3.eth.personal.sign(
       PROMPT_MESSAGE,
       this.account_key
