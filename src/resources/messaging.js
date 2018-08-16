@@ -206,14 +206,15 @@ class Messaging extends ResourceBase {
         console.log('New peers:', this.last_peers)
       }
       //let's do a 15 second reconnect policy
-      if (this.ipfs.__reconnect_peers && Date.now() - this.last_connect_time > 20000 && this.last_peers)
-      {
+      if (
+        this.ipfs.__reconnect_peers &&
+        Date.now() - this.last_connect_time > 20000 &&
+        this.last_peers
+      ) {
         this.last_connect_time = Date.now()
         //every 20 seconds either connect or ping
-        for (const peer of Object.keys(this.ipfs.__reconnect_peers))
-        {
-          if (!this.last_peers.includes(peer))
-          {
+        for (const peer of Object.keys(this.ipfs.__reconnect_peers)) {
+          if (!this.last_peers.includes(peer)) {
             const peer_address = this.ipfs.__reconnect_peers[peer]
             console.log('Reconnecting:', peer_address)
             this.ipfs.swarm.connect(peer_address)
