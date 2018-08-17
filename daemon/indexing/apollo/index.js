@@ -28,7 +28,10 @@ const typeDefs = gql`
     ipfsHash: ID!
     listingId: ID!
     buyer: User!
-    status: Int! # Per contract definition: 1: Created, 2: Accepted, 3: Disputed
+    # Per contract definition: 1: Created, 2: Accepted, 3: Disputed
+    # NOTE: There is no "Finalized" status stored on-chain but could be useful
+    #       to compute it when resolving this object.
+    status: Int!
   }
 
   type Price {
@@ -43,6 +46,7 @@ const typeDefs = gql`
     rating: Int!
   }
 
+  # TODO: Add a status indicating if Listing is sold out.
   type Listing {
     id: ID!
     ipfsHash: ID!
