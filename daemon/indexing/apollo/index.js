@@ -19,16 +19,16 @@ const typeDefs = gql`
   ######################
 
   type User {
-    walletAddr: String!   # Ethereum wallet address
-    identityAddr: String  # ERC 725 identity address.
+    walletAddr: ID!   # Ethereum wallet address
+    identityAddr: ID  # ERC 725 identity address.
   }
 
   type Offer {
-    id: String!
-    ipfsHash: String!
-    listingId: String!
+    id: ID!
+    ipfsHash: ID!
+    listingId: ID!
     buyer: User!
-    status: Int! # Defined in contract: 1: Created, 2: Accepted, 3: Disputed
+    status: Int! # Per contract definition: 1: Created, 2: Accepted, 3: Disputed
   }
 
   type Price {
@@ -37,15 +37,15 @@ const typeDefs = gql`
   }
 
   type Review {
-    ipfsHash: String!
+    ipfsHash: ID!
     reviewer: User!
     text: String!
     rating: Int!
   }
 
   type Listing {
-    id: String!
-    ipfsHash: String!
+    id: ID!
+    ipfsHash: ID!
     seller: User!
     title: String!
     description: String
@@ -76,15 +76,17 @@ const typeDefs = gql`
   #  - Filtering definition needs more thinking. This is not flexible at all...
   #  - Add location based filtering.
   #  - Add fractional usage (e.g. availability) filtering.
-  input SearchFilter {
+  input ListingFilter {
     priceMin: inPrice
     priceMax: inPrice
     cat: String
     subCat: String
     locale: String
+    sellerAddr: String
+    buyerAddr: String
   }
 
-  enum SearchOrderBy {
+  enum ListingOrderBy {
     relevance         # Default if no order by specified.
     priceAsc          # Price low to high.
     priceDesc         # Price high to low.
@@ -92,21 +94,17 @@ const typeDefs = gql`
     sellerRating      # Highest to lowest rating.
   }
 
-  input SearchQuery {
-    query: String!
-    filter: SearchFilter
-    orderBy: SearchOrderBy
-    page: Page
-  }
-
-  input DbQuery {
+  input ListingQuery {
+    search: String    # Search query. If not specified, all listings are candidates.
+    filter: ListingFilter
+    orderBy: ListingOrderBy
     page: Page
   }
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    Listings(db: DbQuery, search: SearchQuery): [Listing],
-    Listing(id: String!): Listing,
+    Listings(query: ListingQuery!): [Listing],
+    Listing(id: ID!): Listing,
   }
 `
 
@@ -114,18 +112,14 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     Listings(root, args, context, info) {
-      if (args.search) {
-        // TODO: handle filters, order by, pagination.
-        return search.Listing.search(args.search.query)
-      }  else if (args.db) {
-        // TODO: handle pagination.
+      // TODO: handle filters, order by, pagination.
+      if (args.query.search) {
+        return search.Listing.search(args.query.search)
+      }  else {
         return db.Listing.all()
-      } else {
-        throw 'Must specify either a Search or DB query.'
       }
     },
     Listing(root, args, context, info) {
-      console.log(`Feching listing with id ${args.id} from DB`)
       return db.Listing.get(args.id)
     },
   },
@@ -137,7 +131,7 @@ const resolvers = {
       return listing.ipfsHash
     },
     seller(listing) {
-      return { walletAddr: 'S_WADDR', identityAddr: 'S_IADDR' }
+      return { walletAddr: 'S_WADDR' }
     },
     title(listing) {
       return listing.name
@@ -149,20 +143,27 @@ const resolvers = {
       return {currency: 'ETH', amount: listing.price}
     },
     offers(listing) {
+      // TODO: fetch all offers for the given listing.id
       return [
         { id: '123', ipfsHash: 'IPFS_H', listingId: listing.id,
-          buyer: { walletAddr: 'B_WADDR', identityAddr: 'B_IADDR' },
+          buyer: { walletAddr: 'B_WADDR', },
         },
       ]
     },
     reviews(listing) {
+      // TODO: fetch all reviews for the given listing.id
       return [
-        {
-          ipfsHash: 'IPFS_H', reviewer: { walletAddr: 'R_WADDR', identityAddr: 'R_IADDR' },
-          text: 'Great seller. A++', status: 1,
-        }
+        { ipfsHash: 'IPFS_H', reviewer: { walletAddr: 'R_WADDR' },
+          text: 'Great product. Great seller.', status: 1,
+        },
       ]
     },
+  },
+  User: {
+    identityAddr(user) {
+      // TODO fetch identify based on user.walletAddr
+      return `I_${user.walletAddr}`
+    }
   },
 }
 
