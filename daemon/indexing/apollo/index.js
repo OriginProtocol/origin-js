@@ -18,30 +18,46 @@ const typeDefs = gql`
   #
   ######################
 
+  # When querying a set of items, the output is a page.
+  interface OutputPage {
+    totalCount: Int! # Total number of items in the set.
+    more: Boolean!   # True if there is another page to fetch.
+  }
+
+  type Price {
+    currency: String!
+    amount: String!
+  }
+
   type User {
     walletAddr: ID!   # Ethereum wallet address
     identityAddr: ID  # ERC 725 identity address.
-    listings: [Listing]
-    offers(status): [Offer]
-    reviews: [Review]
+    listings(page: Page, order: ListingOrder, filter: ListingFilter): ListingPage
+    offers(page: Page, order: OfferOrder, filter: OfferFilter): OfferPage
+    reviews(page: Page, order: ReviewOrder, filter: ReviewFilter): ReviewPage
   }
 
-  # TODO: should we have Seller/Buyer object ?
+  enum OfferStatus {
+    CREATED
+    ACCEPTED
+    DISPUTED
+    # Note: There is no "Finalized" status stored on the Offer contract on-chain.
+    #       This is computed by the indexing server.
+    FINALIZED
+  }
 
   type Offer {
     id: ID!
     ipfsHash: ID!
     listingId: ID!
     buyer: User!
-    # Per contract definition: 1: Created, 2: Accepted, 3: Disputed
-    # NOTE: There is no "Finalized" status stored on-chain but could be useful
-    #       to compute it when resolving this object.
-    status: Int!
+    status: OfferStatus!
   }
 
-  type Price {
-    currency: String!
-    amount: Float!
+  type OfferPage implements OutputPage {
+    totalCount: Int!
+    more: Boolean!
+    offers: [Offer]
   }
 
   type Review {
@@ -49,6 +65,12 @@ const typeDefs = gql`
     reviewer: User!
     text: String!
     rating: Int!
+  }
+
+  type ReviewPage implements OutputPage {
+    totalCount: Int!
+    more: Boolean!
+    reviews: [Review]
   }
 
   # TODO: Add a status indicating if Listing is sold out.
@@ -61,26 +83,83 @@ const typeDefs = gql`
     category: String!
     subCategory: String!
     price: Price!
-    offers(status: Int): [Offer]
-    reviews: [Review]
+    offers(page: Page, order: OfferOrder, filter: OfferFilter): OfferPage
+    reviews(page: Page, order: ReviewOrder, filter: ReviewFilter): ReviewPage
+  }
+
+  type ListingPage implements OutputPage {
+    totalCount: Int!
+    more: Boolean!
+    listings: [Listing]
   }
 
   ######################
   #
   # Query input schema.
   #
+  # Note: Some input types have a "in" prefix because GraphQL does not allow to
+  # use thw same name for both an input and output type.
+  #
   ######################
+  enum OrderDirection {
+    ASC   # Default if no direction specified.
+    DESC
+  }
 
   input Page {
     num: Int!  # Page number.
     size: Int! # Number of items per page.
   }
 
-  # Note: Defined as inPrice vs Price because GraphQL does not allow to
-  # use same name for input and output types.
   input inPrice {
     currency: String!
-    amount: Float!
+    amount: String!
+  }
+
+  #
+  # ORDER
+  #
+  enum OfferOrderField {
+    CREATION_DATE
+    STATUS
+  }
+
+  enum ReviewOrderField {
+    CREATION_DATE
+  }
+
+  enum ListingOrderField {
+    RELEVANCE  # Default if no order field specified in the query.
+    PRICE
+    CREATION_DATE
+    SELLER_RATING
+  }
+
+  input OfferOrder {
+    field: OfferOrderField!
+    order: OrderDirection
+  }
+
+  input ReviewOrder {
+    field: ReviewOrderField!
+    order: OrderDirection
+  }
+
+  input ListingOrder {
+    field: ListingOrderField!
+    order: OrderDirection
+  }
+
+  #
+  # FILTERS
+  #
+
+  input OfferFilter {
+    status: OfferStatus
+  }
+
+  input ReviewFilter {
+    rating: Int
   }
 
   # TODO:
@@ -97,44 +176,39 @@ const typeDefs = gql`
     buyerAddr: String
   }
 
-  enum ListingOrderBy {
-    relevance         # Default if no order by specified.
-    priceAsc          # Price low to high.
-    priceDesc         # Price high to low.
-    creationDateDesc  # Most to least recent.
-    sellerRating      # Highest to lowest rating.
-  }
-
-  input ListingQuery {
-    search: String    # Search query. If not specified, all listings are candidates.
-    filter: ListingFilter
-    orderBy: ListingOrderBy
-    page: Page
-  }
-
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    Listings(query: ListingQuery!): [Listing],
+    Listings(searchQuery: String, page: Page, order: ListingOrder, filter: ListingFilter): ListingPage,
     Listing(id: ID!): Listing,
     
-    User(walletAddr: ID!): [Listing],
+    User(walletAddr: ID!): User
   }
 `
 
 // Resolvers define the technique for fetching the types in the schema.
 const resolvers = {
   Query: {
-    Listings(root, args, context, info) {
-      // TODO: handle filters, order by, pagination.
-      if (args.query.search) {
-        return search.Listing.search(args.query.search)
+    async Listings(root, args, context, info) {
+      // TODO: handle pagination, filters, order.
+      let listings = []
+      if (args.searchQuery) {
+        listings = await search.Listing.search(args.searchQuery)
       }  else {
-        return db.Listing.all()
+        listings = await db.Listing.all()
+      }
+      return {
+        totalCount: listings.length,
+        more: false,
+        listings: listings,
       }
     },
     Listing(root, args, context, info) {
       return db.Listing.get(args.id)
     },
+    User(root, args, context, info) {
+      // TODO: implement me !
+      return {}
+    }
   },
   Listing: {
     seller(listing) {
@@ -145,36 +219,52 @@ const resolvers = {
     },
     category(listing) {
       return listing.type
-    }
+    },
     subCategory(listing) {
       return listing.category
-    }
+    },
     price(listing) {
-      return {currency: 'ETH', amount: listing.price}
+      return {currency: 'ETH', amount: listing.price.toString()}
     },
     offers(listing, args) {
-      // TODO:
-      //  - fetch all offers for the given listing.id
-      //  - if args.status passed, filter out offers by status.
-      return [
-        { id: '123', ipfsHash: 'IPFS_H', listingId: listing.id,
-          buyer: { walletAddr: 'B_WADDR', },
-        },
-      ]
+      // TODO: handle pagination, filters, order.
+      return {
+        totalCount: 1,
+        more: false,
+        offers: [{
+          id: '123', ipfsHash: 'IPFS_H', listingId: listing.id,
+          buyer: {walletAddr: 'B_WADDR',}, status: 'ACCEPTED',
+        }]
+      }
     },
-    reviews(listing) {
-      // TODO: fetch all reviews for the given listing.id
-      return [
-        { ipfsHash: 'IPFS_H', reviewer: { walletAddr: 'R_WADDR' },
-          text: 'Great product. Great seller.', status: 1,
-        },
-      ]
+    reviews(listing, args) {
+      // TODO: handle pagination, filters, order.
+      return {
+        totalCount: 1,
+        more: false,
+        reviews: [{
+          ipfsHash: 'IPFS_H', reviewer: {walletAddr: 'R_WADDR'},
+          text: 'Great product. Great seller.',
+        }]
+      }
     },
   },
   User: {
     identityAddr(user) {
       // TODO fetch identify based on user.walletAddr
       return `I_${user.walletAddr}`
+    },
+    listings(user, args) {
+      // TODO: load listings for the user, handle pagination, filters, order.
+      return {}
+    },
+    offers(user, args) {
+      // TODO: load offers for the user, handle pagination, filters, order.
+      return {}
+    },
+    reviews(user, args) {
+      // TODO: load reviews for the user, handle pagination, filters, order.
+      return {}
     }
   },
 }
