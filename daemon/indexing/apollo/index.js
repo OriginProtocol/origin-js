@@ -30,8 +30,8 @@ const typeDefs = gql`
   }
 
   type User {
-    walletAddr: ID!   # Ethereum wallet address
-    identityAddr: ID  # ERC 725 identity address.
+    walletAddress: ID!   # Ethereum wallet address
+    identityAddress: ID  # ERC 725 identity address.
     listings(page: Page, order: ListingOrder, filter: ListingFilter): ListingPage
     offers(page: Page, order: OfferOrder, filter: OfferFilter): OfferPage
     reviews(page: Page, order: ReviewOrder, filter: ReviewFilter): ReviewPage
@@ -172,8 +172,8 @@ const typeDefs = gql`
     category: String
     subCategory: String
     locale: String
-    sellerAddr: String
-    buyerAddr: String
+    sellerAddress: String
+    buyerAddress: String
   }
 
   # The "Query" type is the root of all GraphQL queries.
@@ -181,7 +181,7 @@ const typeDefs = gql`
     Listings(searchQuery: String, page: Page, order: ListingOrder, filter: ListingFilter): ListingPage,
     Listing(id: ID!): Listing,
     
-    User(walletAddr: ID!): User
+    User(walletAddress: ID!): User
   }
 `
 
@@ -212,7 +212,7 @@ const resolvers = {
   },
   Listing: {
     seller(listing) {
-      return { walletAddr: 'S_WADDR' }
+      return { walletAddress: 'S_WADDR' }
     },
     title(listing) {
       return listing.name
@@ -233,7 +233,7 @@ const resolvers = {
         more: false,
         offers: [{
           id: '123', ipfsHash: 'IPFS_H', listingId: listing.id,
-          buyer: {walletAddr: 'B_WADDR',}, status: 'ACCEPTED',
+          buyer: {walletAddress: 'B_WADDR',}, status: 'ACCEPTED',
         }]
       }
     },
@@ -243,16 +243,16 @@ const resolvers = {
         totalCount: 1,
         more: false,
         reviews: [{
-          ipfsHash: 'IPFS_H', reviewer: {walletAddr: 'R_WADDR'},
+          ipfsHash: 'IPFS_H', reviewer: {walletAddress: 'R_WADDR'},
           text: 'Great product. Great seller.',
         }]
       }
     },
   },
   User: {
-    identityAddr(user) {
-      // TODO fetch identify based on user.walletAddr
-      return `I_${user.walletAddr}`
+    identityAddress(user) {
+      // TODO fetch identify based on user.walletAddress
+      return `I_${user.walletAddress}`
     },
     listings(user, args) {
       // TODO: load listings for the user, handle pagination, filters, order.
