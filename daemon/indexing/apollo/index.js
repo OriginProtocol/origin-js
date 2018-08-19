@@ -21,7 +21,12 @@ const typeDefs = gql`
   type User {
     walletAddr: ID!   # Ethereum wallet address
     identityAddr: ID  # ERC 725 identity address.
+    listings: [Listing]
+    offers(status): [Offer]
+    reviews: [Review]
   }
+
+  # TODO: should we have Seller/Buyer object ?
 
   type Offer {
     id: ID!
@@ -53,8 +58,10 @@ const typeDefs = gql`
     seller: User!
     title: String!
     description: String
+    category: String!
+    subCategory: String!
     price: Price!
-    offers: [Offer]
+    offers(status: Int): [Offer]
     reviews: [Review]
   }
 
@@ -83,8 +90,8 @@ const typeDefs = gql`
   input ListingFilter {
     priceMin: inPrice
     priceMax: inPrice
-    cat: String
-    subCat: String
+    category: String
+    subCategory: String
     locale: String
     sellerAddr: String
     buyerAddr: String
@@ -109,6 +116,8 @@ const typeDefs = gql`
   type Query {
     Listings(query: ListingQuery!): [Listing],
     Listing(id: ID!): Listing,
+    
+    User(walletAddr: ID!): [Listing],
   }
 `
 
@@ -128,26 +137,25 @@ const resolvers = {
     },
   },
   Listing: {
-    id(listing) {
-      return listing.id
-    },
-    ipfsHash(listing) {
-      return listing.ipfsHash
-    },
     seller(listing) {
       return { walletAddr: 'S_WADDR' }
     },
     title(listing) {
       return listing.name
     },
-    description(listing) {
-      return listing.description
-    },
+    category(listing) {
+      return listing.type
+    }
+    subCategory(listing) {
+      return listing.category
+    }
     price(listing) {
       return {currency: 'ETH', amount: listing.price}
     },
-    offers(listing) {
-      // TODO: fetch all offers for the given listing.id
+    offers(listing, args) {
+      // TODO:
+      //  - fetch all offers for the given listing.id
+      //  - if args.status passed, filter out offers by status.
       return [
         { id: '123', ipfsHash: 'IPFS_H', listingId: listing.id,
           buyer: { walletAddr: 'B_WADDR', },
