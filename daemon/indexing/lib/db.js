@@ -16,7 +16,7 @@ const pool = new Pool(
 
 class Listing {
   /*
-  * Returns all rows from the listing table.
+  * Returns the row from the listing table with the specified id.
   * @throws Throws an error if the read operation failed.
   * @returns A row or undefined if no row found with the specified listingId.
   */
@@ -66,13 +66,24 @@ class Listing {
 
 class Offer {
   /*
-  * Returns all rows from the offer table.
+  * Returns all offer rows for a given tuple (listingId, offerId).
   * @throws Throws an error if the read operation failed.
   * @returns A row or undefined if no row found with the specified offerId.
   */
-  static async get(offerId) {
-    const res = await pool.query(`SELECT * FROM ${Offer.table} WHERE id=$1`, [offerId])
-    return (res.rows.length > 0) ? res.rows[0] : undefined
+  static async get(listingId, offerId) {
+    const res = await pool.query(
+      `SELECT * FROM ${Offer.table} WHERE listing_id=$1 AND offer_id=$2`, [listingId, offerId])
+    return res.rows
+  }
+
+  /*
+  * Returns all offers for the given listing Id.
+  * @throws Throws an error if the read operation failed.
+  * @returns A list of rows.
+  */
+  static async getByListingId(listingId) {
+    const res = await pool.query(`SELECT * FROM ${Offer.table} WHERE listing_id=$1`, [listingId])
+    return res.rows
   }
 
   /*
@@ -90,17 +101,19 @@ class Offer {
   /*
    * Inserts a row into the offer table.
    * @params {string} offerId - The unique ID of the offer.
-   * @params {object} offer - Offer to add.
+   * @params {object} listingId - Id of the listing the offer is associated with.
+   * @params {object} data - Offer data.
+   * @params {object} status - Offer status.
    * @throws Throws an error if the operation failed.
-   * @returns The offerId indexed.
+   * @returns The tuple [listingId, offerId, status] indexed.
    */
-  static async insert(offerId, offer) {
+  static async insert(listingId, offerId, status, data) {
     // TODO: Check that we are not replacing new data with old
     const res = await pool.query(
-      `INSERT INTO ${Offer.table}(id, data) VALUES($1, $2)
-      ON CONFLICT (id) DO UPDATE SET data = excluded.data`, [offerId, offer])
-    console.log(`Added row ${offerId} to offer table.`)
-    return offerId
+      `INSERT INTO ${Offer.table}(listing_id, offer_id, status, data) VALUES($1, $2, $3, $4)
+      ON CONFLICT (id) DO UPDATE SET data = excluded.data`, [listingId, offerId, status, data])
+    console.log(`Added row ${listingId}/${offerId}/${status} to offer table.`)
+    return [listingId, offerId, status]
   }
 }
 

@@ -1,4 +1,7 @@
 CREATE TABLE offer (
-  id        VARCHAR(32) PRIMARY KEY,
-  data      JSONB NOT NULL
+  listing_id  VARCHAR(32),
+  offer_id    INT,
+  status      SMALLINT,
+  data        JSONB NOT NULL,
+  PRIMARY KEY(listing_id, offer_id, status)
 );
