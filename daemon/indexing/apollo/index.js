@@ -244,7 +244,7 @@ const resolvers = {
         more: false,
         reviews: [{
           ipfsHash: 'IPFS_H', reviewer: {walletAddress: 'R_WADDR'},
-          text: 'Great product. Great seller.',
+          text: 'Great product. Great seller.', rating: 5,
         }]
       }
     },
