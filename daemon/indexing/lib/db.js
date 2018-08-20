@@ -111,7 +111,8 @@ class Offer {
     // TODO: Check that we are not replacing new data with old
     const res = await pool.query(
       `INSERT INTO ${Offer.table}(listing_id, offer_id, status, data) VALUES($1, $2, $3, $4)
-      ON CONFLICT (id) DO UPDATE SET data = excluded.data`, [listingId, offerId, status, data])
+      ON CONFLICT (listing_id, offer_id, status) DO UPDATE SET data = excluded.data`,
+      [listingId, offerId, status, data])
     console.log(`Added row ${listingId}/${offerId}/${status} to offer table.`)
     return [listingId, offerId, status]
   }
