@@ -64,8 +64,51 @@ class Listing {
   }
 }
 
-Listing.table = 'listing' // Ugly workaround since JS does not allow class variables.
+class Offer {
+  /*
+  * Returns all rows from the offer table.
+  * @throws Throws an error if the read operation failed.
+  * @returns A row or undefined if no row found with the specified offerId.
+  */
+  static async get(offerId) {
+    const res = await pool.query(`SELECT * FROM ${Offer.table} WHERE id=$1`, [offerId])
+    return (res.rows.length > 0) ? res.rows[0] : undefined
+  }
+
+  /*
+   * Returns all rows from the offer table.
+   * @throws Throws an error if the read operation failed.
+   * @returns A list of rows.
+   *
+   * TODO(franck): add support for pagination.
+   */
+  static async all() {
+    const res = await pool.query(`SELECT * FROM ${Offer.table}`, [])
+    return res.rows
+  }
+
+  /*
+   * Inserts a row into the offer table.
+   * @params {string} offerId - The unique ID of the offer.
+   * @params {object} offer - Offer to add.
+   * @throws Throws an error if the operation failed.
+   * @returns The offerId indexed.
+   */
+  static async insert(offerId, offer) {
+    // TODO: Check that we are not replacing new data with old
+    const res = await pool.query(
+      `INSERT INTO ${Offer.table}(id, data) VALUES($1, $2)
+      ON CONFLICT (id) DO UPDATE SET data = excluded.data`, [offerId, offer])
+    console.log(`Added row ${offerId} to offer table.`)
+    return offerId
+  }
+}
+
+// Ugly workaround since JS does not allow class variables.
+Listing.table = 'listing'
+Offer.tabe = 'offer'
 
 module.exports = {
   Listing,
+  Offer,
 }
