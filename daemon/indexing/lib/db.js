@@ -8,7 +8,7 @@ const { Pool } = require('pg')
 const pool = new Pool(
   {
     host: 'postgres',
-    database: 'indexing',
+    database: 'origin-indexing',
     user: 'origin',
     password: 'origin',
   })
