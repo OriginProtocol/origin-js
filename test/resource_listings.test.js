@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import Listings from '../src/resources/listings.js'
+import { Listings, SearchQuery } from '../src/resources/listings.js'
 import Purchases from '../src/resources/purchases.js'
 import ContractService from '../src/services/contract-service'
 import IpfsService from '../src/services/ipfs-service.js'
@@ -233,6 +233,48 @@ describe('Listing Resource', function() {
       expect(all[1])
         .to.be.an('object')
         .with.property('price')
+    })
+  })
+
+  describe('search', async () => {
+    it('should search listings', async () => {
+      const indexingServerUrl = 'http://hello.world'
+
+      const listings = new Listings({
+        contractService,
+        ipfsService,
+        undefined,
+        indexingServerUrl: indexingServerUrl
+      })
+
+      // Get addresses of the sample listings created and use some of those for mocking
+      // the search API response.
+      const allAddresses = await listings.allAddresses()
+      expect(allAddresses.length).to.be.greaterThan(1)
+
+      // Create a mock search API response.
+      listings.fetch = fetchMock.sandbox().mock(
+        (requestUrl, opts) => {
+          expect(opts.method).to.equal('GET')
+          expect(requestUrl).to.equal(indexingServerUrl + '/api/search/listings?query=testing')
+          return true
+        },
+        {
+          body: JSON.stringify({
+            listings: [
+              {
+                _id: allAddresses[0]
+              },
+              {
+                _id: allAddresses[1]
+              }
+            ]
+          })
+        })
+
+      const query = new SearchQuery({rawQuery: 'testing'})
+      const searchIds = await listings.search(query)
+      expect(searchIds).to.eql([0, 1])
     })
   })
 

@@ -100,6 +100,63 @@ class Listings extends ResourceBase {
     return range(0, Number(listingsLength))
   }
 
+  async search(rawQuery) {
+    // Issues an API call to the bridge server for searching listings.
+    // Args:
+    //   rawQuery: rawQueryObject
+    // Returns:
+    //   list(int): listing ids that match the query.
+    if (rawQuery === '') {
+      return []
+    }
+
+    // Make the search API call to the bridge server.
+    const url = encodeURI(
+      `${appendSlash(this.indexingServerUrl)}search/listings?query=${rawQuery}`)
+    const response = await this.fetch(url, { method: 'GET' })
+    if (response.status != 200) {
+      throw new Error('Search API call failed with status ', response.status)
+    }
+    const json = await response.json()
+
+    // Extract listing addresses from the "_id" field of the search results.
+    const addresses = json.listings.map(listing => listing._id)
+
+    // TODO(franck): Fix once we move to new contracts.
+    // Currently the React ListingGrids component manipulates listing ids.
+    // But the search API only returns addresses so we need to convert those into ids.
+    // There is no method on the listing registry contract to handle this conversion.
+    // As a workaround we build a lookup table of address -> id.
+    // While fine in a development environment with a few listings, it won't scale in production
+    // since it involves calling listingsRegistryContract as many times as there are listings...
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Search not supported yet in production.')
+    }
+
+    const listingIds = await this.allIds()
+
+    // Get the listing registry contract deployed on the blockchain.
+    const contract = this.contractService.listingsRegistryContract
+    const listingsRegistry = await this.contractService.deployed(contract)
+
+    // Build a map of address -> id.
+    const addressToId = {}
+    await Promise.all(
+      listingIds.map(async id => {
+        const address = await listingsRegistry.methods.getListingAddress(id).call()
+        addressToId[address] = id
+      } )
+    )
+
+    // Lookup each address returned in the search results to get its id.
+    // Note: the search indexer aggressively indexes listings without waiting for block
+    // confirmation. Therefore in rare cases a search may return an address that is not recorded
+    // in the listing registry. To guard against that we filter out address that fail lookup.
+    const searchIds = addresses.map(address => addressToId[address]).filter(id => id !== undefined)
+
+    return searchIds
+  }
+
   async allAddresses() {
     const contract = this.contractService.listingsRegistryContract
     const deployed = await this.contractService.deployed(contract)
