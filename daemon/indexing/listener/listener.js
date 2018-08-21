@@ -6,6 +6,17 @@ const Origin = require('../../../dist/index') // FIXME: replace with origin-js p
 const search = require ('../lib/search.js')
 const db = require('../lib//db.js')
 
+
+// Origin Listener
+// ---------------
+
+// Todo
+// - Allow configuring web3 endpoint and IPFS endpoint
+// - Persist starting point
+// - Handle blockchain splits/winners
+// - Include current-as-of block numbers in POSTs
+// - Perhaps send related data as it was at the time of the event, not crawl time
+
 const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(web3Provider)
 const o = new Origin({
@@ -14,25 +25,6 @@ const o = new Origin({
   ipfsGatewayPort: 8080,
   web3,
 })
-
-// Origin Listener
-// ---------------
-// An at-least-once event listener for origin events (May deliver an event more than once).
-// Make sure your webhook endpoint is idempotent!
-// Sends events along with all the related data.
-// Designed to be infura compatible - API calls only, no subscriptions.
-//
-// To use:
-// - Run `npm start run` to setup a local IPFS and blockchain, and run tests
-// - In another terminal run `node scripts/listener.js`
-// - Or `node scripts/listener.js --webhook=http://localhost/originevents/`
-//
-// Todo
-// - Allow configuring web3 endpoint and IPFS endpoint
-// - Persist starting point
-// - Handle blockchain splits/winners
-// - Include current-as-of block numbers in POSTs
-// - Perhaps send related data as it was at the time of the event, not crawl time
 
 // -----------------------------
 // Section 1: Follow rules
@@ -119,20 +111,22 @@ async function liveTracking(config) {
   let start
 
   const check = async () => {
-    start = new Date()
-    const currentBlockNumber = await web3.eth.getBlockNumber()
-    if (currentBlockNumber == lastCheckedBlock) {
-      console.log('No new block.')
+    await withRetrys(async ()=>{
+      start = new Date()
+      const currentBlockNumber = await web3.eth.getBlockNumber()
+      if (currentBlockNumber == lastCheckedBlock) {
+        console.log('No new block.')
+        return scheduleNextCheck()
+      }
+      console.log('New block: ' + currentBlockNumber)
+      const opts = { fromBlock: lastLogBlock + 1 }
+      const batchLastLogBlock = await runBatch(opts, context)
+      if (batchLastLogBlock != undefined) {
+        lastLogBlock = batchLastLogBlock
+      }
+      lastCheckedBlock = currentBlockNumber
       return scheduleNextCheck()
-    }
-    console.log('New block: ' + currentBlockNumber)
-    const opts = { fromBlock: lastLogBlock + 1 }
-    const batchLastLogBlock = await runBatch(opts, context)
-    if (batchLastLogBlock != undefined) {
-      lastLogBlock = batchLastLogBlock
-    }
-    lastCheckedBlock = currentBlockNumber
-    return scheduleNextCheck()
+    })
   }
   const scheduleNextCheck = async () => {
     const elapsed = new Date() - start
