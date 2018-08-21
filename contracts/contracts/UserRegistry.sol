@@ -25,11 +25,25 @@ contract UserRegistry {
     */
 
     /// @dev registerUser(): Add a user to the registry
-    function registerUser()
+    function registerUser(
+      uint256[] _claimType,
+      address[] _issuer,
+      bytes _signature,
+      bytes _data,
+      uint256[] _offsets
+    )
       public
     {
-        users[tx.origin] = msg.sender;
-        emit NewUser(tx.origin, msg.sender);
+        ClaimHolderPresigned identity = ClaimHolderPresigned(
+            msg.sender, // set the identity owner
+            _claimType,
+            _issuer,
+            _signature,
+            _data,
+            _offsets
+        );
+        users[msg.sender] = identity;
+        emit NewUser(msg.sender, identity);
     }
 
     /// @dev clearUser(): Remove user from the registry
