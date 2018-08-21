@@ -143,24 +143,24 @@ async function liveTracking(config) {
   check()
 }
 
-function getLastBlock(config){
-  if(config.continueFile == undefined || !fs.existsSync(config.continueFile)){
+function getLastBlock(config) {
+  if (config.continueFile == undefined || !fs.existsSync(config.continueFile)) {
     return 0
   }
-  const json = fs.readFileSync(config.continueFile, {encoding:"utf8"})
+  const json = fs.readFileSync(config.continueFile, { encoding: 'utf8' })
   const data = JSON.parse(json)
-  if(data.lastLogBlock){
+  if (data.lastLogBlock) {
     return data.lastLogBlock
   }
   return 0
 }
 
-function setLastBlock(config, blockNumber){
-  if(config.continueFile == undefined){
+function setLastBlock(config, blockNumber) {
+  if (config.continueFile == undefined) {
     return
   }
-  const json = JSON.stringify({lastLogBlock: blockNumber, version:1})
-  fs.writeFileSync(config.continueFile, json, {encoding: "utf8"})
+  const json = JSON.stringify({ lastLogBlock: blockNumber, version: 1 })
+  fs.writeFileSync(config.continueFile, json, { encoding: 'utf8' })
 }
 
 // runBatch - gets and processes logs for a range of blocks
@@ -252,7 +252,7 @@ async function handleLog(log, rule, contractVersion, context) {
     ruleResults = await rule.ruleFn(log)
   } catch (e) {
     console.log(
-      "Error: could not get information for",
+      'Error: could not get information for',
       `${log.contractName} ${log.eventName}`
     )
     console.log(e)
