@@ -40,7 +40,7 @@ Use origin-box to start an origin-js container.
 
 Start the Apollo server in the origin-js container
 
-    docker exec -ti origin-js node daemon/indexing/apollo/index.js
+    docker exec -w /app/daemon/indexing origin-js node apollo/index.js
 
  The server should start and you can point your browser to http://localhost:4000 to access the GraphQL playground.
 
