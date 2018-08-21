@@ -196,9 +196,18 @@ async function handleLog(log, rule, contractVersion, context) {
   log.contractVersionKey = contractVersion.versionKey
   log.networkId = context.networkId
 
+  let ruleResults = undefined
+  // If for any reason, origin-js can't read the listings, then we don't index that listing
+  try {
+    ruleResults = await rule.ruleFn(log)
+  } catch (e){
+    console.log(`Error: could not get information for ${log.contractName} ${log.eventName}`)
+    console.log(e)
+    return
+  }
   const output = {
     log: log,
-    related: await rule.ruleFn(log)
+    related: ruleResults
   }
 
   const json = JSON.stringify(output, null, 2)
