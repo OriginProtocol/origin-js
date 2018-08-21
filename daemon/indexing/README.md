@@ -24,7 +24,7 @@ If you want to index data in Elasticsearch, start the elasticsearch container.
 
 Start the listener in the the origin-js container. Use --elasticsearch and/or --db options to pick the indexer(s).
 
-    docker exec -ti origin-js node daemon/indexing/listener/listener.js --elasticsearch --db
+    docker exec -w /app/daemon/indexing origin-js node listener/listener.js --elasticsearch --db
 
 You should see messages in the console indicating events are being indexed.
 
