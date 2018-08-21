@@ -29,7 +29,6 @@ const o = new Origin({
 //
 // Todo
 // - Allow configuring web3 endpoint and IPFS endpoint
-// - Handle errors
 // - Persist starting point
 // - Handle blockchain splits/winners
 // - Include current-as-of block numbers in POSTs
@@ -182,6 +181,33 @@ async function runBatch(opts, context) {
   return lastLogBlock
 }
 
+async function withRetrys(fn){
+  let tryCount = 0
+  while(true){
+    try {
+      await fn() // Do our action.
+      return // it worked!
+    } catch(e) {
+      // Roughly double wait time each failure
+      let waitTime = Math.pow(100, 1 + (tryCount/6))
+      // Randomly jiggle wait time by 20% either way. No thundering herd.
+      waitTime = Math.floor(waitTime * (1.2 - Math.random() * 0.4 ))
+      // Max out at two minutes
+      waitTime = Math.min(waitTime, 2*60*1000)
+      console.log("ERROR", e)
+      console.log(`will retry in ${waitTime/1000} seconds`)
+      tryCount += 1
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    if(tryCount > 10){
+      console.log("Maximum number of retrys reached")
+      // Now it's up to our enviroment to restart us.
+      // Hopefuly with a clean start, things will work better
+      process.exit(1); 
+    }
+  }
+}
+
 // handleLog - annotates, runs rule, and ouputs a particular log
 async function handleLog(log, rule, contractVersion, context) {
   console.log(`Processing log blockNumber=${log.blockNumber} transactionIndex=${log.transactionIndex}`)
@@ -227,23 +253,32 @@ async function handleLog(log, rule, contractVersion, context) {
   // Data consistency: check  listingId from the JSON stored in IPFS
   // matches with listingID emitted in the event.
   // TODO: use method utils/id.js:parseListingId
+  // DVF: this should really be handled in origin js - origin.js should throw
+  // an error if this happens.
   const ipfsListingId = listingId.split('-')[2]
   if (ipfsListingId !== log.decoded.listingID) {
-    throw error(`ListingId mismatch: ${ipfsListingId} !== ${log.decoded.listingID}`)
+    throw `ListingId mismatch: ${ipfsListingId} !== ${log.decoded.listingID}`
   }
 
   if (context.config.elasticsearch) {
     console.log("INDEXING ", listingId)
-    await search.Listing.index(listingId, userAddress, ipfsHash, listing.ipfsData.data)
+    await withRetrys(async ()=>{
+      await search.Listing.index(listingId, userAddress, ipfsHash, listing.ipfsData.data)
+    })
   }
 
+  
   if (context.config.db) {
-    await db.Listing.insert(listingId, userAddress, ipfsHash, listing.ipfsData.data)
+    await withRetrys(async ()=>{
+      await db.Listing.insert(listingId, userAddress, ipfsHash, listing.ipfsData.data)
+    })
   }
 
   if (context.config.webhook) {
     console.log('\n-- WEBHOOK to ' + context.config.webhook + ' --\n')
-    await postToWebhook(context.config.webhook, json)
+    await withRetrys(async ()=>{
+      await postToWebhook(context.config.webhook, json)
+    })
   }
 }
 
