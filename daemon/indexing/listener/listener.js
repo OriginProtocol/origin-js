@@ -3,9 +3,8 @@ const urllib = require('url')
 const Web3 = require('web3')
 
 const Origin = require('../../../dist/index') // FIXME: replace with origin-js package
-const search = require ('../lib/search.js')
+const search = require('../lib/search.js')
 const db = require('../lib//db.js')
-
 
 // Origin Listener
 // ---------------
@@ -23,7 +22,7 @@ const o = new Origin({
   ipfsDomain: 'origin-js',
   ipfsGatewayProtocol: 'http',
   ipfsGatewayPort: 8080,
-  web3,
+  web3
 })
 
 // -----------------------------
@@ -46,10 +45,10 @@ const generateOfferId = log => {
 }
 const getListingDetails = async log => {
   const listingId = generateListingId(log)
-  console.log("CALLING getListing for ID ", listingId)
+  console.log('CALLING getListing for ID ', listingId)
   const listing = await o.marketplace.getListing(listingId)
   return {
-    listing: listing,
+    listing: listing
   }
   //return {
   //  listing: await o.marketplace.getListing(generateListingId(log))
@@ -111,7 +110,7 @@ async function liveTracking(config) {
   let start
 
   const check = async () => {
-    await withRetrys(async ()=>{
+    await withRetrys(async () => {
       start = new Date()
       const currentBlockNumber = await web3.eth.getBlockNumber()
       if (currentBlockNumber == lastCheckedBlock) {
@@ -175,36 +174,40 @@ async function runBatch(opts, context) {
   return lastLogBlock
 }
 
-async function withRetrys(fn){
+async function withRetrys(fn) {
   let tryCount = 0
-  while(true){
+  while (true) {
     try {
       await fn() // Do our action.
       return // it worked!
-    } catch(e) {
+    } catch (e) {
       // Roughly double wait time each failure
-      let waitTime = Math.pow(100, 1 + (tryCount/6))
+      let waitTime = Math.pow(100, 1 + tryCount / 6)
       // Randomly jiggle wait time by 20% either way. No thundering herd.
-      waitTime = Math.floor(waitTime * (1.2 - Math.random() * 0.4 ))
+      waitTime = Math.floor(waitTime * (1.2 - Math.random() * 0.4))
       // Max out at two minutes
-      waitTime = Math.min(waitTime, 2*60*1000)
-      console.log("ERROR", e)
-      console.log(`will retry in ${waitTime/1000} seconds`)
+      waitTime = Math.min(waitTime, 2 * 60 * 1000)
+      console.log('ERROR', e)
+      console.log(`will retry in ${waitTime / 1000} seconds`)
       tryCount += 1
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise(resolve => setTimeout(resolve, waitTime))
     }
-    if(tryCount > 10){
-      console.log("Maximum number of retrys reached")
+    if (tryCount > 10) {
+      console.log('Maximum number of retrys reached')
       // Now it's up to our enviroment to restart us.
       // Hopefuly with a clean start, things will work better
-      process.exit(1); 
+      process.exit(1)
     }
   }
 }
 
 // handleLog - annotates, runs rule, and ouputs a particular log
 async function handleLog(log, rule, contractVersion, context) {
-  console.log(`Processing log blockNumber=${log.blockNumber} transactionIndex=${log.transactionIndex}`)
+  console.log(
+    `Processing log blockNumber=${log.blockNumber} transactionIndex=${
+      log.transactionIndex
+    }`
+  )
 
   log.decoded = web3.eth.abi.decodeLog(
     rule.eventAbi.inputs,
@@ -220,8 +223,11 @@ async function handleLog(log, rule, contractVersion, context) {
   // If for any reason, origin-js can't read the listings, then we don't index that listing
   try {
     ruleResults = await rule.ruleFn(log)
-  } catch (e){
-    console.log(`Error: could not get information for ${log.contractName} ${log.eventName}`)
+  } catch (e) {
+    console.log(
+      "Error: could not get information for",
+      `${log.contractName} ${log.eventName}`
+    )
     console.log(e)
     return
   }
@@ -240,7 +246,7 @@ async function handleLog(log, rule, contractVersion, context) {
   const ipfsHash = log.decoded.ipfsHash
 
   //TODO: remove binary data from pictures in a proper way.
-  let listing = output.related.listing
+  const listing = output.related.listing
   delete listing.ipfsData.data.pictures
   const listingId = listing.id
 
@@ -255,22 +261,31 @@ async function handleLog(log, rule, contractVersion, context) {
   }
 
   if (context.config.elasticsearch) {
-    console.log("INDEXING ", listingId)
-    await withRetrys(async ()=>{
-      await search.Listing.index(listingId, userAddress, ipfsHash, listing.ipfsData.data)
+    console.log('INDEXING ', listingId)
+    await withRetrys(async () => {
+      await search.Listing.index(
+        listingId,
+        userAddress,
+        ipfsHash,
+        listing.ipfsData.data
+      )
     })
   }
 
-  
   if (context.config.db) {
-    await withRetrys(async ()=>{
-      await db.Listing.insert(listingId, userAddress, ipfsHash, listing.ipfsData.data)
+    await withRetrys(async () => {
+      await db.Listing.insert(
+        listingId,
+        userAddress,
+        ipfsHash,
+        listing.ipfsData.data
+      )
     })
   }
 
   if (context.config.webhook) {
     console.log('\n-- WEBHOOK to ' + context.config.webhook + ' --\n')
-    await withRetrys(async ()=>{
+    await withRetrys(async () => {
       await postToWebhook(context.config.webhook, json)
     })
   }
@@ -290,7 +305,7 @@ async function postToWebhook(urlString, json) {
   }
   return new Promise((resolve, reject) => {
     const req = http.request(postOptions, res => {
-      if(res.statusCode == 200){
+      if (res.statusCode == 200) {
         resolve()
       } else {
         reject()
@@ -329,8 +344,8 @@ function buildSignatureLookup() {
   for (const contractName in LISTEN_RULES) {
     const eventRules = LISTEN_RULES[contractName]
     const contract = o.contractService[contractName]
-    if(contract == undefined){
-      throw "Can't find contract "+contractName
+    if (contract == undefined) {
+      throw "Can't find contract " + contractName
     }
     contract.abi.filter(x => x.type == 'event').forEach(eventAbi => {
       const ruleFn = eventRules[eventAbi.name]
@@ -375,7 +390,7 @@ async function buildVersionList() {
 const args = {}
 process.argv.forEach(arg => {
   const t = arg.split('=')
-  const argVal = (t.length > 1) ? t[1] : true
+  const argVal = t.length > 1 ? t[1] : true
   args[t[0]] = argVal
 })
 
@@ -387,6 +402,6 @@ const config = {
   // Index events in the database.
   db: args['--db'],
   // Verbose mode, includes dumping events on the console.
-  verbose: args['--verbose'],
+  verbose: args['--verbose']
 }
 liveTracking(config)
