@@ -30,7 +30,7 @@ Output:
 
 Events:
 
-`--continue-file=path` Will start following events at the block number defined in the file, and will keep this file updated as it listens to events.
+`--continue-file=path` Will start following events at the block number defined in the file, and will keep this file updated as it listens to events. The continue file is JSON, in the format `{"lastLogBlock":222, "version":1}`.
 
 
 # How the listener works
