@@ -11,10 +11,12 @@ const db = require('../lib//db.js')
 
 // Todo
 // - Allow configuring web3 endpoint and IPFS endpoint
+// - When catching up, work in smaller batches
 // - Persist starting point
 // - Handle blockchain splits/winners
 // - Include current-as-of block numbers in POSTs
 // - Perhaps send related data as it was at the time of the event, not crawl time
+// - Possible configurable log levels
 
 const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(web3Provider)
@@ -24,6 +26,9 @@ const o = new Origin({
   ipfsGatewayPort: 8080,
   web3
 })
+
+MAX_RETRYS = 10
+MAX_RETRY_WAIT_MS = 2 * 60 * 1000
 
 // -----------------------------
 // Section 1: Follow rules
@@ -45,7 +50,6 @@ const generateOfferId = log => {
 }
 const getListingDetails = async log => {
   const listingId = generateListingId(log)
-  console.log('CALLING getListing for ID ', listingId)
   const listing = await o.marketplace.getListing(listingId)
   return {
     listing: listing
@@ -174,26 +178,26 @@ async function runBatch(opts, context) {
   return lastLogBlock
 }
 
+// Retrys up to 10 times, with exponential backoff, then exits the process
 async function withRetrys(fn) {
   let tryCount = 0
   while (true) {
     try {
-      await fn() // Do our action.
-      return // it worked!
+      return await fn() // Do our action.
     } catch (e) {
       // Roughly double wait time each failure
       let waitTime = Math.pow(100, 1 + tryCount / 6)
       // Randomly jiggle wait time by 20% either way. No thundering herd.
       waitTime = Math.floor(waitTime * (1.2 - Math.random() * 0.4))
       // Max out at two minutes
-      waitTime = Math.min(waitTime, 2 * 60 * 1000)
+      waitTime = Math.min(waitTime, MAX_RETRY_WAIT_MS)
       console.log('ERROR', e)
       console.log(`will retry in ${waitTime / 1000} seconds`)
       tryCount += 1
       await new Promise(resolve => setTimeout(resolve, waitTime))
     }
-    if (tryCount > 10) {
-      console.log('Maximum number of retrys reached')
+    if (tryCount >= MAX_RETRYS) {
+      console.log('Exiting. Maximum number of retrys reached.')
       // Now it's up to our enviroment to restart us.
       // Hopefuly with a clean start, things will work better
       process.exit(1)
@@ -305,7 +309,7 @@ async function postToWebhook(urlString, json) {
   }
   return new Promise((resolve, reject) => {
     const req = http.request(postOptions, res => {
-      if (res.statusCode == 200) {
+      if (res.statusCode === 200) {
         resolve()
       } else {
         reject()

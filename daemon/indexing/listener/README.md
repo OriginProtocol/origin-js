@@ -14,7 +14,7 @@ First you'll need a blockchain network to listen to. To get a local network work
 
 A simple way to see the listener in action:
 
-    node scripts/listener.js --verbose
+    node daemon/indexing/listener/listener.js
 
 ### Command line options
 
@@ -33,7 +33,7 @@ The listener checks every few seconds for a new block number. If it sees one, it
 
 For each of those events, the listener decodes them, annotates them with some useful fields, then runs a rule based on the event/contract to load additional information about the event through origin.js. For example, a `ListingCreated` event on a marketplace contract will have the results of `origin.marketplace.get` added to it. The code that uses the event listener output doesn't need to talk to the blockchain or IPFS at all.
 
-After being annotated with more information, the event is then output the places set by the command line options.
+After being annotated with more information, the event is then output to the places set by the command line options.
 
 ## Error handling
 
