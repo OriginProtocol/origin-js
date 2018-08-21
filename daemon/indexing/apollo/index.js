@@ -20,8 +20,9 @@ const typeDefs = gql`
 
   # When querying a set of items, the output is a page.
   interface OutputPage {
-    totalCount: Int! # Total number of items in the set.
-    more: Boolean!   # True if there is another page to fetch.
+    num: Int!      # Current page number
+    size: Int!     # Size of pages.
+    total: Int!    # Total number of pages available.
   }
 
   type Price {
@@ -126,6 +127,7 @@ const typeDefs = gql`
 
   enum ReviewOrderField {
     CREATION_DATE
+    RATING
   }
 
   enum ListingOrderField {
@@ -185,11 +187,16 @@ const typeDefs = gql`
   }
 `
 
+// Maximum number of items returned in a page.
+// If caller requests more, page size will be trimmed to MaxResultsPerPage.
+const MaxResultsPerPage = 100
+
+
 // Resolvers define the technique for fetching the types in the schema.
 const resolvers = {
   Query: {
     async Listings(root, args, context, info) {
-      // TODO: handle pagination, filters, order.
+      // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       let listings = []
       if (args.searchQuery) {
         listings = await search.Listing.search(args.searchQuery)
@@ -227,7 +234,7 @@ const resolvers = {
       return {currency: 'ETH', amount: listing.price.toString()}
     },
     offers(listing, args) {
-      // TODO: handle pagination, filters, order.
+      // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       return {
         totalCount: 1,
         more: false,
@@ -238,7 +245,7 @@ const resolvers = {
       }
     },
     reviews(listing, args) {
-      // TODO: handle pagination, filters, order.
+      // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       return {
         totalCount: 1,
         more: false,
