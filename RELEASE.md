@@ -49,6 +49,8 @@ No additional features should be added to this release branch. Only bug fixes sh
 ## Publish
 ### origin-js
 - [ ] _origin-js_ : In `package.json`, confirm version is `0.7.0`
+- [ ] _origin_js Update README.md example code to new version.
+  - `<script src="https://code.originprotocol.com/origin-js/origin-v0.7.0.js"></script>`
 - [ ] If contracts have changed:
   - Show diff with: `git diff master..develop contracts/contracts/`  
   - `cd contracts`
@@ -99,7 +101,9 @@ No additional features should be added to this release branch. Only bug fixes sh
   - `git clone https://github.com/OriginProtocol/origin-dapp && cd origin-dapp`
   - `heroku create && git push heroku master`
 - [ ] _origin-dapp_: Add git tag to `master` to match origin-js.
-  - `git tag -a v0.3.0 -m "New release"`
+  - `git tag -a v0.7.0 -m "New release"`
+- Create IFPFS deploy of DApp
+  - `scripts/deploy.sh` (See usage notes in file)
 
 ### origin-bridge
 - [ ] _origin-dapp_: Merge and push branches
