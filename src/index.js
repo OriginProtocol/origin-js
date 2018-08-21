@@ -1,12 +1,8 @@
 import ContractService from './services/contract-service'
 import IpfsService from './services/ipfs-service'
 import { Attestations } from './resources/attestations'
-<<<<<<< HEAD
 import Listings from './resources/listings'
 import Marketplace from './resources/marketplace'
-=======
-import { Listings, SearchQuery } from './resources/listings'
->>>>>>> f7ef563... Added SearchQuery object, added unit test.
 import Notifications from './resources/notifications'
 import Purchases from './resources/purchases'
 import Reviews from './resources/reviews'
@@ -15,7 +11,8 @@ import Messaging from './resources/messaging'
 import fetch from 'cross-fetch'
 import store from 'store'
 
-const defaultBridgeServer = 'https://bridge.originprotocol.com'
+//const defaultBridgeServer = 'https://bridge.originprotocol.com'
+const defaultBridgeServer = 'http://localhost:5000'
 const defaultIpfsDomain = 'gateway.originprotocol.com'
 const defaultIpfsApiPort = '5002'
 const defaultIpfsGatewayPort = '443'
@@ -104,4 +101,4 @@ class Origin {
   }
 }
 
-module.exports = { Origin, SearchQuery }
+module.exports = Origin

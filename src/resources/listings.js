@@ -37,15 +37,6 @@ function validate(validateFn, data, schema) {
   }
 }
 
-class SearchQuery {
-  // SearchQuery encapsulates the properties of a search: query string, filters, etc...
-  constructor( {rawQuery, }) {
-    // Raw query string as entered by the user.
-    this.rawQuery = rawQuery
-    // TODO(franck): add relevant fields.
-  }
-}
-
 class Listings extends ResourceBase {
   constructor({
     contractService,
@@ -109,19 +100,19 @@ class Listings extends ResourceBase {
     return range(0, Number(listingsLength))
   }
 
-  async search(query) {
+  async search(rawQuery) {
     // Issues an API call to the bridge server for searching listings.
     // Args:
-    //   query(SearchQuery): query object.
+    //   rawQuery: rawQueryObject
     // Returns:
     //   list(int): listing ids that match the query.
-    if (query.rawQuery == '') {
+    if (rawQuery === '') {
       return []
     }
 
     // Make the search API call to the bridge server.
     const url = encodeURI(
-      appendSlash(this.indexingServerUrl) + 'api/search/listings?query=' + query.rawQuery)
+      `${appendSlash(this.indexingServerUrl)}search/listings?query=${rawQuery}`)
     const response = await this.fetch(url, { method: 'GET' })
     if (response.status != 200) {
       throw new Error('Search API call failed with status ', response.status)
@@ -619,7 +610,4 @@ class Listings extends ResourceBase {
   }
 }
 
-module.exports = {
-  Listings,
-  SearchQuery
-}
+module.exports = Listings
