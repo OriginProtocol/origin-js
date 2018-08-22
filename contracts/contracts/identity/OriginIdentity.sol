@@ -5,4 +5,6 @@ import './ClaimHolder.sol';
 // This will be deployed exactly once and represents Origin Protocol's
 // own identity for use in signing attestations.
 
-contract OriginIdentity is ClaimHolder {}
+contract OriginIdentity is ClaimHolder {
+  constructor(address _ownerAddress) ClaimHolder(_ownerAddress) public {}
+}
