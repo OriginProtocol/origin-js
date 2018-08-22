@@ -10,6 +10,9 @@ import store from 'store'
 
 const defaultBridgeServer = 'https://bridge.originprotocol.com'
 const defaultIpfsDomain = 'gateway.originprotocol.com'
+//const defaultApolloServer = 'http://apollo.originprotocol.com'
+const defaultApolloServer = 'http://localhost'
+const defaultApolloServerPort = '4000'
 const defaultIpfsApiPort = '5002'
 const defaultIpfsGatewayPort = '443'
 const defaultIpfsGatewayProtocol = 'https'
@@ -52,6 +55,8 @@ class Origin {
       contractService: this.contractService,
       ipfsService: this.ipfsService,
       indexingServerUrl,
+      defaultApolloServer,
+      defaultApolloServerPort,
       fetch,
       store
     })
