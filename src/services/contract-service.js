@@ -1,5 +1,3 @@
-import ClaimHolderRegisteredContract from './../../contracts/build/contracts/ClaimHolderRegistered.json'
-import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
@@ -24,8 +22,6 @@ class ContractService {
 
     const contracts = {
       userRegistryContract: UserRegistryContract,
-      claimHolderRegisteredContract: ClaimHolderRegisteredContract,
-      claimHolderPresignedContract: ClaimHolderPresignedContract,
       originIdentityContract: OriginIdentityContract,
       originTokenContract: OriginTokenContract,
       v00_MarketplaceContract: V00_MarketplaceContract,
