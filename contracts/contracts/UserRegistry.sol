@@ -34,7 +34,7 @@ contract UserRegistry {
     )
       public
     {
-        ClaimHolderPresigned identity = ClaimHolderPresigned(
+        ClaimHolderPresigned identity = new ClaimHolderPresigned(
             msg.sender, // set the identity owner
             _claimType,
             _issuer,
