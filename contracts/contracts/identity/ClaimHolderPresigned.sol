@@ -21,7 +21,7 @@ contract ClaimHolderPresigned is ClaimHolder {
         KeyHolder(_ownerAddress)
         public
     {
-        ClaimHolderLibrary.addClaims(
+        ClaimHolderLibrary.initializeClaims(
             keyHolderData,
             claims,
             _claimType,

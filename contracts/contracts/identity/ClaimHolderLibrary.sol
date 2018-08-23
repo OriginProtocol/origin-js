@@ -37,6 +37,36 @@ library ClaimHolderLibrary {
         require(KeyHolderLibrary.keyHasPurpose(_keyHolderData, keccak256(msg.sender), 3), "Sender does not have claim signer key");
       }
 
+      return addClaimUnauthorized(
+        _keyHolderData,
+        _claims,
+        _claimType,
+        _scheme,
+        _issuer,
+        _signature,
+        _data,
+        _uri
+      );
+  }
+
+  /*
+    NOTE:
+      This method does not check permissions. It should never be used without
+      additional permission checks, outside of a constructor method.
+  */
+  function addClaimUnauthorized(
+      KeyHolderLibrary.KeyHolderData storage _keyHolderData,
+      Claims storage _claims,
+      uint256 _claimType,
+      uint256 _scheme,
+      address _issuer,
+      bytes _signature,
+      bytes _data,
+      string _uri
+  )
+      public
+      returns (bytes32 claimRequestId)
+  {
       bytes32 claimId = keccak256(_issuer, _claimType);
 
       if (_claims.byId[claimId].issuer != _issuer) {
@@ -77,6 +107,33 @@ library ClaimHolderLibrary {
       uint offset = 0;
       for (uint8 i = 0; i < _claimType.length; i++) {
           addClaim(
+            _keyHolderData,
+            _claims,
+            _claimType[i],
+            1,
+            _issuer[i],
+            getBytes(_signature, (i * 65), 65),
+            getBytes(_data, offset, _offsets[i]),
+            ""
+          );
+          offset += _offsets[i];
+      }
+  }
+
+  function initializeClaims(
+      KeyHolderLibrary.KeyHolderData storage _keyHolderData,
+      Claims storage _claims,
+      uint256[] _claimType,
+      address[] _issuer,
+      bytes _signature,
+      bytes _data,
+      uint256[] _offsets
+  )
+      public
+  {
+      uint offset = 0;
+      for (uint8 i = 0; i < _claimType.length; i++) {
+          addClaimUnauthorized(
             _keyHolderData,
             _claims,
             _claimType[i],
