@@ -1,3 +1,4 @@
+import ClaimHolderContract from './../../contracts/build/contracts/ClaimHolder.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
@@ -21,6 +22,7 @@ class ContractService {
     this.web3 = new Web3(externalWeb3.currentProvider)
 
     const contracts = {
+      claimHolderContract: ClaimHolderContract,
       userRegistryContract: UserRegistryContract,
       originIdentityContract: OriginIdentityContract,
       originTokenContract: OriginTokenContract,
