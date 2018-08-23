@@ -6,5 +6,5 @@ import './ClaimHolder.sol';
 // own identity for use in signing attestations.
 
 contract OriginIdentity is ClaimHolder {
-  constructor(address _ownerAddress) ClaimHolder(_ownerAddress) public {}
+  constructor(address _ownerAddress) KeyHolder(_ownerAddress) public {}
 }

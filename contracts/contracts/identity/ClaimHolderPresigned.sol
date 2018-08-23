@@ -18,7 +18,7 @@ contract ClaimHolderPresigned is ClaimHolder {
         bytes _data,
         uint256[] _offsets
     )
-        ClaimHolder(_ownerAddress)
+        KeyHolder(_ownerAddress)
         public
     {
         ClaimHolderLibrary.addClaims(

@@ -8,8 +8,6 @@ contract ClaimHolder is KeyHolder, ERC735 {
 
     ClaimHolderLibrary.Claims claims;
 
-    constructor(address _ownerAddress) KeyHolder(_ownerAddress) public {}
-
     function addClaim(
         uint256 _claimType,
         uint256 _scheme,
