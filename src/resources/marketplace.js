@@ -14,11 +14,14 @@ const storeKeys = {
 }
 
 class Marketplace extends Adaptable {
+
   constructor({
     contractService,
     ipfsService,
-    fetch,
     indexingServerUrl,
+    apolloServer,
+    apolloServerPort,
+    fetch,
     store
   }) {
     super(...arguments)
@@ -27,6 +30,8 @@ class Marketplace extends Adaptable {
     this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
     this.listingIpfsStore = new ListingIpfsStore(this.ipfsService)
+    this.apolloServer = apolloServer
+    this.apolloServerPort = apolloServerPort
 
     // initialize notifications
     if (!store.get(storeKeys.notificationSubscriptionStart)) {
@@ -92,16 +97,17 @@ class Marketplace extends Adaptable {
       Listings (
         searchQuery: "${searchQuery}"
       ) {
-        totalCount
-        more
+        pageNumber
+        itemsPerPage
+        totalNumberOfPages
         listings {
           id
 
         }
       }
     }`
-    const url = `${this.defaultApolloServer}:${this.defaultApolloServerPort}`
-    const response = await this.fetch(url, {
+
+    return this.fetch(`${this.apolloServer}:${this.apolloServerPort}`, {
         method: 'POST',
         body: JSON.stringify({
           query:query
@@ -111,9 +117,6 @@ class Marketplace extends Adaptable {
         },
       }
     )
-
-    console.log(response.json())
-
   }
 
   // async getOffersCount(listingId) {}
