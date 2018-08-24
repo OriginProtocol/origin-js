@@ -8,7 +8,7 @@ import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/Pausab
  * token transfers that involve an allowed sender or allowed recipient. Once the
  * whitelist expiration passes, it becomes impossible to re-enable the
  * whitelist.
- * 
+ *
  * This contract inherits from PausableToken to enforce both pausing and
  * whitelists for transfer calls.
  */
@@ -19,17 +19,17 @@ contract WhitelistedPausableToken is PausableToken {
   mapping (address => bool) public allowedSenders;
   // May receive tokens from any sender
   mapping (address => bool) public allowedRecipients;
-  
+
   event SetWhitelistExpiration(uint256 expiration);
   event AllowedSenderAdded(address sender);
   event AllowedSenderRemoved(address sender);
   event AllowedRecipientAdded(address recipient);
   event AllowedRecipientRemoved(address recipient);
-  
+
   //
   // Functions for maintaining whitelist
   //
-  
+
   modifier allowedTransfer(address _from, address _to) {
     require(
       !whitelistActive() ||
@@ -39,31 +39,31 @@ contract WhitelistedPausableToken is PausableToken {
     );
     _;
   }
-  
+
   function whitelistActive() public view returns (bool) {
     return block.timestamp < whitelistExpiration;
   }
-  
+
   function addAllowedSender(address _sender) public onlyOwner {
     emit AllowedSenderAdded(_sender);
     allowedSenders[_sender] = true;
   }
-  
+
   function removeAllowedSender(address _sender) public onlyOwner {
     emit AllowedSenderRemoved(_sender);
     delete allowedSenders[_sender];
   }
-  
+
   function addAllowedRecipient(address _recipient) public onlyOwner {
     emit AllowedRecipientAdded(_recipient);
     allowedRecipients[_recipient] = true;
   }
-  
+
   function removeAllowedRecipient(address _recipient) public onlyOwner {
     emit AllowedRecipientRemoved(_recipient);
     delete allowedRecipients[_recipient];
   }
-  
+
   /**
    * @dev Set the whitelist expiration, after which the whitelist no longer
    * applies.
@@ -78,12 +78,12 @@ contract WhitelistedPausableToken is PausableToken {
     emit SetWhitelistExpiration(_expiration);
     whitelistExpiration = _expiration;
   }
-  
+
   //
   // ERC20 transfer functions that have been overridden to enforce the
   // whitelist.
   //
-  
+
   function transfer(
     address _to,
     uint256 _value
