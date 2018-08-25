@@ -22,7 +22,7 @@ let o
 
 MAX_RETRYS = 10
 MAX_RETRY_WAIT_MS = 2 * 60 * 1000
-MAX_BATCH_BLOCKS = 30000
+MAX_BATCH_BLOCKS = 3000 // Adjust as needed as Origin gets more popular
 
 // -----------------------------
 // Section 1: Follow rules
@@ -100,6 +100,7 @@ function setupOriginJS(config){
   const web3Provider = new Web3.providers.HttpProvider(config.web3Url)
   // global
   web3 = new Web3(web3Provider)
+  console.log(`Web3 URL: ${config.web3Url}`)
 
   const ipfsUrl = urllib.parse(config.ipfsUrl)
   // global
@@ -109,6 +110,7 @@ function setupOriginJS(config){
     ipfsGatewayPort: ipfsUrl.port,
     web3
   })
+  console.log(`IPFS URL: ${config.ipfsUrl}`)
 }
 
 // liveTracking
