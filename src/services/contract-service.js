@@ -44,9 +44,9 @@ class ContractService {
       try {
         this[name].networks = Object.assign(
           {},
-          ((ContractAddresses[name]|{}).network|{}), // start with hard coded addresses
+          ((ContractAddresses[name]||{}).network||{}), // start with hard coded addresses
           this[name].networks, // override with addresses in contracts/build
-          (options.contractAddresses[name]|{}) // override with passed in options
+          (options.contractAddresses[name]||{}) // override with passed in options
         )
       } catch (e) {
         /* Ignore */
