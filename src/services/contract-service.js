@@ -26,15 +26,19 @@ class ContractService {
     this.opts = options
     this.initWalletLinker()
 
-    const contracts = {
+    this.marketplaceContracts = {
+      v00_MarketplaceContract: V00_MarketplaceContract,
+      v01_MarketplaceContract: V01_MarketplaceContract
+    }
+
+    const contracts = Object.assign({
       userRegistryContract: UserRegistryContract,
       claimHolderRegisteredContract: ClaimHolderRegisteredContract,
       claimHolderPresignedContract: ClaimHolderPresignedContract,
       originIdentityContract: OriginIdentityContract,
-      originTokenContract: OriginTokenContract,
-      v00_MarketplaceContract: V00_MarketplaceContract,
-      v01_MarketplaceContract: V01_MarketplaceContract
-    }
+      originTokenContract: OriginTokenContract
+    }, this.marketplaceContracts)
+
     this.libraries = {}
     this.libraries.ClaimHolderLibrary = ClaimHolderLibrary
     this.libraries.KeyHolderLibrary = KeyHolderLibrary
@@ -84,6 +88,22 @@ class ContractService {
 
   getMobileWalletLink() {
     return this.walletLinker.getLinkCode()
+  }
+
+  // Returns an object that describes how many marketplace
+  // contracts are available.
+  async marketplaceContractsFound() {
+    const networkId = await web3.eth.net.getId()
+
+    const contractCount = Object.keys(this.marketplaceContracts).length
+    const contractsFound = Object.keys(this.marketplaceContracts)
+      .filter(contractName => this.marketplaceContracts[contractName].networks[networkId])
+      .length
+
+    return {
+      allContractsPresent: contractCount === contractsFound,
+      someContractsPresent: contractsFound > 0
+    }
   }
 
   // Return bytes32 hex string from base58 encoded ipfs hash,
@@ -250,9 +270,10 @@ class ContractService {
         })
         .on('confirmation', confirmationCallback)
     })
+    const block = await this.web3.eth.getBlock(transactionReceipt.blockNumber)
     return {
-      created: (await this.web3.eth.getBlock(transactionReceipt.blockNumber))
-        .timestamp,
+      // return current time in seconds if block is not found
+      created: block ? block.timestamp : Math.floor(Date.now() / 1000),
       transactionReceipt
     }
   }

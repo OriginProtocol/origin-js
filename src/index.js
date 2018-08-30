@@ -25,7 +25,6 @@ class Origin {
     attestationServerUrl = defaultAttestationServerUrl,
     indexingServerUrl = defaultIndexingServerUrl,
     walletLinkerUrl = defaultWalletLinkerUrl,
-    disableNotifications,
     contractAddresses,
     web3,
     ipfsCreator,
@@ -58,22 +57,6 @@ class Origin {
       ipfsService: this.ipfsService,
       indexingServerUrl,
       fetch
-    })
-
-    if (!disableNotifications) {
-      const store = require('store')
-
-      this.notifications = new Notifications({
-        listings: this.listings,
-        purchases: this.purchases,
-        contractService: this.contractService,
-        store
-      })
-    }
-
-    this.reviews = new Reviews({
-      contractService: this.contractService,
-      ipfsService: this.ipfsService
     })
 
     this.users = new Users({
