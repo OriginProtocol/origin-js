@@ -1,0 +1,243 @@
+{
+  "$id": "http://schema.originprotocol.com/listing-core-v1.0.0",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "title": "Origin Protocol core listing schema",
+  "definitions": {
+    "moneyAmount": {
+      "type": "object",
+      "title": "An amount of money in a specified currency",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "amount"
+      ]
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "extendedStreet": {
+          "type": "string"
+        },
+        "locality": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "box": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "coord": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "integer",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "longitude": {
+              "type": "integer",
+              "minimum": -180,
+              "maximum": 180
+            }
+          },
+          "required": [
+            "latitude",
+            "longitude"
+          ]
+        }
+      },
+      "required": [
+        "street",
+        "locality",
+        "region",
+        "country"
+      ]
+    },
+    "media": {
+      "type": "object",
+      "title": "Representation of a media asset such as an image or a video",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dimension": {
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer"
+            },
+            "width": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "height",
+            "width"
+          ]
+        }
+      }
+    },
+    "timeSlot": {
+      "type": "object",
+      "required": [
+        "startDate",
+        "endDate",
+        "isAvailable"
+      ],
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isAvailable": {
+          "type": "boolean"
+        },
+        "price": {
+          "$ref": "#/definitions/moneyAmount"
+        }
+      },
+      "required": [
+        "startDate",
+        "endDate",
+        "isAvailable",
+        "price"
+      ]
+    },
+    "unitListing": {
+      "type": "object",
+      "properties": {
+        "unitsAvailable": {
+          "type": "integer"
+        },
+        "price": {
+          "$ref": "#/definitions/moneyAmount"
+        }
+      },
+      "required": [
+        "unitsAvailable",
+        "price"
+      ]
+    },
+    "fractionalListing": {
+      "type": "object",
+      "properties": {
+        "timeIncrement": {
+          "type": "string"
+        },
+        "calendarStep": {
+          "type": "string"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/timeSlot"
+          }
+        }
+      }
+    },
+    "listingClass": {
+      "type": "object",
+      "title": "Support for Unit and Fractional listing types",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "unit",
+            "fractional"
+          ]
+        },
+        "fields": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/unitListing"
+            },
+            {
+              "$ref": "#/definitions/fractionalListing"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "fields"
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string"
+    },
+    "class": {
+      "$ref": "#/definitions/listingClass"
+    },
+    "category": {
+      "type": "string"
+    },
+    "subCategory": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "expiry": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/media"
+      }
+    },
+    "commission": {
+      "$ref": "#/definitions/moneyAmount"
+    },
+    "securityDeposit": {
+      "$ref": "#/definitions/moneyAmount"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "class",
+    "category",
+    "subCategory",
+    "locale",
+    "title",
+    "description"
+  ]
+}
