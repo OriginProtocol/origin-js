@@ -36,7 +36,7 @@ function parseNotificationId(notificationId) {
   if (typeof notificationId !== 'string') {
     throw new Error(`Notification id ${notificationId} must be a string`)
   }
-  const exploded = offerId.split(separator)
+  const exploded = notificationId.split(separator)
   if (exploded.length < 3) {
     throw new Error(`Invalid notification id: ${notificationId}`)
   }
