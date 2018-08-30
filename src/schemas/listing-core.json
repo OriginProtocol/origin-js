@@ -205,7 +205,7 @@
     "subCategory": {
       "type": "string"
     },
-    "locale": {
+    "language": {
       "type": "string"
     },
     "title": {
