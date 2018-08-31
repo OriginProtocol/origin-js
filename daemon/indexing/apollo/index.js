@@ -214,7 +214,7 @@ const resolvers = {
       }
     },
     listing(root, args, context, info) {
-      return db.Listing.get(args.id)
+      return search.Listing.get(args.id)
     },
     user(root, args, context, info) {
       // TODO: implement me !
