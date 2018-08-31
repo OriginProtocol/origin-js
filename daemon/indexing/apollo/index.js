@@ -183,7 +183,7 @@ const typeDefs = gql`
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    Listings(searchQuery: String, page: Page, order: ListingOrder, filter: ListingFilter): ListingPage,
+    listings(searchQuery: String, page: Page, order: ListingOrder, filter: ListingFilter): ListingPage,
     Listing(id: ID!): Listing,
     
     User(walletAddress: ID!): User
@@ -198,14 +198,10 @@ const MaxResultsPerPage = 100
 // Resolvers define the technique for fetching the types in the schema.
 const resolvers = {
   Query: {
-    async Listings(root, args, context, info) {
+    async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       let listings = []
-      if (args.searchQuery) {
-        listings = await search.Listing.search(args.searchQuery)
-      }  else {
-        listings = await db.Listing.all()
-      }
+      listings = await search.Listing.search(args.searchQuery)
       return {
         num: 1,
         size: listings.length,
