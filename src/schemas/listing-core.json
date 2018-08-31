@@ -86,9 +86,6 @@
     "unitListing": {
       "type": "object",
       "properties": {
-        "name": {
-          "const": "unit"
-        },
         "unitsAvailable": {
           "type": "integer"
         },
@@ -104,9 +101,6 @@
     "fractionalListing": {
       "type": "object",
       "properties": {
-        "name": {
-          "const": "fractional"
-        },
         "timeIncrement": {
           "type": "string"
         },
@@ -129,16 +123,6 @@
   "properties": {
     "schemaVersion": {
       "type": "string"
-    },
-    "class": {
-      "oneOf": [
-        {
-          "$ref": "#/definitions/unitListing"
-        },
-        {
-          "$ref": "#/definitions/fractionalListing"
-        }
-      ]
     },
     "category": {
       "type": "string"
@@ -172,13 +156,24 @@
       "$ref": "#/definitions/money"
     }
   },
+  "listingType": {
+    "enum": ["unit", "fractional"]
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/unitListing"
+    },
+    {
+      "$ref": "#/definitions/fractionalListing"
+    }
+  ],
   "required": [
     "schemaVersion",
-    "class",
     "category",
     "subCategory",
     "language",
     "title",
-    "description"
+    "description",
+    "listingType"
   ]
 }
