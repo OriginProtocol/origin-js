@@ -198,7 +198,7 @@ const MaxResultsPerPage = 100
 // Resolvers define the technique for fetching the types in the schema.
 const resolvers = {
   Query: {
-    async Listings(root, args, context, info) {
+    async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       let listings = []
       if (args.searchQuery) {
@@ -213,10 +213,10 @@ const resolvers = {
         listings: listings,
       }
     },
-    Listing(root, args, context, info) {
+    listing(root, args, context, info) {
       return db.Listing.get(args.id)
     },
-    User(root, args, context, info) {
+    user(root, args, context, info) {
       // TODO: implement me !
       return {}
     }
