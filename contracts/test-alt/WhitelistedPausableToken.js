@@ -14,34 +14,49 @@ describe('WhitelistedPausableToken.sol', async function() {
     return await OriginToken.methods.balanceOf(address).call()
   }
   async function addAllowedSender(address) {
-    return await OriginToken.methods.addAllowedSender(address).send()
-    // TODO: check for event
+    const res = await OriginToken.methods.addAllowedSender(address).send()
+    assert(res.events.AllowedSenderAdded)
+    return res
   }
   async function isAllowedSender(address) {
     return await OriginToken.methods.allowedSenders(address).call()
   }
   async function removeAllowedSender(address) {
-    return await OriginToken.methods.removeAllowedSender(address).send()
-    // TODO: check for event
+    const res = await OriginToken.methods.removeAllowedSender(address).send()
+    assert(res.events.AllowedSenderRemoved)
+    return res
   }
   async function addAllowedRecipient(address) {
-    return await OriginToken.methods.addAllowedRecipient(address).send()
-    // TODO: check for event
+    const res = await OriginToken.methods.addAllowedRecipient(address).send()
+    assert(res.events.AllowedRecipientAdded)
+    return res
   }
   async function isAllowedRecipient(address) {
     return await OriginToken.methods.allowedRecipients(address).call()
   }
   async function removeAllowedRecipient(address) {
-    return await OriginToken.methods.removeAllowedRecipient(address).send()
-    // TODO: check for event
+    const res = await OriginToken.methods.removeAllowedRecipient(address).send()
+    assert(res.events.AllowedRecipientRemoved)
+    return res
   }
   async function whitelistExpiration() {
     return await OriginToken.methods.whitelistExpiration().call()
   }
+  async function setWhitelistExpiration(expiration) {
+    const res = await OriginToken.methods.setWhitelistExpiration(expiration).send()
+    assert(res.events.SetWhitelistExpiration)
+    return res
+  }
 
 
   beforeEach(async function() {
-    ({ deploy, accounts, web3, blockTimestamp, evmIncreaseTime } = await helper(`${__dirname}/..`))
+    ({
+      deploy,
+      accounts,
+      web3,
+      blockTimestamp,
+      evmIncreaseTime,
+    } = await helper(`${__dirname}/..`))
     owner = accounts[1]
     account1 = accounts[2]
     account2 = accounts[3]
@@ -68,44 +83,40 @@ describe('WhitelistedPausableToken.sol', async function() {
 
   it('should disallow setting an unreasonably short whitelist expiration', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs - 60
-    await assertRevert(
-      OriginToken.methods.setWhitelistExpiration(expiration).send()
-    )
+    await assertRevert(setWhitelistExpiration(expiration))
   })
 
   it('should allow extending the whitelist expiration', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs
-    await OriginToken.methods.setWhitelistExpiration(expiration).send()
+    await setWhitelistExpiration(expiration)
     assert.equal(await whitelistExpiration(), expiration)
     const newExpiration = expiration + 86400
-    await OriginToken.methods.setWhitelistExpiration(newExpiration).send()
+    await setWhitelistExpiration(newExpiration)
     assert.equal(await whitelistExpiration(), newExpiration)
   })
 
   it('should allow extending the whitelist expiration', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs
-    await OriginToken.methods.setWhitelistExpiration(expiration).send()
+    await setWhitelistExpiration(expiration)
     assert.equal(await whitelistExpiration(), expiration)
     const newExpiration = expiration + 86400
-    await OriginToken.methods.setWhitelistExpiration(newExpiration).send()
+    await setWhitelistExpiration(newExpiration)
     assert.equal(await whitelistExpiration(), newExpiration)
   })
 
   it('should disallow setting an expiration after it has already expired', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs
-    await OriginToken.methods.setWhitelistExpiration(expiration).send()
+    await setWhitelistExpiration(expiration)
     assert.equal(await whitelistExpiration(), expiration)
     await evmIncreaseTime(minWhitelistExpirationSecs)
-    assertRevert(
-      OriginToken.methods.setWhitelistExpiration(expiration + 10).send()
-    )
+    assertRevert(setWhitelistExpiration(expiration + 10))
   })
 
   describe('with an active whitelist', async function() {
     const transferAmount = 2
     beforeEach(async function() {
       const expiration = await blockTimestamp() + minWhitelistExpirationSecs
-      await OriginToken.methods.setWhitelistExpiration(expiration).send()
+      await setWhitelistExpiration(expiration)
       assert.equal(await OriginToken.methods.whitelistActive().call(), true)
     })
 
