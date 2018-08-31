@@ -3,7 +3,7 @@
   "$id": "listing-core.json",
   "title": "Origin Protocol core listing schema",
   "definitions": {
-    "moneyAmount": {
+    "money": {
       "type": "object",
       "title": "An amount of money in a specified currency",
       "properties": {
@@ -99,7 +99,8 @@
             "width"
           ]
         }
-      }
+      },
+      "required": ["url"]
     },
     "timeSlot": {
       "type": "object",
@@ -121,7 +122,7 @@
           "type": "boolean"
         },
         "price": {
-          "$ref": "#/definitions/moneyAmount"
+          "$ref": "#/definitions/money"
         }
       },
       "required": [
@@ -138,7 +139,7 @@
           "type": "integer"
         },
         "price": {
-          "$ref": "#/definitions/moneyAmount"
+          "$ref": "#/definitions/money"
         }
       },
       "required": [
@@ -226,10 +227,10 @@
       }
     },
     "commission": {
-      "$ref": "#/definitions/moneyAmount"
+      "$ref": "#/definitions/money"
     },
     "securityDeposit": {
-      "$ref": "#/definitions/moneyAmount"
+      "$ref": "#/definitions/money"
     }
   },
   "required": [

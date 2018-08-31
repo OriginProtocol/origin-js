@@ -1,5 +1,5 @@
 import Ajv from 'ajv'
-import coreListingSchema from '../schemas/listing-core.json'
+import listingCoreSchema from '../schemas/listing-core.json'
 import unitPurchaseSchema from '../schemas/unit-purchase.json'
 import fractionalPurchaseSchema from '../schemas/fractional-purchase.json'
 import reviewSchema from '../schemas/review.json'
@@ -10,7 +10,7 @@ const ajv = new Ajv({allErrors: true})
 // To use the draft-06 JSON schema, we need to explicitly add it to ajv.
 ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-06.json'))
 ajv.addSchema([
-  coreListingSchema,
+  listingCoreSchema,
   unitPurchaseSchema,
   fractionalPurchaseSchema,
   reviewSchema,
@@ -20,7 +20,7 @@ const listingValidator = ajv.getSchema(coreListingSchemaId)
 
 /**
  * Validate a listing object against the core listing schema.
- * @param {object} listingData - Listing object to validate.
+ * @param {object} listingData - Listing object to validate. This is typically data read from IPFS.
  * @throws {Error}
  */
 export function validateListing(listingData) {
@@ -42,7 +42,8 @@ export function validateListing(listingData) {
     throw new Error(
       `Invalid listing data.
       Listing: ${JSON.stringify(listingData)}.
-      Schema: ${JSON.stringify(coreListingSchema)}`
+      Schema: ${JSON.stringify(listingCoreSchema)}
+      Errors: ${JSON.stringify(listingValidator.errors)}`
     )
   }
 }

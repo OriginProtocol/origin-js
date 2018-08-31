@@ -115,8 +115,49 @@ class Marketplace extends Adaptable {
     })
   }
 
+  createIpfsData(formData) {
+    console.log("FORM DATA=", formData)
+    const ipfsData = {
+      schemaVersion: '1.0.0',
+      category: formData.category,
+      subCategory: '',
+      language: 'en-US',
+      title: formData.name,
+      description: formData.description,
+      class: {
+        name: 'unit',
+        fields: {
+          unitsAvailable: 1,
+          price: {
+            amount: formData.price.toString(),
+            currency: 'ETH'
+          }
+        }
+      }
+    }
+    if (formData.pictures) {
+      ipfsData.media = []
+      for (const picture of formData.pictures) {
+        let media = {}
+        media.url = picture.url
+        media.contentType = 'image/png'
+        ipfsData.media.push(media)
+      }
+    }
+    return ipfsData
+  }
+
+  /**
+   *
+   * @param {object} ipfsData - Listing data to store in IPFS
+   * @param confirmationCallback - Function to call back upon blocks confirmation.
+   *                               Called with 2 arguments: confirmationCount, transactionReceipt.
+   * @returns {Promise<object>} - Object containing listingId and transactionReceipt.
+   */
   async createListing(ipfsData, confirmationCallback) {
-    validateListing(ipfsData, this.contractService)
+    const ipfsData2 = this.createIpfsData(ipfsData)
+    // Validate the listing's data against the schema.
+    validateListing(ipfsData2)
 
     // Apply filtering to pictures and uploaded any data: URLs to IPFS
     if (ipfsData.pictures) {
