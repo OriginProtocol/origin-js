@@ -5,7 +5,7 @@ const Web3 = require('web3')
 const Config = require('../lib/config.js')
 const Token = require('../lib/token.js')
 
-const DEFAULT_SERVER_PORT = 4000
+const DEFAULT_SERVER_PORT = 5000
 const DEFAULT_NETWORK_ID = '999' // Local blockchain.
 
 // Credit 100 token units per request.
