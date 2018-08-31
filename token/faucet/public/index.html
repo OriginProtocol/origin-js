@@ -1,25 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Origin Protocol OGN - Testnet token faucet</title>
-</head>
-<body>
-    <h2>Origin Protocol OGN - TestNet token faucet</h2>
-    <fieldset>
-        <form action="/tokens">
-            Wallet address:
-            <input type="text" name="wallet" size="42">
-            TestNet
-            <select name="network_id">
-                <option value="4">Rinkeby</option>
-                <option value="3">Ropsten</option>
-                <option value="999">Localhost</option>
-            </select>
-            <input type="submit" value="Submit">
-        </form>
-    </fieldset>
-    <br><br>
-    <img src="potty.png" alt="potty" height="300" width="300">
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <title>Origin Protocol OGN - Testnet token faucet</title>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <link rel = "stylesheet" type = "text/css" href = "static/css/styles.css" />
+    </head>
+    <body>
+        <div class="jumbotron jumbotron-fluid">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <h1>Origin Protocol OGN - TestNet Token Faucet</h1>
+                        <fieldset>
+                            <form action="/tokens">
+                                <div class="form-row">
+                                    <div class="col-lg-6">
+                                        Wallet address:
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" name="wallet" size="42">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-lg-6">
+                                        TestNet:
+                                        <div class="form-group">
+                                            <select class="form-control" name="network_id">
+                                                <option value="4">Rinkeby</option>
+                                                <option value="3">Ropsten</option>
+                                                <option value="999">Localhost</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </form>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
