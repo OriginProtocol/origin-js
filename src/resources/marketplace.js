@@ -1,17 +1,41 @@
 import URL from 'url-parse'
 
-import { generateListingId, generateOfferId } from '../utils/id'
+import { generateListingId, generateOfferId, generateNotificationId } from '../utils/id'
 import { validateListing } from '../utils/schemaValidators'
 
 import Adaptable from './adaptable'
 
+const unreadStatus = 'unread'
+const readStatus = 'read'
+const notificationStatuses = [unreadStatus, readStatus]
+
+const storeKeys = {
+  notificationSubscriptionStart: 'notification_subscription_start',
+  notificationStatuses: 'notification_statuses'
+}
+
 class Marketplace extends Adaptable {
-  constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
+  constructor({
+    contractService,
+    ipfsService,
+    fetch,
+    indexingServerUrl,
+    store
+  }) {
     super(...arguments)
     this.contractService = contractService
     this.ipfsService = ipfsService
     this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
+
+    // initialize notifications
+    if (!store.get(storeKeys.notificationSubscriptionStart)) {
+      store.set(storeKeys.notificationSubscriptionStart, Date.now())
+    }
+    if (!store.get(storeKeys.notificationStatuses)) {
+      store.set(storeKeys.notificationStatuses, {})
+    }
+    this.store = store
   }
 
   async getListingsCount() {
@@ -46,22 +70,41 @@ class Marketplace extends Adaptable {
   async getListing(listingId) {
     const { adapter, listingIndex } = this.parseListingId(listingId)
     const listing = await adapter.getListing(listingIndex)
+    const { offers } = listing
 
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(
       listing.ipfsHash
     )
     const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
+    const ipfsData = ipfsJson && ipfsJson.data
 
     // Rewrite IPFS image URLs to use the configured IPFS gateway
-    if (ipfsJson && ipfsJson.data && ipfsJson.data.pictures) {
-      ipfsJson.data.pictures = ipfsJson.data.pictures.map((url) => {
+    if (ipfsData && ipfsData.pictures) {
+      ipfsData.pictures = ipfsData.pictures.map(url => {
         return this.ipfsService.rewriteUrl(url)
       })
     }
 
+    const unitsForSale = (ipfsData && (typeof ipfsData.units !== 'undefined'))
+      ? ipfsData.units
+      : 1 // default value
+
+    const unitsSold = Object.keys(offers).reduce((acc, offerId) => {
+      if (offers[offerId].status === 'created') {
+        return acc + 1
+      }
+      // TODO: we need to subtract 1 for every offer that is canceled
+      return acc
+    }, 0)
+
+    // units available is derived from units for sale and offers created.
+    // should never be negative
+    const unitsAvailable = Math.max(unitsForSale - unitsSold, 0)
+
     return Object.assign({}, listing, {
       id: listingId,
-      ipfsData: ipfsJson || {}
+      ipfsData: ipfsJson || {},
+      unitsAvailable
     })
   }
 
@@ -120,27 +163,29 @@ class Marketplace extends Adaptable {
 
     // Apply filtering to pictures and uploaded any data: URLs to IPFS
     if (ipfsData.pictures) {
-      const pictures = ipfsData.pictures.filter((url) => {
-        try {
-          // Only allow data:, dweb:, and ipfs: URLs
-          return ['data:', 'dweb:', 'ipfs:'].includes((new URL(url).protocol))
-        } catch (error) {
-          // Invalid URL, filter it out
-          return false
-        }
-      }).map(async (url) => {
-        // Upload any data: URLs to IPFS
-        // TODO possible removal and only accept dweb: and ipfs: URLS from dapps
-        if (url.startsWith('data:')) {
-          const ipfsHash = await this.ipfsService.saveDataURIAsFile(url)
-          return this.ipfsService.gatewayUrlForHash(ipfsHash)
-        }
-        // Leave other URLs untouched
-        return url
-      })
+      const pictures = ipfsData.pictures
+        .filter(url => {
+          try {
+            // Only allow data:, dweb:, and ipfs: URLs
+            return ['data:', 'dweb:', 'ipfs:'].includes(new URL(url).protocol)
+          } catch (error) {
+            // Invalid URL, filter it out
+            return false
+          }
+        })
+        .map(async url => {
+          // Upload any data: URLs to IPFS
+          // TODO possible removal and only accept dweb: and ipfs: URLS from dapps
+          if (url.startsWith('data:')) {
+            const ipfsHash = await this.ipfsService.saveDataURIAsFile(url)
+            return this.ipfsService.gatewayUrlForHash(ipfsHash)
+          }
+          // Leave other URLs untouched
+          return url
+        })
 
       // Replace data.pictures
-      await Promise.all(pictures).then((results) => {
+      await Promise.all(pictures).then(results => {
         ipfsData.pictures = results
       })
     }
@@ -148,7 +193,11 @@ class Marketplace extends Adaptable {
     const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    const transactionReceipt = await this.currentAdapter.createListing(ipfsBytes, ipfsData, confirmationCallback)
+    const transactionReceipt = await this.currentAdapter.createListing(
+      ipfsBytes,
+      ipfsData,
+      confirmationCallback
+    )
     const version = this.currentVersion
     const network = await this.contractService.web3.eth.net.getId()
     const { listingIndex } = transactionReceipt
@@ -163,11 +212,17 @@ class Marketplace extends Adaptable {
     const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await adapter.withdrawListing(listingIndex, ipfsBytes, confirmationCallback)
+    return await adapter.withdrawListing(
+      listingIndex,
+      ipfsBytes,
+      confirmationCallback
+    )
   }
 
   async makeOffer(listingId, data, confirmationCallback) {
-    const { adapter, listingIndex, version, network } = this.parseListingId(listingId)
+    const { adapter, listingIndex, version, network } = this.parseListingId(
+      listingId
+    )
     const buyer = await this.contractService.currentAccount()
 
     data.price = this.contractService.web3.utils.toWei(
@@ -179,9 +234,19 @@ class Marketplace extends Adaptable {
     const ipfsHash = await this.ipfsService.saveObjAsFile({ data })
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    const transactionReceipt = await adapter.makeOffer(listingIndex, ipfsBytes, data, confirmationCallback)
+    const transactionReceipt = await adapter.makeOffer(
+      listingIndex,
+      ipfsBytes,
+      data,
+      confirmationCallback
+    )
     const { offerIndex } = transactionReceipt
-    const offerId = generateOfferId({ network, version, listingIndex, offerIndex })
+    const offerId = generateOfferId({
+      network,
+      version,
+      listingIndex,
+      offerIndex
+    })
     return Object.assign({ listingId, offerId }, transactionReceipt)
   }
 
@@ -281,6 +346,23 @@ class Marketplace extends Adaptable {
       )
 
       for (const notification of rawNotifications) {
+        notification.id = generateNotificationId({
+          network,
+          version,
+          transactionHash: notification.event.transactionHash
+        })
+        const timestamp = await this.contractService.getTimestamp(notification.event)
+        const timestampInMilli = timestamp * 1000
+        const isWatched =
+          timestampInMilli >
+          this.store.get(storeKeys.notificationSubscriptionStart)
+        const notificationStatuses = this.store.get(
+          storeKeys.notificationStatuses
+        )
+        notification.status =
+          isWatched && notificationStatuses[notification.id] !== readStatus
+            ? unreadStatus
+            : readStatus
         if (notification.resources.listingId) {
           notification.resources.listing = await this.getListing(
             `${network}-${version}-${notification.resources.listingId}`
@@ -298,6 +380,15 @@ class Marketplace extends Adaptable {
       notifications = notifications.concat(rawNotifications)
     }
     return notifications
+  }
+
+  async setNotification({ id, status }) {
+    if (!notificationStatuses.includes(status)) {
+      throw new Error(`invalid notification status: ${status}`)
+    }
+    const notifications = this.store.get(storeKeys.notificationStatuses)
+    notifications[id] = status
+    this.store.set(storeKeys.notificationStatuses, notifications)
   }
 }
 

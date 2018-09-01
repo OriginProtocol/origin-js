@@ -184,9 +184,9 @@ const typeDefs = gql`
   # The "Query" type is the root of all GraphQL queries.
   type Query {
     listings(searchQuery: String, page: Page, order: ListingOrder, filter: ListingFilter): ListingPage,
-    Listing(id: ID!): Listing,
+    listing(id: ID!): Listing,
     
-    User(walletAddress: ID!): User
+    user(walletAddress: ID!): User
   }
 `
 
@@ -209,10 +209,10 @@ const resolvers = {
         listings: listings,
       }
     },
-    Listing(root, args, context, info) {
-      return db.Listing.get(args.id)
+    listing(root, args, context, info) {
+      return search.Listing.get(args.id)
     },
-    User(root, args, context, info) {
+    user(root, args, context, info) {
       // TODO: implement me !
       return {}
     }

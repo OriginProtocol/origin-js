@@ -19,7 +19,11 @@ class MarkeplaceAdapter {
     return Number(total)
   }
 
-  async createListing(ipfsBytes, { deposit = '0', arbitrator }, confirmationCallback) {
+  async createListing(
+    ipfsBytes,
+    { deposit = '0', arbitrator },
+    confirmationCallback
+  ) {
     await this.getContract()
     const from = await this.contractService.currentAccount()
 
@@ -31,8 +35,11 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
-    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
-    const listingIndex = transactionReceipt.events['ListingCreated'].returnValues.listingID
+    const timestamp = await this.contractService.getTimestamp(
+      transactionReceipt
+    )
+    const listingIndex =
+      transactionReceipt.events['ListingCreated'].returnValues.listingID
     return Object.assign({ timestamp, listingIndex }, transactionReceipt)
   }
 
@@ -49,7 +56,9 @@ class MarkeplaceAdapter {
         .on('confirmation', confirmationCallback)
         .on('error', reject)
     })
-    const timestamp = await this.contractService.getTimestamp(transactionReceipt)
+    const timestamp = await this.contractService.getTimestamp(
+      transactionReceipt
+    )
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
@@ -91,7 +100,8 @@ class MarkeplaceAdapter {
     const timestamp = await this.contractService.getTimestamp(
       transactionReceipt
     )
-    const offerIndex = transactionReceipt.events['OfferCreated'].returnValues.offerID
+    const offerIndex =
+      transactionReceipt.events['OfferCreated'].returnValues.offerID
     return Object.assign({ timestamp, offerIndex }, transactionReceipt)
   }
 
@@ -153,7 +163,8 @@ class MarkeplaceAdapter {
       fromBlock: 0
     })
 
-    const status = rawListing.seller.indexOf('0x00000') === 0 ? 'inactive' : 'active'
+    const status =
+      rawListing.seller.indexOf('0x00000') === 0 ? 'inactive' : 'active'
 
     // Loop through the events looking and update the IPFS hash appropriately
     let ipfsHash
@@ -309,17 +320,15 @@ class MarkeplaceAdapter {
         const offer = listing.offers[offerId]
         if (offer.status === 'created') {
           notifications.push({
-            id: offer.event.transactionHash,
+            event: offer.event,
             type: 'seller_listing_purchased',
-            status: 'unread',
             resources: { listingId, offerId }
           })
         }
         if (offer.status === 'finalized') {
           notifications.push({
-            id: offer.event.transactionHash,
+            event: offer.event,
             type: 'seller_review_received',
-            status: 'unread',
             resources: { listingId, offerId }
           })
         }
@@ -331,9 +340,8 @@ class MarkeplaceAdapter {
       const offer = listing.offers[offerId]
       if (offer.status === 'accepted') {
         notifications.push({
-          id: offer.event.transactionHash,
+          event: offer.event,
           type: 'buyer_listing_shipped',
-          status: 'unread',
           resources: { listingId, offerId }
         })
       }
