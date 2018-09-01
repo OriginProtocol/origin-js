@@ -84,9 +84,9 @@ class Listing {
    */
   static async search(query) {
     const esQuery = {}
-    if(query !== undefined){
+    if (query !== undefined){
       esQuery.match = {'description': query}
-    }else {
+    } else {
       esQuery.match_all = {}
     }
     const resp = await client.search({
