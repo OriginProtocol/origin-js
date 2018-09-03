@@ -1,5 +1,7 @@
 {
   "schemaVersion": "1.0.0",
+  "listingType": "unit",
+  "listingId": "001-123-456",
   "category": "ForSale",
   "subCategory": "Mushrooms",
   "language": "en-US",
@@ -24,15 +26,10 @@
       }
     }
   ],
-  "class": {
-    "name": "unit",
-    "fields": {
-      "unitsAvailable": 1,
-      "price": {
-        "currency": "ETH",
-        "amount": "200"
-      }
-    }
+  "unitsForSale": 1,
+  "price": {
+    "currency": "ETH",
+    "amount": "200"
   },
   "commission": {
     "currency": "OGN",

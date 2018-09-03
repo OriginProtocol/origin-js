@@ -1,0 +1,135 @@
+import chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+chai.use(chaiAsPromised)
+
+const expect = chai.expect
+
+import { Listing, ListingIpfsStore} from '../src/resources/listing.js'
+import sinon from 'sinon'
+import goodListing from './data/listing-valid'
+
+
+describe('Listing', () => {
+
+  it(`unitsAvailable should be unitsForSale when no offer`, () => {
+    const chainListing = { offers: [] }
+    const ipfsListing = { unitsForSale: 10 }
+    const listing = new Listing(chainListing, ipfsListing)
+    expect(listing.unitsAvailable).to.equal(10)
+    expect(listing.unitsSold).to.equal(0)
+  })
+
+  it(`unitsAvailable should be unitsForSale - unitsSold`, () => {
+    const chainListing = { offers: {
+      offerId1: { status: 'created' },
+      offerId2: { status: 'accepted'} } }
+    const ipfsListing = { unitsForSale: 10 }
+    const listing = new Listing(chainListing, ipfsListing)
+    expect(listing.unitsAvailable).to.equal(9)
+    expect(listing.unitsSold).to.equal(1)
+  })
+
+})
+
+
+describe('ListingIpfsStore load', () => {
+  let mockIpfsService, store
+
+  before(() => {
+    mockIpfsService = new Object()
+    store = new ListingIpfsStore(mockIpfsService)
+  })
+
+  it(`Should load a valid object`, async () => {
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(goodListing)
+    mockIpfsService.rewriteUrl = sinon.stub().returns('http://test-gateway')
+
+    const listing = await store.load('TestHash')
+
+    expect(listing.id).to.equal('001-123-456')
+    expect(listing.type).to.equal('unit')
+    expect(listing.category).to.equal('ForSale')
+    expect(listing.subCategory).to.equal('Mushrooms')
+    expect(listing.language).to.equal('en-US')
+    expect(listing.title).to.equal('my listing')
+    expect(listing.description).to.equal('my description')
+    expect(listing.expiry).to.equal('1996-12-19T16:39:57-08:00')
+    expect(listing.media.length).to.equal(2)
+    expect(listing.media[0].url).to.equal('http://test-gateway')
+    expect(listing.unitsForSale).to.equal(1)
+    expect(listing.price).to.deep.equal({amount:'200', currency:'ETH'})
+    expect(listing.commission).to.deep.equal({amount:'10', currency:'OGN'})
+    expect(listing.securityDeposit).to.deep.equal({amount:'100', currency:'ETH'})
+    expect(listing.ipfs.hash).to.equal('TestHash')
+    expect(listing.ipfs.data).to.deep.equal(goodListing)
+  })
+
+  it(`Should throw an exception on listing using unsupported schema version`, () => {
+    const listingUnsupportedVersion = Object.assign({}, goodListing, { 'schemaVersion': 'X.Y.Z' })
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(listingUnsupportedVersion)
+
+    expect(store.load('TestHash')).to.eventually.be.rejectedWith(Error)
+  })
+
+  it(`Should throw an exception on listing data with missing fields`, () => {
+    const badListing = { 'schemaVersion': '1.0.0', 'title': 'bad listing' }
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(badListing)
+
+    expect(store.load('TestHash')).to.eventually.be.rejectedWith(Error)
+  })
+
+})
+
+describe('ListingIpfsStore save', () => {
+  let mockIpfsService, store
+  
+  before(() => {
+    mockIpfsService = new Object()
+    store = new ListingIpfsStore(mockIpfsService)
+  })
+
+  it(`Should save a valid object with IPFS URLs`, () => {
+    mockIpfsService.saveObjAsFile = sinon.stub().returns('ListingHash')
+    mockIpfsService.saveDataURIAsFile = sinon.stub().returns('DataHash')
+    mockIpfsService.gatewayUrlForHash = sinon.stub().returns('http://test-gateway')
+
+    expect(store.save(goodListing)).to.eventually.equal('ListingHash')
+
+    expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(0)
+    expect(mockIpfsService.gatewayUrlForHash.callCount).to.equal(0)
+  })
+
+  it(`Should save a valid listing with data URLs`, async () => {
+    mockIpfsService.saveObjAsFile = sinon.stub().returns('ListingHash')
+    mockIpfsService.saveDataURIAsFile = sinon.stub().returns('DataHash')
+    mockIpfsService.gatewayUrlForHash = sinon.stub().returns('http://test-gateway')
+
+    const media = { media: [
+      {url: 'data:image/jpeg;name=test1.jpg;base64,/AA/BB'},
+      {url: 'data:image/jpeg;name=test2.jpg;base64,/CC/DD'}
+    ] }
+    const listing = Object.assign({}, goodListing, media)
+    const ipfsHash = await store.save(listing)
+
+    expect(ipfsHash).to.equal('ListingHash')
+
+    // Check the media content was save as separate IPFS files.
+    expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(2)
+
+    // Check the URL for media content is an IPFS URL.
+    const ipfsData = mockIpfsService.saveObjAsFile.firstCall.args[0]['data']
+    expect(ipfsData.media[0].url.substring(0,7)).to.equal('ipfs://')
+    expect(ipfsData.media[1].url.substring(0,7)).to.equal('ipfs://')
+  })
+
+  it(`Should throw an exception on listing using unsupported schema version`, async () => {
+    const listingUnsupportedVersion = Object.assign({}, goodListing, { 'schemaVersion': 'X.Y.Z' })
+    expect(store.save(listingUnsupportedVersion)).to.eventually.be.rejectedWith(Error)
+  })
+
+  it(`Should throw an exception on invalid listing`, async () => {
+    const badListing = {'schemaVersion': '1.0.0', 'title': 'bad listing'}
+    expect(store.save(badListing)).to.eventually.be.rejectedWith(Error)
+  })
+
+})

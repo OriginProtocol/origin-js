@@ -4,6 +4,7 @@ import { generateListingId, generateOfferId } from '../utils/id'
 import { validateListing } from '../utils/schemaValidators'
 
 import Adaptable from './adaptable'
+import { Listing, ListingIpfsStore } from './listing'
 
 class Marketplace extends Adaptable {
   constructor({ contractService, ipfsService, fetch, indexingServerUrl }) {
@@ -25,7 +26,7 @@ class Marketplace extends Adaptable {
   async getListings(opts = {}) {
     const network = await this.contractService.web3.eth.net.getId()
     const listingIds = []
-    console.log(opts)
+
     for (const version of this.versions) {
       const listingIndexes = await this.adapters[version].getListings(opts)
       listingIndexes.forEach(listingIndex => {
@@ -44,25 +45,17 @@ class Marketplace extends Adaptable {
   }
 
   async getListing(listingId) {
+    // Get the on-chain listing data.
     const { adapter, listingIndex } = this.parseListingId(listingId)
-    const listing = await adapter.getListing(listingIndex)
+    const chainListing = await adapter.getListing(listingIndex)
 
-    const ipfsHash = this.contractService.getIpfsHashFromBytes32(
-      listing.ipfsHash
-    )
-    const ipfsJson = await this.ipfsService.loadObjFromFile(ipfsHash)
+    // Get the off-chain listing data from IPFS.
+    const store = ListingIpfsStore(this.ipfsService)
+    const ipfsHash = this.contractService.getIpfsHashFromBytes32(chainListing.ipfsHash)
+    const ipfsListing = await store.load(ipfsHash)
 
-    // Rewrite IPFS image URLs to use the configured IPFS gateway
-    if (ipfsJson && ipfsJson.data && ipfsJson.data.pictures) {
-      ipfsJson.data.pictures = ipfsJson.data.pictures.map(url => {
-        return this.ipfsService.rewriteUrl(url)
-      })
-    }
-
-    return Object.assign({}, listing, {
-      id: listingId,
-      ipfsData: ipfsJson || {}
-    })
+    // Create and return a Listing from on-chain and off-chain data .
+    return new Listing(chainListing, ipfsListing)
   }
 
   // async getOffersCount(listingId) {}
@@ -115,38 +108,6 @@ class Marketplace extends Adaptable {
     })
   }
 
-  createIpfsData(formData) {
-    console.log("FORM DATA=", formData)
-    const ipfsData = {
-      schemaVersion: '1.0.0',
-      category: formData.category,
-      subCategory: '',
-      language: 'en-US',
-      title: formData.name,
-      description: formData.description,
-      class: {
-        name: 'unit',
-        fields: {
-          unitsAvailable: 1,
-          price: {
-            amount: formData.price.toString(),
-            currency: 'ETH'
-          }
-        }
-      }
-    }
-    if (formData.pictures) {
-      ipfsData.media = []
-      for (const picture of formData.pictures) {
-        let media = {}
-        media.url = picture.url
-        media.contentType = 'image/png'
-        ipfsData.media.push(media)
-      }
-    }
-    return ipfsData
-  }
-
   /**
    *
    * @param {object} ipfsData - Listing data to store in IPFS
@@ -155,40 +116,9 @@ class Marketplace extends Adaptable {
    * @returns {Promise<object>} - Object containing listingId and transactionReceipt.
    */
   async createListing(ipfsData, confirmationCallback) {
-    const ipfsData2 = this.createIpfsData(ipfsData)
-    // Validate the listing's data against the schema.
-    validateListing(ipfsData2)
-
-    // Apply filtering to pictures and uploaded any data: URLs to IPFS
-    if (ipfsData.pictures) {
-      const pictures = ipfsData.pictures
-        .filter(url => {
-          try {
-            // Only allow data:, dweb:, and ipfs: URLs
-            return ['data:', 'dweb:', 'ipfs:'].includes(new URL(url).protocol)
-          } catch (error) {
-            // Invalid URL, filter it out
-            return false
-          }
-        })
-        .map(async url => {
-          // Upload any data: URLs to IPFS
-          // TODO possible removal and only accept dweb: and ipfs: URLS from dapps
-          if (url.startsWith('data:')) {
-            const ipfsHash = await this.ipfsService.saveDataURIAsFile(url)
-            return this.ipfsService.gatewayUrlForHash(ipfsHash)
-          }
-          // Leave other URLs untouched
-          return url
-        })
-
-      // Replace data.pictures
-      await Promise.all(pictures).then(results => {
-        ipfsData.pictures = results
-      })
-    }
-
-    const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
+    // Validate and save the data to IPFS.
+    const store = ListingIpfsStore(this.ipfsService)
+    const ipfsHash = await store.save(ipfsData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     const transactionReceipt = await this.currentAdapter.createListing(

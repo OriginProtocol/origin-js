@@ -5,6 +5,7 @@ import validListing from './data/listing-valid.json'
 import listingCoreSchema from '../src/schemas/listing-core.json'
 
 describe('Listing schema validation', () => {
+
   it(`Valid listing should validate`, () => {
     expect(() => {validateListing(validListing)}).to.not.throw()
   })

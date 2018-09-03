@@ -1,6 +1,6 @@
 {
-  "$schema":"http://json-schema.org/draft-06/schema#",
-  "$id": "listing-core.json",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$id": "http://schema.originprotocol.com/listing-core-v1.0.0",
   "title": "Origin Protocol core listing schema",
   "definitions": {
     "money": {
@@ -17,57 +17,6 @@
       "required": [
         "currency",
         "amount"
-      ]
-    },
-    "location": {
-      "type": "object",
-      "properties": {
-        "street": {
-          "type": "string"
-        },
-        "extendedStreet": {
-          "type": "string"
-        },
-        "locality": {
-          "type": "string"
-        },
-        "region": {
-          "type": "string"
-        },
-        "box": {
-          "type": "string"
-        },
-        "postalCode": {
-          "type": "string"
-        },
-        "country": {
-          "type": "string"
-        },
-        "coord": {
-          "type": "object",
-          "properties": {
-            "latitude": {
-              "type": "integer",
-              "minimum": -90,
-              "maximum": 90
-            },
-            "longitude": {
-              "type": "integer",
-              "minimum": -180,
-              "maximum": 180
-            }
-          },
-          "required": [
-            "latitude",
-            "longitude"
-          ]
-        }
-      },
-      "required": [
-        "street",
-        "locality",
-        "region",
-        "country"
       ]
     },
     "media": {
@@ -100,7 +49,9 @@
           ]
         }
       },
-      "required": ["url"]
+      "required": [
+        "url"
+      ]
     },
     "timeSlot": {
       "type": "object",
@@ -135,7 +86,7 @@
     "unitListing": {
       "type": "object",
       "properties": {
-        "unitsAvailable": {
+        "unitsForSale": {
           "type": "integer"
         },
         "price": {
@@ -143,7 +94,7 @@
         }
       },
       "required": [
-        "unitsAvailable",
+        "unitsForSale",
         "price"
       ]
     },
@@ -163,43 +114,15 @@
           }
         }
       },
-      "required": ["calendarStep", "slots"]
-    },
-    "listingClass": {
-      "type": "object",
-      "title": "Support for Unit and Fractional listing types",
-      "properties": {
-        "name": {
-          "type": "string",
-          "enum": [
-            "unit",
-            "fractional"
-          ]
-        },
-        "fields": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/unitListing"
-            },
-            {
-              "$ref": "#/definitions/fractionalListing"
-            }
-          ]
-        }
-      },
       "required": [
-        "name",
-        "fields"
+        "calendarStep",
+        "slots"
       ]
     }
   },
-  "type": "object",
   "properties": {
     "schemaVersion": {
       "type": "string"
-    },
-    "class": {
-      "$ref": "#/definitions/listingClass"
     },
     "category": {
       "type": "string"
@@ -233,9 +156,27 @@
       "$ref": "#/definitions/money"
     }
   },
+  "listingId": {
+    "type": "string"
+  },
+  "listingType": {
+    "enum": [
+      "unit",
+      "fractional"
+    ]
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/unitListing"
+    },
+    {
+      "$ref": "#/definitions/fractionalListing"
+    }
+  ],
   "required": [
     "schemaVersion",
-    "class",
+    "listingType",
+    "listingId",
     "category",
     "subCategory",
     "language",
