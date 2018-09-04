@@ -1,3 +1,5 @@
+const OFFER_STATUS = ['error','created', 'accepted', 'finalized', 'buyerReviewed']
+
 class MarkeplaceAdapter {
   constructor({ contractService, contractName }) {
     this.web3 = contractService.web3
@@ -265,6 +267,8 @@ class MarkeplaceAdapter {
       if (e.event === 'OfferData') {
         rawOffer.status = '4'
       }
+      // Translate status number to string
+      rawOffer.status = OFFER_STATUS[rawOffer.status]
       e.timestamp = timestamp
     }
 
