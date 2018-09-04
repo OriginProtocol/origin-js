@@ -5,9 +5,10 @@ import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary
 import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
 import OriginTokenContract from './../../contracts/build/contracts/OriginToken.json'
-
 import V00_MarketplaceContract from './../../contracts/build/contracts/V00_Marketplace.json'
 import V01_MarketplaceContract from './../../contracts/build/contracts/V01_Marketplace.json'
+
+import ContractAddresses from './../../contracts/releases/addresses.json'
 
 import bs58 from 'bs58'
 import Web3 from 'web3'
@@ -46,8 +47,9 @@ class ContractService {
       try {
         this[name].networks = Object.assign(
           {},
-          this[name].networks,
-          options.contractAddresses[name]
+          ((ContractAddresses[name]||{}).network||{}), // start with hard coded addresses
+          this[name].networks, // override with addresses in contracts/build
+          (options.contractAddresses[name]||{}) // override with passed in options
         )
       } catch (e) {
         /* Ignore */

@@ -1,0 +1,26 @@
+{
+  "listingsRegistryContract": {
+    "networks": {
+      "3": { "address": "0x67057a6ddbc10d1c75a8812f770854f8627fc7b6" },
+      "4": { "address": "0x4f041f3ec338f85048831d1dff15433d3cb3983f" }
+    }
+  },
+  "listingsRegistryStorageContract": {
+    "networks": {
+      "3": { "address": "0x2293f5592885de85c68b03f69522023957ad5133" },
+      "4": { "address": "0x12593d9f73d8cc7056dc073617380694e92d3a49" }
+    }
+  },
+  "userRegistryContract": {
+    "networks": {
+      "3": { "address": "0xd9ed0df63df8dbe53ef108de9b3c59ad0118912c" },
+      "4": { "address": "0xa080e08a6355debebbc29b9e35d8c001ad6eb3cd" }
+    }
+  },
+  "originIdentityContract": {
+    "networks": {
+      "3": { "address": "0x788371f0976b370f435ef45303f8f7f14ee27e15" },
+      "4": { "address": "0xc8467dc9155f9d7045ea478c85dc074aecb893c6" }
+    }
+  }
+}
