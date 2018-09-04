@@ -19,10 +19,10 @@ describe('OriginToken.sol', async function() {
       balance
     )
   }
-  async function assertTotalSupplyEquals(initialSupply) {
+  async function assertTotalSupplyEquals(totalSupply) {
     assert.equal(
       await OriginToken.methods.totalSupply().call(),
-      initialSupply
+      totalSupply
     )
   }
 
