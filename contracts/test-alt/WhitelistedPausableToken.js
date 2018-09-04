@@ -64,7 +64,7 @@ describe('WhitelistedPausableToken.sol', async function() {
     OriginToken = await deploy('OriginToken', {
       from: owner,
       path: `${contractPath}/token/`,
-      args: [100]
+      args: [initialSupply]
     })
   })
 
