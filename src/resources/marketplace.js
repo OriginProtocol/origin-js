@@ -1,7 +1,4 @@
-import URL from 'url-parse'
-
 import { generateListingId, generateOfferId } from '../utils/id'
-import { validateListing } from '../utils/schemaValidators'
 
 import Adaptable from './adaptable'
 import { Listing, ListingIpfsStore } from './listing'
@@ -13,6 +10,7 @@ class Marketplace extends Adaptable {
     this.ipfsService = ipfsService
     this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
+    this.listingIpfsStore = new ListingIpfsStore(this.ipfsService)
   }
 
   async getListingsCount() {
@@ -44,15 +42,20 @@ class Marketplace extends Adaptable {
     return listingIds
   }
 
+  /**
+   * Returns a Listing object based in its id.
+   * @param listingId
+   * @returns {Promise<Listing>}
+   * @throws {Error}
+   */
   async getListing(listingId) {
     // Get the on-chain listing data.
     const { adapter, listingIndex } = this.parseListingId(listingId)
     const chainListing = await adapter.getListing(listingIndex)
 
     // Get the off-chain listing data from IPFS.
-    const store = ListingIpfsStore(this.ipfsService)
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(chainListing.ipfsHash)
-    const ipfsListing = await store.load(ipfsHash)
+    const ipfsListing = await this.listingIpfsStore.load(ipfsHash)
 
     // Create and return a Listing from on-chain and off-chain data .
     return new Listing(chainListing, ipfsListing)
@@ -109,16 +112,14 @@ class Marketplace extends Adaptable {
   }
 
   /**
-   *
+   * Creates a new listing in the system. Data is recorded both on-chain and off-chain in IPFS.
    * @param {object} ipfsData - Listing data to store in IPFS
-   * @param confirmationCallback - Function to call back upon blocks confirmation.
-   *                               Called with 2 arguments: confirmationCount, transactionReceipt.
-   * @returns {Promise<object>} - Object containing listingId and transactionReceipt.
+   * @param {func(confirmationCount, transactionReceipt)} confirmationCallback - Called upon blocks confirmation.
+   * @returns {Promise<object>} - Object with listingId and transactionReceipt fields.
    */
   async createListing(ipfsData, confirmationCallback) {
     // Validate and save the data to IPFS.
-    const store = ListingIpfsStore(this.ipfsService)
-    const ipfsHash = await store.save(ipfsData)
+    const ipfsHash = await this.listingIpfsStore.save(ipfsData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     const transactionReceipt = await this.currentAdapter.createListing(
@@ -130,6 +131,7 @@ class Marketplace extends Adaptable {
     const network = await this.contractService.web3.eth.net.getId()
     const { listingIndex } = transactionReceipt
     const listingId = generateOfferId({ network, version, listingIndex })
+
     return Object.assign({ listingId }, transactionReceipt)
   }
 

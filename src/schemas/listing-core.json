@@ -24,8 +24,7 @@
       "title": "Representation of a media asset such as an image or a video",
       "properties": {
         "url": {
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "contentType": {
           "type": "string"
@@ -156,9 +155,6 @@
       "$ref": "#/definitions/money"
     }
   },
-  "listingId": {
-    "type": "string"
-  },
   "listingType": {
     "enum": [
       "unit",
@@ -176,7 +172,6 @@
   "required": [
     "schemaVersion",
     "listingType",
-    "listingId",
     "category",
     "subCategory",
     "language",

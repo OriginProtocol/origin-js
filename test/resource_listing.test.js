@@ -46,7 +46,6 @@ describe('ListingIpfsStore load', () => {
 
     const listing = await store.load('TestHash')
 
-    expect(listing.id).to.equal('001-123-456')
     expect(listing.type).to.equal('unit')
     expect(listing.category).to.equal('ForSale')
     expect(listing.subCategory).to.equal('Mushrooms')
@@ -99,7 +98,7 @@ describe('ListingIpfsStore save', () => {
     expect(mockIpfsService.gatewayUrlForHash.callCount).to.equal(0)
   })
 
-  it(`Should save a valid listing with data URLs`, async () => {
+  it(`Should save a valid listing with data`, async () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('ListingHash')
     mockIpfsService.saveDataURIAsFile = sinon.stub().returns('DataHash')
     mockIpfsService.gatewayUrlForHash = sinon.stub().returns('http://test-gateway')
@@ -113,13 +112,27 @@ describe('ListingIpfsStore save', () => {
 
     expect(ipfsHash).to.equal('ListingHash')
 
-    // Check the media content was save as separate IPFS files.
+    // Check the media content was saved as separate IPFS files.
     expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(2)
 
     // Check the URL for media content is an IPFS URL.
-    const ipfsData = mockIpfsService.saveObjAsFile.firstCall.args[0]['data']
+    const ipfsData = mockIpfsService.saveObjAsFile.firstCall.args[0]
     expect(ipfsData.media[0].url.substring(0,7)).to.equal('ipfs://')
     expect(ipfsData.media[1].url.substring(0,7)).to.equal('ipfs://')
+  })
+
+  it(`Should filter out invalid media`, async () => {
+    mockIpfsService.saveObjAsFile = sinon.stub().returns('ListingHash')
+    const media = { media: [
+      {url: 'bogus://'},             // Invalid data field.
+      {url:'http://notallowed'},  // Only ipfs and dwed URL are allowed.
+    ] }
+    const listing = Object.assign({}, goodListing, media)
+    await store.save(listing)
+
+    // Check all the entries were filtered out in the listing data saved to IPFS.
+    const ipfsData = mockIpfsService.saveObjAsFile.firstCall.args[0]
+    expect(ipfsData.media.length).to.equal(0)
   })
 
   it(`Should throw an exception on listing using unsupported schema version`, async () => {

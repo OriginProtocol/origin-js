@@ -13,9 +13,14 @@ ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-06.json'))
 ajv.addSchema(schemaV1)
 
 
+//
+// Listing is the main interface exposed by Origin Protocol to interact with listings.
+//
 class Listing {
   /**
    * A Listing is constructed based on its on-chain and off-chain data.
+   * @param {Object} chainListing -
+   * @param {Object} ipfsListing
    */
   constructor(chainListing, ipfsListing) {
     // FIXME(franck): Exposing directly the chain data will make it difficult
@@ -44,7 +49,6 @@ class Listing {
     // Should never be negative.
     return Math.max(this.unitsForSale - this.unitsSold, 0)
   }
-
 }
 
 /**
@@ -94,7 +98,6 @@ class SchemaAdapterV1 {
 
     const listing = {
       schemaVersion:  data.schemaVersion,
-      id:             data.listingId,
       type:           data.listingType,
       category:       data.category,
       subCategory:    data.subCategory,
@@ -118,14 +121,16 @@ class SchemaAdapterV1 {
   }
 }
 
-
+//
+// ListingIpfsStore exposes methods to read and write listing data from/to IPFS.
+//
 class ListingIpfsStore {
   constructor(ipfsService) {
     this.ipfsService = ipfsService
   }
 
   /**
-   * Helper method that rewrites the IPFS Url in the listing to point to the configured gateway.
+   * Rewrites IPFS media URLs to point to the configured IPFS gateway.
    */
   _rewriteMediaUrls(media) {
     if (!media) {
@@ -137,34 +142,35 @@ class ListingIpfsStore {
   }
 
   /**
-   * Helper method that uploads to IPFS binary data passed the URL of media object by the DApp.
-   * @param media
-   * @returns {Promise<[any , any , any , any , any , any , any , any , any , any]>}
-   * @private
+   * Uploads to IPFS content passed as data URL.
    */
-  // Apply filtering to pictures and uploaded any data: URLs to IPFS
-  async _saveMediaData(media) {
-    if (!media) {
+  async _saveMediaData(listing) {
+    if (!listing.media) {
       return
     }
-    const uploads = media
-      .filter(medium => {
+
+    // Only allow data:, dweb:, and ipfs: URLs
+    listing.media = listing.media.filter(medium => {
+      if (medium.url) {
         try {
-          // Only allow data:, dweb:, and ipfs: URLs
           return ['data:', 'dweb:', 'ipfs:'].includes(new URL(medium.url).protocol)
         } catch (error) {
           // Invalid URL, filter it out
           return false
         }
-      })
-      .map(async medium => {
-        // Upload any data: URLs to IPFS
-        // TODO possible removal and only accept dweb: and ipfs: URLS from dapps
-        if (medium.url.startsWith('data:')) {
-          const ipfsHash = await this.ipfsService.saveDataURIAsFile(medium.url)
-          medium.url = `ipfs://${ipfsHash}`
-        }
-      })
+      } else {
+        // No url. Invalid entry.
+        return false
+      }
+    })
+
+    // Upload to IPFS data URL content.
+    const uploads = listing.media.map(async medium => {
+      if (medium.url.startsWith('data:')) {
+        const ipfsHash = await this.ipfsService.saveDataURIAsFile(medium.url)
+        medium.url = `ipfs://${ipfsHash}`
+      }
+    })
     return Promise.all(uploads)
   }
 
@@ -178,11 +184,11 @@ class ListingIpfsStore {
     // Fetch the data from IPFS.
     const data = await this.ipfsService.loadObjFromFile(ipfsHash)
 
-    // Deserialize and validate the data into a Listing object.
+    // Deserialize the data into a Listing object.
     const adapter = schemaAdapterFactory(data.schemaVersion)
     const listing = adapter.deserialize(data)
 
-    // Rewrite the IPFS URLs to point to configured IPFS gateway.
+    // Rewrite any IPFS URL to point to configured IPFS gateway.
     this._rewriteMediaUrls(listing.media)
 
     // Decorate the listing with Ipfs data. Useful for troubleshooting purposes.
@@ -200,16 +206,17 @@ class ListingIpfsStore {
    * @returns {bytes} Base58 encoded IPFS Hash.
    */
   async save(ipfsData) {
-    // Validate the listing's data against the schema.
+    // Validate the listing's data against schema.
     const adapter = schemaAdapterFactory(ipfsData.schemaVersion)
     adapter.validate(ipfsData)
 
-    await this._saveMediaData(ipfsData.media)
+    // Save media data as separate files.
+    await this._saveMediaData(ipfsData)
 
-    const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
+    // Save listing data to IPFS in JSON format.
+    const ipfsHash = await this.ipfsService.saveObjAsFile(ipfsData)
     return ipfsHash
   }
-
 }
 
 module.exports = {

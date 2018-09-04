@@ -68,9 +68,15 @@ const populateIpfs = async () => {
       const data = JSON.parse(dataJson)
       // Preserve order of uploaded images to maintain IPFS hash
       // This is necessary because the hashes are hardcoded in contract migrations
+      data.media = []
       for (const imagePath of imagePaths) {
         const imageUpload = await ipfs.util.addFromFs(imagePath)
-        data['data']['pictures'].push(`ipfs://${imageUpload[0]['hash']}`)
+        const contentType = imagePath.endsWith('jpg') ? 'image/jpeg' : 'image/png'
+        medium = {
+          url: `ipfs://${imageUpload[0]['hash']}`,
+          contentType: contentType
+        }
+        data.media.push(medium)
       }
 
       // Update listing data to IPFS
