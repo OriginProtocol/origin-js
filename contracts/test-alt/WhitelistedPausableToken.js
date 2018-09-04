@@ -68,11 +68,11 @@ describe('WhitelistedPausableToken.sol', async function() {
     })
   })
 
-  it('should start with an inactive whitelist', async function() {
+  it('starts with an inactive whitelist', async function() {
     assert.equal(await OriginToken.methods.whitelistActive().call(), false)
   })
 
-  it('should allow transfers before activating whitelist', async function() {
+  it('allows transfers before activating whitelist', async function() {
     const transferAmount = 1
     await OriginToken.methods.transfer(account1, transferAmount).send({from: owner})
     await OriginToken.methods.transfer(account2, transferAmount).send({from: account1})
@@ -81,12 +81,12 @@ describe('WhitelistedPausableToken.sol', async function() {
     assert.equal(await balanceOf(account2), transferAmount)
   })
 
-  it('should disallow setting an unreasonably short whitelist expiration', async function() {
+  it('disallows setting an unreasonably short whitelist expiration', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs - 60
     await assertRevert(setWhitelistExpiration(expiration))
   })
 
-  it('should allow extending the whitelist expiration', async function() {
+  it('allows extending the whitelist expiration', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs
     await setWhitelistExpiration(expiration)
     assert.equal(await whitelistExpiration(), expiration)
@@ -95,7 +95,7 @@ describe('WhitelistedPausableToken.sol', async function() {
     assert.equal(await whitelistExpiration(), newExpiration)
   })
 
-  it('should allow extending the whitelist expiration', async function() {
+  it('allows extending the whitelist expiration with active whitelist', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs
     await setWhitelistExpiration(expiration)
     assert.equal(await whitelistExpiration(), expiration)
@@ -104,7 +104,7 @@ describe('WhitelistedPausableToken.sol', async function() {
     assert.equal(await whitelistExpiration(), newExpiration)
   })
 
-  it('should disallow setting an expiration after it has already expired', async function() {
+  it('disallows setting an expiration after it has already expired', async function() {
     const expiration = await blockTimestamp() + minWhitelistExpirationSecs
     await setWhitelistExpiration(expiration)
     assert.equal(await whitelistExpiration(), expiration)
@@ -120,14 +120,14 @@ describe('WhitelistedPausableToken.sol', async function() {
       assert.equal(await OriginToken.methods.whitelistActive().call(), true)
     })
 
-    it('should disallow transfers with an empty whitelist', async function() {
+    it('disallows transfers with an empty whitelist', async function() {
       await assertRevert(
         OriginToken.methods.transfer(account1, 1).send({from: owner})
       )
       assert.equal(await balanceOf(owner), initialSupply)
     })
 
-    it('should let a whitelisted sender to transfer tokens', async function() {
+    it('lets a whitelisted sender to transfer tokens', async function() {
       await addAllowedSender(owner)
       assert.equal(await isAllowedSender(owner), true)
       assert.equal(await isAllowedRecipient(account1), false)
@@ -136,7 +136,7 @@ describe('WhitelistedPausableToken.sol', async function() {
       assert.equal(await balanceOf(account1), transferAmount)
     })
 
-    it('should not let a removed sender transfer tokens', async function() {
+    it('does not let a removed sender transfer tokens', async function() {
       await addAllowedSender(owner)
       assert.equal(await isAllowedSender(owner), true)
       await removeAllowedSender(owner)
@@ -146,7 +146,7 @@ describe('WhitelistedPausableToken.sol', async function() {
       )
     })
 
-    it('should let any sender send to an allowed recipient', async function() {
+    it('lets any sender send to an allowed recipient', async function() {
       await addAllowedRecipient(account1)
       assert.equal(await isAllowedSender(owner), false)
       assert.equal(await isAllowedRecipient(account1), true)
@@ -155,7 +155,7 @@ describe('WhitelistedPausableToken.sol', async function() {
       assert.equal(await balanceOf(account1), transferAmount)
     })
 
-    it('should not let a removed recipient receive tokens', async function() {
+    it('does not let a removed recipient receive tokens', async function() {
       await addAllowedRecipient(account1)
       assert.equal(await isAllowedSender(owner), false)
       assert.equal(await isAllowedRecipient(account1), true)
@@ -167,7 +167,7 @@ describe('WhitelistedPausableToken.sol', async function() {
     })
 
     describe('after whitelist expires', async function() {
-      it('whitelist is no longer active', async function() {
+      it('disables whitelist', async function() {
         assert.equal(await OriginToken.methods.whitelistActive().call(), true)
         await evmIncreaseTime(minWhitelistExpirationSecs)
         assert.equal(await OriginToken.methods.whitelistActive().call(), false)

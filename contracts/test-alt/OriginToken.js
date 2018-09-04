@@ -13,6 +13,19 @@ describe('OriginToken.sol', async function() {
   let owner, account1
   let OriginToken
 
+  async function assertBalanceEquals(address, balance) {
+    assert.equal(
+      await OriginToken.methods.balanceOf(address).call(),
+      balance
+    )
+  }
+  async function assertTotalSupplyEquals(initialSupply) {
+    assert.equal(
+      await OriginToken.methods.totalSupply().call(),
+      initialSupply
+    )
+  }
+
   beforeEach(async function() {
     ({
       deploy,
@@ -28,28 +41,14 @@ describe('OriginToken.sol', async function() {
       args: [initialSupply]
     })
 
-    assert.equal(
-      await OriginToken.methods.totalSupply().call(),
-      initialSupply
-    )
-    assert.equal(
-      await OriginToken.methods.balanceOf(owner).call(),
-      initialSupply
-    )
-    assert.equal(
-      await OriginToken.methods.balanceOf(account1).call(),
-      0
-    )
+    assert.equal(await OriginToken.methods.owner().call(), owner)
+    await assertTotalSupplyEquals(initialSupply)
+    await assertBalanceEquals(owner, initialSupply)
+    await assertBalanceEquals(account1, 0)
 
     await OriginToken.methods.transfer(account1, transferAmount).send({from: owner})
-    assert.equal(
-      await OriginToken.methods.balanceOf(owner).call(),
-      initialSupply - transferAmount
-    )
-    assert.equal(
-      await OriginToken.methods.balanceOf(account1).call(),
-      transferAmount
-    )
+    await assertBalanceEquals(owner, initialSupply - transferAmount)
+    await assertBalanceEquals(account1, transferAmount)
   })
 
   it('does not allow regular accounts to burn tokens', async function() {
@@ -61,14 +60,9 @@ describe('OriginToken.sol', async function() {
   it('allows owner to burn its own tokens', async function() {
     const res = await OriginToken.methods.burn(burnAmount).send({from: owner})
     assert(res.events.Burn)
-    assert.equal(
-      await OriginToken.methods.balanceOf(owner).call(),
-      initialSupply - transferAmount - burnAmount
-    )
-    assert.equal(
-      await OriginToken.methods.totalSupply().call(),
-      initialSupply - burnAmount
-    )
+    await assertTotalSupplyEquals(initialSupply - burnAmount)
+    await assertBalanceEquals(owner, initialSupply - transferAmount - burnAmount)
+    await assertBalanceEquals(account1, transferAmount)
   })
 
   it('does not allow regular accounts to burn other\'s tokens', async function() {
@@ -80,14 +74,8 @@ describe('OriginToken.sol', async function() {
   it('allows owner to burn others\' tokens', async function() {
     const res = await OriginToken.methods.burn(account1, burnAmount).send({from: owner})
     assert(res.events.Burn)
-    assert.equal(
-      await OriginToken.methods.balanceOf(account1).call(),
-      transferAmount - burnAmount
-    )
-    assert.equal(
-      await OriginToken.methods.totalSupply().call(),
-      initialSupply - burnAmount
-    )
+    await assertBalanceEquals(account1, transferAmount - burnAmount)
+    await assertTotalSupplyEquals(initialSupply - burnAmount)
   })
 
   it('has the correct name', async function() {
