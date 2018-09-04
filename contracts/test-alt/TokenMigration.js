@@ -182,4 +182,10 @@ describe('TokenMigration.sol', async function() {
       TokenMigration.methods.finish(owner).send({from: other})
     )
   })
+
+  it('does not allow new token to be owned by migration contract', async function() {
+    await assertRevert(
+      TokenMigration.methods.finish(TokenMigration._address).send({from: owner})
+    )
+  })
 })
