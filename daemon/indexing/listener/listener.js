@@ -281,9 +281,9 @@ async function handleLog(log, rule, contractVersion, context) {
   const userAddress = log.decoded.party
   const ipfsHash = log.decoded.ipfsHash
 
-  //TODO: remove binary data from pictures in a proper way.
   const listing = output.related.listing
-  delete listing.ipfsData.data.pictures
+  let pictures = listing.ipfsData.data.pictures || []
+  listing.ipfsData.data.pictures = pictures.filter( x=>x.substring(0,7) == 'ipfs://')
   const listingId = listing.id
 
   // Data consistency: check  listingId from the JSON stored in IPFS
