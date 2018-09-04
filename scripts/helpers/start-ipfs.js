@@ -72,7 +72,7 @@ const populateIpfs = async () => {
       for (const imagePath of imagePaths) {
         const imageUpload = await ipfs.util.addFromFs(imagePath)
         const contentType = imagePath.endsWith('jpg') ? 'image/jpeg' : 'image/png'
-        medium = {
+        const medium = {
           url: `ipfs://${imageUpload[0]['hash']}`,
           contentType: contentType
         }

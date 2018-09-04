@@ -14,7 +14,7 @@ ajv.addSchema(schemaV1)
 
 
 //
-// Listing is the main interface exposed by Origin Protocol to interact with listings.
+// Listing is the main interface exposed by Origin Protocol to access data from a listing.
 //
 class Listing {
   /**
