@@ -24,8 +24,7 @@
       "title": "Representation of a media asset such as an image or a video",
       "properties": {
         "url": {
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "contentType": {
           "type": "string"
@@ -86,7 +85,7 @@
     "unitListing": {
       "type": "object",
       "properties": {
-        "unitsAvailable": {
+        "unitsForSale": {
           "type": "integer"
         },
         "price": {
@@ -94,7 +93,7 @@
         }
       },
       "required": [
-        "unitsAvailable",
+        "unitsForSale",
         "price"
       ]
     },
@@ -157,7 +156,10 @@
     }
   },
   "listingType": {
-    "enum": ["unit", "fractional"]
+    "enum": [
+      "unit",
+      "fractional"
+    ]
   },
   "oneOf": [
     {
@@ -169,11 +171,11 @@
   ],
   "required": [
     "schemaVersion",
+    "listingType",
     "category",
     "subCategory",
     "language",
     "title",
-    "description",
-    "listingType"
+    "description"
   ]
 }
