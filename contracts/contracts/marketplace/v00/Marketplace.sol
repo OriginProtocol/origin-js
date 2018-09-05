@@ -1,5 +1,7 @@
 pragma solidity ^0.4.23;
 
+import "../../../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
+
 /**
  * @title A Marketplace contract for managing listings, offers, payments, escrow and arbitration
  * @author Nick Poulden <nick@poulden.com>
@@ -7,16 +9,12 @@ pragma solidity ^0.4.23;
  * Listings may be priced in Eth or ERC20.
  */
 
-contract IArbitrator {
-  function createDispute(uint listingID, uint offerID, uint refund) external returns (uint);
-}
-
 contract ERC20 {
   function transfer(address _to, uint256 _value) external returns (bool);
   function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
 }
 
-contract V00_Marketplace {
+contract V00_Marketplace is Ownable {
 
   /**
    * @notice All events have the same indexed signature offsets for easy filtering
@@ -29,7 +27,8 @@ contract V00_Marketplace {
   event OfferCreated     (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
   event OfferWithdrawn   (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
   event OfferAccepted    (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
-  event OfferDisputed    (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash, uint disputeID);
+  event OfferFundsAdded  (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
+  event OfferDisputed    (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
   event OfferRuling      (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash, uint ruling);
   event OfferFinalized   (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
   event OfferData        (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
@@ -56,10 +55,11 @@ contract V00_Marketplace {
   Listing[] public listings;
   mapping(uint => Offer[]) public offers; // listingID => Offers
 
-  ERC20 private tokenAddr; // Origin Token address
+  ERC20 public tokenAddr; // Origin Token address
 
   constructor(address _tokenAddr) public {
-    tokenAddr = ERC20(_tokenAddr); // Origin Token contract
+    owner = msg.sender;
+    setTokenAddr(_tokenAddr); // Origin Token contract
   }
 
   // @dev Return the total number of listings
@@ -196,7 +196,7 @@ contract V00_Marketplace {
   function withdrawOffer(uint listingID, uint offerID, bytes32 _ipfsHash) public {
     Listing storage listing = listings[listingID];
     Offer storage offer = offers[listingID][offerID];
-    require(msg.sender == offer.buyer);
+    require(msg.sender == offer.buyer || msg.sender == listing.seller);
     if (listing.seller == 0x0) { // If listing was withdrawn
       require(offer.status == 1 || offer.status == 2); // Offer must be in state 'Created' or 'Accepted'
       if (offer.status == 2) { // Pay out commission if seller accepted offer then withdrew listing
@@ -208,6 +208,21 @@ contract V00_Marketplace {
     refundBuyer(listingID, offerID);
     emit OfferWithdrawn(msg.sender, listingID, offerID, _ipfsHash);
     delete offers[listingID][offerID];
+  }
+
+  // @dev Buyer adds extra funds to an accepted offer.
+  function addFunds(uint listingID, uint offerID, bytes32 _ipfsHash, uint _value) public payable {
+    Offer storage offer = offers[listingID][offerID];
+    require(msg.sender == offer.buyer);
+    require(offer.status == 2); // Offer must be in state 'Accepted'
+    if (address(offer.currency) == 0x0) { // Listing is in ETH
+      require(msg.value == _value);
+    } else { // Listing is in ERC20
+      require(msg.value == 0); // Make sure no ETH is sent (would be unrecoverable)
+      require(offer.currency.transferFrom(msg.sender, this, _value));
+    }
+    offer.value += _value;
+    emit OfferFundsAdded(msg.sender, listingID, offerID, _ipfsHash);
   }
 
   // @dev Buyer must finalize transaction to receive commission
@@ -229,25 +244,29 @@ contract V00_Marketplace {
   }
 
   // @dev Buyer can dispute transaction during finalization window
-  function dispute(uint listingID, uint offerID, bytes32 _ipfsHash, uint _refund) public {
+  function dispute(uint listingID, uint offerID, bytes32 _ipfsHash) public {
     Offer storage offer = offers[listingID][offerID];
     require(msg.sender == offer.buyer);
     require(offer.status == 2); // Offer must be in 'Accepted' state
     require(now <= offer.finalizes); // Must be before agreed finalization window
     offer.status = 3; // Set status to "Disputed"
-    uint disputeID = IArbitrator(offer.arbitrator).createDispute(listingID, offerID, _refund);
-    emit OfferDisputed(msg.sender, listingID, offerID, _ipfsHash, disputeID);
+    emit OfferDisputed(msg.sender, listingID, offerID, _ipfsHash);
   }
 
-  // @dev Called from arbitration contract. 0: Seller, 1: Buyer, 2: Com + Seller, 3: Com + Buyer
-  function executeRuling(uint listingID, uint offerID, uint _ruling, uint _refund) public {
+  // @dev Called by arbitrator
+  function executeRuling(
+    uint listingID,
+    uint offerID,
+    bytes32 _ipfsHash,
+    uint _ruling, // 0: Seller, 1: Buyer, 2: Com + Seller, 3: Com + Buyer
+    uint _refund
+  ) public {
     Offer storage offer = offers[listingID][offerID];
-    Listing storage listing = listings[listingID];
     require(msg.sender == offer.arbitrator);
     require(offer.status == 3); // Offer must be 'disputed'
     require(_refund <= offer.value); // Cannot refund more than value of listing
     offer.refund = _refund;
-    if (_ruling & 1 == 1 || listing.seller == 0x0) {
+    if (_ruling & 1 == 1) {
       refundBuyer(listingID, offerID);
     } else  {
       paySeller(listingID, offerID);
@@ -257,7 +276,7 @@ contract V00_Marketplace {
     } else  { // Refund commission to seller
       listings[listingID].deposit += offer.commission;
     }
-    emit OfferRuling(offer.arbitrator, listingID, offerID, 0x0, _ruling);
+    emit OfferRuling(offer.arbitrator, listingID, offerID, _ipfsHash, _ruling);
     delete offers[listingID][offerID];
   }
 
@@ -326,5 +345,10 @@ contract V00_Marketplace {
     listing.deposit -= value;
     require(tokenAddr.transfer(target, value));
     emit ListingArbitrated(target, listingID, ipfsHash);
+  }
+
+  // @dev Set the address of the Origin token contract
+  function setTokenAddr(address _tokenAddr) public onlyOwner {
+    tokenAddr = ERC20(_tokenAddr);
   }
 }
