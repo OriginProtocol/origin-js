@@ -274,7 +274,7 @@ const resolvers = {
     },
     listing(offer, args, context, info) {
       const requestedSubFields = info.fieldNodes[0].selectionSet.selections 
-      const isIdOnly = requestedSubFields.filter(x=>x.name.value !== "id").length == 0
+      const isIdOnly = requestedSubFields.filter(x=>x.name.value !== "id").length === 0
       if(isIdOnly){
         return {id: offer.listingId}
       } else {
