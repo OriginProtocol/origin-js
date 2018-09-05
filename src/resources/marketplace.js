@@ -91,17 +91,17 @@ class Marketplace extends Adaptable {
     return new Listing(listingId, chainListing, ipfsListing)
   }
 
-  async search(searchQuery, filters) {
+  async search(searchQuery, filters = []) {
     const query = `
     {
-      Listings (
+      listings (
         searchQuery: "${searchQuery}"
         filters: ${JSON.stringify(filters)}
       ) {
         pageNumber
         itemsPerPage
         totalNumberOfPages
-        listings {
+        nodes {
           id
 
         }
