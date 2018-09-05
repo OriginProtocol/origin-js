@@ -22,33 +22,18 @@ const OFFER_TYPE = 'offer'
 
 
 class Cluster {
-  /*
+  /**
    * Gets cluster health and prints it.
    */
   static async health() {
     const resp = await client.cluster.health({})
     console.log('-- Search cluster health --\n', resp)
   }
-
-  /*
-   * Creates the Origin index.
-   */
-  static async createIndex() {
-    await client.indices.create({index: LISTINGS_INDEX})
-    console.log(`Created search index ${LISTINGS_INDEX}`)
-  }
-
-  /*
-   * Deletes the Origin index.
-   */
-  static async deleteIndex() {
-    await client.indices.delete({index: LISTINGS_INDEX})
-  }
 }
 
 
 class Listing {
-  /*
+  /**
    * Counts number of listings indexed.
    * @returns The number of listings indexed.
    */
