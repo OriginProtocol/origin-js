@@ -85,7 +85,7 @@
     "unitListing": {
       "type": "object",
       "properties": {
-        "unitsForSale": {
+        "unitsTotal": {
           "type": "integer"
         },
         "price": {
@@ -93,7 +93,7 @@
         }
       },
       "required": [
-        "unitsForSale",
+        "unitsTotal",
         "price"
       ]
     },
