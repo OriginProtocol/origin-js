@@ -169,23 +169,33 @@ const typeDefs = gql`
     rating: Int
   }
 
-  # TODO:
-  #  - Filtering definition needs more thinking. This is not flexible at all...
-  #  - Add location based filtering.
-  #  - Add fractional usage (e.g. availability) filtering.
+  enum ValueType {
+    STRING
+    FLOAT
+    DATE
+    ARRAY_STRING
+  }
+
+  enum FilterOperator {
+    EQUALS
+    CONTAINS #for array values where at least one must match E.g. list of categories 
+    GREATER
+    GREATER_OR_EQUAL
+    LESSER
+    LESSER_OR_EQUAL
+  }
+
+  # A generic listing filter
   input ListingFilter {
-    priceMin: inPrice
-    priceMax: inPrice
-    category: String
-    subCategory: String
-    locale: String
-    sellerAddress: String
-    buyerAddress: String
+    name: String!
+    value: String!
+    valueType: ValueType!
+    operator: FilterOperator!
   }
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    listings(searchQuery: String): ListingPage, # (page: Page, order: ListingOrder, filter: ListingFilter)
+    listings(searchQuery: String, filters: [ListingFilter!]): ListingPage, #(searchQuery: String, page: Page, order: ListingOrder, filters: [ListingFilter!]): ListingPage,
     listing(id: ID!): Listing,
 
     offers(buyerAddress: ID, listingId: ID): OfferConnection,
