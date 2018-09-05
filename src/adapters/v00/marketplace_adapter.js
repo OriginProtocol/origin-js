@@ -1,6 +1,6 @@
 const OFFER_STATUS = ['error','created', 'accepted', 'disputed', 'finalized', 'buyerReviewed']
 
-class MarkeplaceAdapter {
+class MarketplaceAdapter {
   constructor({ contractService, contractName }) {
     this.web3 = contractService.web3
     this.contractService = contractService
