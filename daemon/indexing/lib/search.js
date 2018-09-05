@@ -55,10 +55,10 @@ class Listing {
 
   /**
    * Indexes a listing.
-   * @params {string} listingId - The unique ID of the listing.
-   * @params {string} buyerAddress - ETH address of the buyer.
-   * @params {string} ipfsHash - 32 bytes IPFS hash, in hexa (not base58 encoded).
-   * @params {object} listing - JSON listing data.
+   * @param {string} listingId - The unique ID of the listing.
+   * @param {string} buyerAddress - ETH address of the buyer.
+   * @param {string} ipfsHash - 32 bytes IPFS hash, in hexa (not base58 encoded).
+   * @param {object} listing - JSON listing data.
    * @throws Throws an error if indexing operation failed.
    * @returns The listingId indexed.
    */
@@ -73,9 +73,9 @@ class Listing {
     return listingId
   }
 
-  /*
+  /**
    * Searches for listings.
-   * @params {string} query - The search query.
+   * @param {string} query - The search query.
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
@@ -109,9 +109,9 @@ class Listing {
 }
 
 class Offer {
-  /*
+  /**
    * Indexes an Offerr
-   * @params {object} offer - JSON offer data from origin.js
+   * @param {object} offer - JSON offer data from origin.js
    * @throws Throws an error if indexing operation failed. 
    */
   static async index(offer, listing){
