@@ -1,4 +1,4 @@
-const OFFER_STATUS = ['error','created', 'accepted', 'finalized', 'buyerReviewed']
+const OFFER_STATUS = ['error','created', 'accepted', 'disputed', 'finalized', 'buyerReviewed']
 
 class MarkeplaceAdapter {
   constructor({ contractService, contractName }) {
@@ -261,11 +261,11 @@ class MarkeplaceAdapter {
       }
       // Override status if offer was deleted from blockchain state
       if (e.event === 'OfferFinalized') {
-        rawOffer.status = '3'
+        rawOffer.status = '4'
       }
       // TODO: Assumes OfferData event is a seller review
       if (e.event === 'OfferData') {
-        rawOffer.status = '4'
+        rawOffer.status = '5'
       }
       // Translate status number to string
       rawOffer.status = OFFER_STATUS[rawOffer.status]
