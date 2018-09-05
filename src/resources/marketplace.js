@@ -1,7 +1,8 @@
 import { generateListingId, generateOfferId, generateNotificationId } from '../utils/id'
 
 import Adaptable from './adaptable'
-import { Listing, ListingIpfsStore } from './listing'
+import { Listing } from '../models/listing'
+import { ListingIpfsStore } from '../services/listing-service'
 
 const unreadStatus = 'unread'
 const readStatus = 'read'
