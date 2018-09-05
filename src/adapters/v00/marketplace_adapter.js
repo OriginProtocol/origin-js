@@ -354,9 +354,14 @@ class MarketplaceAdapter {
     return notifications
   }
 
+  async getTokenAddress() {
+    await this.getContract()
+    return await this.contract.methods.tokenAddr().call()
+  }
+
   padTopic(id) {
     return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
   }
 }
 
-export default MarkeplaceAdapter
+export default MarketplaceAdapter
