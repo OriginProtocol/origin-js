@@ -1,3 +1,4 @@
+const bs58 = require('bs58')
 const fs = require('fs')
 const ipfsAPI = require('ipfs-api')
 const HttpIPFS = require('ipfs/src/http')
@@ -83,7 +84,15 @@ const populateIpfs = async () => {
       const stream = new ReadableStream()
       stream.push(JSON.stringify(data))
       stream.push(null)
-      await ipfs.add(stream)
+      const resp = await ipfs.add(stream)
+
+      // Log some data.
+      // TODO(franck): re-use ContractService.getBytes32FromIpfsHash
+      const ipfsHash = resp[0].hash
+      const bytes32 = '0x' + bs58.decode(ipfsHash).slice(2).toString('hex')
+      console.log(`Uploaded fixture listing ${listingDirectoryName} to IPFS`)
+      console.log(`  IPFS Hash=${ipfsHash}`)
+      console.log(`  Bytes32  =${bytes32}`)
     }
   }
 }

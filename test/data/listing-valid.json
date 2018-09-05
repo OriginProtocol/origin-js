@@ -25,7 +25,7 @@
       }
     }
   ],
-  "unitsForSale": 1,
+  "unitsTotal": 1,
   "price": {
     "currency": "ETH",
     "amount": "200"

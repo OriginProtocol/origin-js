@@ -58,7 +58,7 @@ class Marketplace extends Adaptable {
     const ipfsListing = await this.listingIpfsStore.load(ipfsHash)
 
     // Create and return a Listing from on-chain and off-chain data .
-    return new Listing(chainListing, ipfsListing)
+    return new Listing(listingId, chainListing, ipfsListing)
   }
 
   // async getOffersCount(listingId) {}

@@ -19,14 +19,16 @@ ajv.addSchema(schemaV1)
 class Listing {
   /**
    * A Listing is constructed based on its on-chain and off-chain data.
-   * @param {Object} chainListing -
-   * @param {Object} ipfsListing
+   * #param {string} listingId - Unique listing ID.
+   * @param {Object} chainListing - Listing data from the blockchain.
+   * @param {Object} ipfsListing - Listing data from IPFS.
    */
-  constructor(chainListing, ipfsListing) {
+  constructor(listingId, chainListing, ipfsListing) {
+    this.id = listingId
     // FIXME(franck): Exposing directly the chain data will make it difficult
     // to support backward compatibility of the Listing interface in the future. We should
     // select and possibly abstract what data from the chain gets exposed.
-    Object.assign(this, chainListing, ipfsListing)
+    Object.assign(this, ipfsListing, chainListing)
   }
 
   get unitsSold() {
@@ -44,10 +46,9 @@ class Listing {
     return this._unitsSold
   }
 
-  get unitsAvailable() {
-    // Units available is derived from units for sale and offers created.
+  get unitsRemaining() {
     // Should never be negative.
-    return Math.max(this.unitsForSale - this.unitsSold, 0)
+    return Math.max(this.unitsTotal - this.unitsSold, 0)
   }
 }
 
@@ -110,10 +111,10 @@ class SchemaAdapterV1 {
 
     // Unit data.
     if (listing.type === 'unit') {
-      listing.unitsForSale = data.unitsForSale
+      listing.unitsTotal = data.unitsTotal
       listing.price = new Money(data.price)
-      listing.commission = new Money(data.commission)
-      listing.securityDeposit = new Money(data.securityDeposit)
+      listing.commission = data.commission ? new Money(data.commission) : null
+      listing.securityDeposit = data.securityDeposit ? new Money(data.securityDeposit) : null
     } else if (listing.type === 'fractional') {
       // TODO(franck): fill this in.
     }

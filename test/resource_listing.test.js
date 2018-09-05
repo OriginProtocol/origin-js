@@ -11,21 +11,21 @@ import goodListing from './data/listing-valid'
 
 describe('Listing', () => {
 
-  it(`unitsAvailable should be unitsForSale when no offer`, () => {
+  it(`unitsRemaining should equal to unitsTotal when no offer`, () => {
     const chainListing = { offers: [] }
-    const ipfsListing = { unitsForSale: 10 }
-    const listing = new Listing(chainListing, ipfsListing)
-    expect(listing.unitsAvailable).to.equal(10)
+    const ipfsListing = { unitsTotal: 10 }
+    const listing = new Listing('FakeID', chainListing, ipfsListing)
+    expect(listing.unitsRemaining).to.equal(10)
     expect(listing.unitsSold).to.equal(0)
   })
 
-  it(`unitsAvailable should be unitsForSale - unitsSold`, () => {
+  it(`unitsRemaining should be unitsTotal - unitsSold`, () => {
     const chainListing = { offers: {
       offerId1: { status: 'created' },
       offerId2: { status: 'accepted'} } }
-    const ipfsListing = { unitsForSale: 10 }
-    const listing = new Listing(chainListing, ipfsListing)
-    expect(listing.unitsAvailable).to.equal(9)
+    const ipfsListing = { unitsTotal: 10 }
+    const listing = new Listing('FakeID', chainListing, ipfsListing)
+    expect(listing.unitsRemaining).to.equal(9)
     expect(listing.unitsSold).to.equal(1)
   })
 
@@ -55,7 +55,7 @@ describe('ListingIpfsStore load', () => {
     expect(listing.expiry).to.equal('1996-12-19T16:39:57-08:00')
     expect(listing.media.length).to.equal(2)
     expect(listing.media[0].url).to.equal('http://test-gateway')
-    expect(listing.unitsForSale).to.equal(1)
+    expect(listing.unitsTotal).to.equal(1)
     expect(listing.price).to.deep.equal({amount:'200', currency:'ETH'})
     expect(listing.commission).to.deep.equal({amount:'10', currency:'OGN'})
     expect(listing.securityDeposit).to.deep.equal({amount:'100', currency:'ETH'})
