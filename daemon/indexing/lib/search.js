@@ -61,14 +61,14 @@ class Listing {
   static async get(id) {
     const resp = await client.get({id: id, index: LISTINGS_INDEX, type: LISTINGS_TYPE})
     if(!resp.found){
-      throw "Listing not found"
+      throw Error("Listing not found")
     }
     const listing = resp._source
     listing.id = id
     return resp._source
   }
 
-  /*
+  /**
    * Indexes a listing.
    * @params {string} listingId - The unique ID of the listing.
    * @params {string} buyerAddress - ETH address of the buyer.
@@ -149,7 +149,7 @@ class Offer {
   static async get(id) {
     const resp = await client.get({id: id, index: OFFER_INDEX, type: OFFER_TYPE})
     if(!resp.found){
-      throw "Offer not found"
+      throw Error("Offer not found")
     }
     return resp._source
   }
