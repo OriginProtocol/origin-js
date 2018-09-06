@@ -704,6 +704,29 @@ class Messaging extends ResourceBase {
     return room
   }
 
+  async joinConvoRoom(room_id, keys) {
+    this.convs[room_id] = { keys }
+    const writers = this.getRecipients(room_id).sort()
+    const room = await this.getShareRoom(
+      this.CONV,
+      'eventlog',
+      writers,
+      room => {
+        room.events.on('write', (/* dbname, entry, items */) => {
+          this.processMessage(room_id, room)
+        })
+        room.events.on('ready', (/* dbname, entry, items */) => {
+          this.processMessage(room_id, room)
+        })
+        room.events.on('replicated', (/* dbname */) => {
+          console.log('process Message from replicated')
+          this.processMessage(room_id, room)
+        })
+      }
+    )
+    return room
+  }
+
   async watchMyConv() {
     await this.getConvo(this.account_key)
   }
