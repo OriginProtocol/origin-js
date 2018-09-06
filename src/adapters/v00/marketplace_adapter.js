@@ -1,21 +1,31 @@
-class MarketplaceAdapter {
-  constructor({ contractService, contractName }) {
+const OFFER_STATUS = ['error','created', 'accepted', 'disputed', 'finalized', 'buyerReviewed']
+
+class V00_MarkeplaceAdapter {
+  constructor({ contractService }) {
     this.web3 = contractService.web3
     this.contractService = contractService
-    this.contractName = contractName
+    this.contractName = 'V00_Marketplace'
   }
 
   async getContract() {
     if (!this.contract) {
       this.contract = await this.contractService.deployed(
-        this.contractService[this.contractName]
+        this.contractService.contracts[this.contractName]
       )
     }
   }
 
+  async call(methodName, args, opts) {
+    return await this.contractService.call(
+      this.contractName,
+      methodName,
+      args,
+      opts
+    )
+  }
+
   async getListingsCount() {
-    await this.getContract()
-    const total = await this.contract.methods.totalListings().call()
+    const total = await this.call('totalListings')
     return Number(total)
   }
 
@@ -24,19 +34,12 @@ class MarketplaceAdapter {
     { deposit = '0', arbitrator },
     confirmationCallback
   ) {
-    await this.getContract()
     const from = await this.contractService.currentAccount()
 
-    const transactionReceipt = await new Promise((resolve, reject) => {
-      this.contract.methods
-        .createListing(ipfsBytes, deposit, arbitrator || from)
-        .send({ gas: 4612388, from })
-        .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
-        .on('error', reject)
-    })
-    const timestamp = await this.contractService.getTimestamp(
-      transactionReceipt
+    const { transactionReceipt, timestamp } = await this.call(
+      'createListing',
+      [ipfsBytes, deposit, arbitrator || from],
+      { from, confirmationCallback }
     )
     const listingIndex =
       transactionReceipt.events['ListingCreated'].returnValues.listingID
@@ -44,27 +47,16 @@ class MarketplaceAdapter {
   }
 
   async withdrawListing(listingId, ipfsBytes, confirmationCallback) {
-    await this.getContract()
     const from = await this.contractService.currentAccount()
-
-    const opts = { gas: 4612388, from }
-    const transactionReceipt = await new Promise((resolve, reject) => {
-      this.contract.methods
-        .withdrawListing(listingId, from, ipfsBytes)
-        .send(opts)
-        .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
-        .on('error', reject)
-    })
-    const timestamp = await this.contractService.getTimestamp(
-      transactionReceipt
+    const { transactionReceipt, timestamp } = await this.call(
+      'withdrawListing',
+      [listingId, from, ipfsBytes],
+      { from, confirmationCallback }
     )
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
   async makeOffer(listingId, ipfsBytes, data, confirmationCallback) {
-    await this.getContract()
-    const from = await this.contractService.currentAccount()
     const {
       finalizes,
       affiliate,
@@ -84,21 +76,15 @@ class MarketplaceAdapter {
       currencyAddr || '0x0',
       arbitrator || '0x0'
     ]
-    const opts = { gas: 4612388, from }
+    const opts = { confirmationCallback }
     if (!currencyAddr) {
       opts.value = price
     }
 
-    const transactionReceipt = await new Promise((resolve, reject) => {
-      this.contract.methods
-        .makeOffer(...args)
-        .send(opts)
-        .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
-        .on('error', reject)
-    })
-    const timestamp = await this.contractService.getTimestamp(
-      transactionReceipt
+    const { transactionReceipt, timestamp } = await this.call(
+      'makeOffer',
+      args,
+      opts
     )
     const offerIndex =
       transactionReceipt.events['OfferCreated'].returnValues.offerID
@@ -106,21 +92,10 @@ class MarketplaceAdapter {
   }
 
   async acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
-    await this.getContract()
-    const from = await this.contractService.currentAccount()
-
-    const args = [listingIndex, offerIndex, ipfsBytes]
-    const opts = { gas: 4612388, from }
-    const transactionReceipt = await new Promise((resolve, reject) => {
-      this.contract.methods
-        .acceptOffer(...args)
-        .send(opts)
-        .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
-        .on('error', reject)
-    })
-    const timestamp = await this.contractService.getTimestamp(
-      transactionReceipt
+    const { transactionReceipt, timestamp } = await this.call(
+      'acceptOffer',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
     )
     return Object.assign({ timestamp }, transactionReceipt)
   }
@@ -131,21 +106,10 @@ class MarketplaceAdapter {
     ipfsBytes,
     confirmationCallback
   ) {
-    await this.getContract()
-    const from = await this.contractService.currentAccount()
-
-    const args = [listingIndex, offerIndex, ipfsBytes]
-    const opts = { gas: 4612388, from }
-    const transactionReceipt = await new Promise((resolve, reject) => {
-      this.contract.methods
-        .finalize(...args)
-        .send(opts)
-        .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
-        .on('error', reject)
-    })
-    const timestamp = await this.contractService.getTimestamp(
-      transactionReceipt
+    const { transactionReceipt, timestamp } = await this.call(
+      'finalize',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
     )
     return Object.assign({ timestamp }, transactionReceipt)
   }
@@ -154,7 +118,7 @@ class MarketplaceAdapter {
     await this.getContract()
 
     // Get the raw listing data from the contract
-    const rawListing = await this.contract.methods.listings(listingId).call()
+    const rawListing = await this.call('listings', [listingId])
 
     // Find all events related to this listing
     const listingTopic = this.padTopic(listingId)
@@ -212,13 +176,14 @@ class MarketplaceAdapter {
       })
       return events.map(e => Number(e.returnValues.listingID))
     } else {
-      const total = await this.contract.methods.totalListings().call()
+      const total = await this.call('totalListings')
       return [...Array(Number(total)).keys()]
     }
   }
 
   async getOffers(listingIndex, opts) {
     await this.getContract()
+
     let filter = {}
     if (listingIndex) {
       filter = Object.assign(filter, { listingID: listingIndex })
@@ -237,9 +202,7 @@ class MarketplaceAdapter {
     await this.getContract()
 
     // Get the raw listing data from the contract
-    const rawOffer = await this.contract.methods
-      .offers(listingIndex, offerIndex)
-      .call()
+    const rawOffer = await this.call('offers', [listingIndex, offerIndex])
 
     // Find all events related to this offer
     const listingTopic = this.padTopic(listingIndex)
@@ -259,12 +222,14 @@ class MarketplaceAdapter {
       }
       // Override status if offer was deleted from blockchain state
       if (e.event === 'OfferFinalized') {
-        rawOffer.status = '3'
+        rawOffer.status = '4'
       }
       // TODO: Assumes OfferData event is a seller review
       if (e.event === 'OfferData') {
-        rawOffer.status = '4'
+        rawOffer.status = '5'
       }
+      // Translate status number to string
+      rawOffer.status = OFFER_STATUS[rawOffer.status]
       e.timestamp = timestamp
     }
 
@@ -273,24 +238,17 @@ class MarketplaceAdapter {
   }
 
   async addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback) {
-    await this.getContract()
-    const from = await this.contractService.currentAccount()
-    const transactionReceipt = await new Promise((resolve, reject) => {
-      return this.contract.methods
-        .addData(listingIndex, offerIndex, ipfsBytes)
-        .send({ gas: 4612388, from })
-        .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
-        .on('error', reject)
-    })
-    const timestamp = await this.contractService.getTimestamp(
-      transactionReceipt
+    const { transactionReceipt, timestamp } = await this.call(
+      'addData',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
     )
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
   async getNotifications(party) {
     await this.getContract()
+
     const notifications = []
 
     const partyListingIds = []
@@ -350,9 +308,14 @@ class MarketplaceAdapter {
     return notifications
   }
 
+  async getTokenAddress() {
+    await this.getContract()
+    return await this.contract.methods.tokenAddr().call()
+  }
+
   padTopic(id) {
     return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
   }
 }
 
-export default MarketplaceAdapter
+export default V00_MarkeplaceAdapter
