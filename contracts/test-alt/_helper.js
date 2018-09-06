@@ -1,3 +1,4 @@
+import assert from 'assert'
 import fs from 'fs'
 import solc from 'solc'
 import linker from 'solc/linker'
@@ -16,8 +17,17 @@ const solcOpts = {
   }
 }
 
+const solidityCoverage = (process.env['SOLIDITY_COVERAGE'] !== undefined)
+// Use solidity-coverage's forked testrpc if this is a coverage run
+const defaultProvider = solidityCoverage
+  ? 'ws://localhost:8555'
+  : 'ws://localhost:7545'
+export const contractPath = solidityCoverage
+  ? `${__dirname}/../../coverageEnv/contracts`
+  : `${__dirname}/../contracts`
+
 // Instantiate a web3 instance. Start a node if one is not already running.
-export async function web3Helper(provider = 'ws://localhost:7545') {
+export async function web3Helper(provider = defaultProvider) {
   const web3 = new Web3(provider)
   const instance = await server(web3, provider)
   return { web3, server: instance }
@@ -83,9 +93,10 @@ export default async function testHelper(contracts, provider) {
       }
 
       const LibContract = new web3.eth.Contract(libObj.abi)
+      const gas = solidityCoverage ? 3000000 * 3 : 3000000
       const libContract = await LibContract.deploy({
         data: libObj.evm.bytecode.object
-      }).send({ from, gas: 3000000 })
+      }).send({ from, gas: gas })
       const libs = { [`${linkedFile}:${linkedLib}`]: libContract._address }
       return linker.linkBytecode(bytecode.object, libs)
     }
@@ -135,7 +146,7 @@ export default async function testHelper(contracts, provider) {
           data,
           from,
           value: 0,
-          gas: 4612388,
+          gas: solidityCoverage ? 4612388 * 5 : 4612388,
           chainId
         })
         .once('transactionHash', hash => {
@@ -183,7 +194,37 @@ export default async function testHelper(contracts, provider) {
     return web3.eth.abi.decodeLog(ruling.inputs, data, topics)
   }
 
-  return { web3, accounts, deploy, server, decodeEvent }
+  async function blockTimestamp() {
+    const block = await web3.eth.getBlock('latest')
+    return block.timestamp
+  }
+
+  async function evmIncreaseTime(secs) {
+    await web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_increaseTime',
+      params: [secs],
+      id: new Date().getTime(),
+    }, () => {})
+
+    // Mine a block to get the time change to occur
+    await web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_mine',
+      params: [],
+      id: new Date().getTime(),
+    }, () => { })
+  }
+
+  return {
+    web3,
+    accounts,
+    deploy,
+    server,
+    decodeEvent,
+    blockTimestamp,
+    evmIncreaseTime,
+  }
 }
 
 // Start the server if it hasn't been already...
@@ -205,4 +246,17 @@ async function server(web3, provider) {
   const server = Ganache.server()
   await server.listen(port)
   return server
+}
+
+// Asserts unless the given promise leads to an EVM revert.
+// Ported from OpenZeppelin.
+export async function assertRevert(promise) {
+  try {
+    await promise
+  } catch (error) {
+    const revertFound = error.message.search('revert') >= 0
+    assert(revertFound, `Expected "revert", got ${error} instead`)
+    return
+  }
+  assert.fail('Expected revert not received')
 }

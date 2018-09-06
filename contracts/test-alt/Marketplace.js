@@ -1,5 +1,5 @@
 import assert from 'assert'
-import helper from './_helper'
+import helper, { contractPath } from './_helper'
 import marketplaceHelpers, { IpfsHash } from './_marketplaceHelpers'
 import Table from 'cli-table'
 import GasPriceInDollars from './_gasPriceInDollars'
@@ -28,12 +28,15 @@ Withdraw Listing
 `.split('\n')
 
 describe('Marketplace.sol', async function() {
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
   let accounts, deploy, web3
   let Marketplace,
     OriginToken,
     DaiStableCoin,
     Buyer,
     // BuyerIdentity,
+    Owner,
     Seller,
     SellerIdentity,
     Arbitrator,
@@ -45,6 +48,7 @@ describe('Marketplace.sol', async function() {
   before(async function() {
     ({ deploy, accounts, web3 } = await helper(`${__dirname}/..`))
 
+    Owner = accounts[0]
     Seller = accounts[1]
     Buyer = accounts[2]
     ArbitratorAddr = accounts[3]
@@ -53,13 +57,13 @@ describe('Marketplace.sol', async function() {
     gasEstimate = web3.utils.toBN(gasPrice).mul(web3.utils.toBN('4000000'))
 
     OriginToken = await deploy('OriginToken', {
-      from: accounts[0],
-      path: `${__dirname}/../contracts/token/`,
+      from: Owner,
+      path: `${contractPath}/token/`,
       args: [12000]
     })
 
     DaiStableCoin = await deploy('Token', {
-      from: accounts[0],
+      from: Owner,
       path: `${__dirname}/contracts/`,
       args: ['Dai', 'DAI', 2, 12000]
       // args: [12000]
@@ -78,21 +82,21 @@ describe('Marketplace.sol', async function() {
     })
 
     Marketplace = await deploy('V00_Marketplace', {
-      from: accounts[0],
+      from: Owner,
       // path: `${__dirname}/contracts/`,
-      path: `${__dirname}/../contracts/marketplace/v00`,
+      path: `${contractPath}/marketplace/v00`,
       file: 'Marketplace.sol',
       args: [OriginToken._address]
     })
 
     SellerIdentity = await deploy('ClaimHolder', {
       from: Seller,
-      path: `${__dirname}/../contracts/identity/`
+      path: `${contractPath}/identity/`
     })
 
     // BuyerIdentity = await deploy('ClaimHolder', {
     //   from: Buyer,
-    //   path: `${__dirname}/../contracts/identity`
+    //   path: `${contractPath}/identity`
     // })
 
     await OriginToken.methods.transfer(Seller, 400).send()
@@ -363,7 +367,7 @@ describe('Marketplace.sol', async function() {
   })
 
   describe('Arbitration', function() {
-    let disputeID, balanceBefore, balanceAfter
+    let listingID, offerID, balanceBefore, balanceAfter
 
     // When comparing Eth, take into account gas price
     function assertBN(before, expr, after) {
@@ -377,26 +381,26 @@ describe('Marketplace.sol', async function() {
 
     describe('dispute without refund (Eth)', function() {
       it('should resolve in favor of buyer (no commission)', async function() {
-        ({ disputeID, balance: balanceBefore } = await helpers.disputedOffer({}));
-        ({ balance: balanceAfter } = await helpers.giveRuling({ disputeID, ruling: 1 }))
+        ({ listingID, offerID, balance: balanceBefore } = await helpers.disputedOffer({}));
+        ({ balance: balanceAfter } = await helpers.giveRuling({ listingID, offerID, ruling: 1 }))
         assertBN(balanceBefore.eth, 'add 0.1 ether', balanceAfter.eth)
         assert(balanceAfter.ogn.eq(balanceBefore.ogn))
       })
       it('should resolve in favor of buyer (pay commission)', async function() {
-        ({ disputeID, balance: balanceBefore } = await helpers.disputedOffer({}));
-        ({ balance: balanceAfter } = await helpers.giveRuling({ disputeID, ruling: 3 }))
+        ({ listingID, offerID, balance: balanceBefore } = await helpers.disputedOffer({}));
+        ({ balance: balanceAfter } = await helpers.giveRuling({ listingID, offerID, ruling: 3 }))
         assertBN(balanceBefore.eth, 'add 0.1 ether', balanceAfter.eth)
         assert(balanceAfter.ogn.eq(balanceBefore.ogn.add(new web3.utils.BN('2'))))
       })
       it('should resolve in favor of seller (no commission)', async function() {
-        ({ disputeID, balance: balanceBefore } = await helpers.disputedOffer({ party: Seller }));
-        ({ balance: balanceAfter } = await helpers.giveRuling({ disputeID, ruling: 0, party: Seller }))
+        ({ listingID, offerID, balance: balanceBefore } = await helpers.disputedOffer({ party: Seller }));
+        ({ balance: balanceAfter } = await helpers.giveRuling({ listingID, offerID, ruling: 0, party: Seller }))
         assertBN(balanceBefore.eth, 'add 0.1 ether', balanceAfter.eth)
         assert(balanceAfter.ogn.eq(balanceBefore.ogn))
       })
       it('should resolve in favor of seller (pay commission)', async function() {
-        ({ disputeID, balance: balanceBefore } = await helpers.disputedOffer({ party: Seller }));
-        ({ balance: balanceAfter } = await helpers.giveRuling({ disputeID, ruling: 2, party: Seller }))
+        ({ listingID, offerID, balance: balanceBefore } = await helpers.disputedOffer({ party: Seller }));
+        ({ balance: balanceAfter } = await helpers.giveRuling({ listingID, offerID, ruling: 2, party: Seller }))
         assertBN(balanceBefore.eth, 'add 0.1 ether', balanceAfter.eth)
         assert(balanceAfter.ogn.eq(balanceBefore.ogn.add(new web3.utils.BN('2'))))
       })
@@ -507,5 +511,32 @@ describe('Marketplace.sol', async function() {
     //     Number(balanceBefore) + Number(web3.utils.toWei('0.1', 'ether'))
     //   )
     // })
+  })
+
+  describe('Ownership', function() {
+    it('should allow the contract owner to set the token address', async function() {
+      try {
+        await Marketplace.methods.setTokenAddr(ZERO_ADDRESS).send()
+        assert.equal(
+          await Marketplace.methods.tokenAddr().call(),
+          ZERO_ADDRESS)
+      } finally {
+        await Marketplace.methods.setTokenAddr(OriginToken._address).send()
+        assert.equal(
+          await Marketplace.methods.tokenAddr().call(),
+          OriginToken._address)
+      }
+    })
+
+    it('should not allow non-owners to set the token address', async function() {
+      try {
+        await Marketplace.methods.setTokenAddr(ZERO_ADDRESS).send({
+          from: Buyer
+        })
+        assert(false)
+      } catch (e) {
+        assert(e.message.match(/revert/))
+      }
+    })
   })
 })

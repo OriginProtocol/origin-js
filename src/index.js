@@ -4,7 +4,9 @@ import { Attestations } from './resources/attestations'
 import Marketplace from './resources/marketplace'
 import Users from './resources/users'
 import Messaging from './resources/messaging'
+import Token from './resources/token'
 import fetch from 'cross-fetch'
+import store from 'store'
 
 const defaultBridgeServer = 'https://bridge.originprotocol.com'
 const defaultIpfsDomain = 'gateway.originprotocol.com'
@@ -56,7 +58,8 @@ class Origin {
       contractService: this.contractService,
       ipfsService: this.ipfsService,
       indexingServerUrl,
-      fetch
+      fetch,
+      store
     })
 
     this.users = new Users({
@@ -70,6 +73,12 @@ class Origin {
       OrbitDB,
       ecies,
       messagingNamespace
+    })
+
+    this.token = new Token({
+      contractService: this.contractService,
+      ipfsService: this.ipfsService,
+      marketplace: this.marketplace
     })
   }
 }
