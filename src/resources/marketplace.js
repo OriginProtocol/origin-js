@@ -18,7 +18,6 @@ class Marketplace extends Adaptable {
   constructor({
     contractService,
     ipfsService,
-    indexingServerUrl,
     discoveryServer,
     discoveryServerPort,
     fetch,
@@ -27,7 +26,6 @@ class Marketplace extends Adaptable {
     super(...arguments)
     this.contractService = contractService
     this.ipfsService = ipfsService
-    this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
     this.listingIpfsStore = new ListingIpfsStore(this.ipfsService)
     this.discoveryServer = discoveryServer
@@ -91,9 +89,17 @@ class Marketplace extends Adaptable {
     return new Listing(listingId, chainListing, ipfsListing)
   }
 
+  /**
+   * Issues a sarch request to the indexing server which returns Listings result as a promise.
+   * This way the caller of the function can implement error checks when results is something
+   * unexpected. To get JSON result caller should call `await searchResponse.json()` to get the
+   * actual JSON.
+   * @param searchQuery {string} general search query
+   * @param listingType {string} one of the supported listingTypes
+   * @param filters {object} object with properties: name, value, valueType, operator
+   * @returns {Promise<HTTP_Response>}
+   */
   async search(searchQuery, listingType, filters = []) {
-
-
     const query = `
     {
       listings (
@@ -114,7 +120,6 @@ class Marketplace extends Adaptable {
         totalNumberOfPages
         nodes {
           id
-
         }
       }
     }`
