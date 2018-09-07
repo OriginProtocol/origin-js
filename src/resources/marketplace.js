@@ -116,9 +116,6 @@ class Marketplace extends Adaptable {
     `
   }).join(',')}]
       ) {
-        pageNumber
-        itemsPerPage
-        totalNumberOfPages
         nodes {
           id
         }
