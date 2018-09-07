@@ -19,11 +19,11 @@ const typeDefs = gql`
   ######################
 
   # When querying a set of items, the output is a page.
-  interface OutputPage {
-    pageNumber: Int!
-    itemsPerPage: Int!
-    totalNumberOfPages: Int!
-  }
+ # interface OutputPage {
+ #   pageNumber: Int!
+ #   itemsPerPage: Int!
+ #   totalNumberOfPages: Int!
+ # }
 
   type Price {
     currency: String!
