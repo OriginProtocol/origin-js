@@ -19,8 +19,8 @@ class Marketplace extends Adaptable {
     contractService,
     ipfsService,
     indexingServerUrl,
-    apolloServer,
-    apolloServerPort,
+    discoveryServer,
+    discoveryServerPort,
     fetch,
     store
   }) {
@@ -30,8 +30,8 @@ class Marketplace extends Adaptable {
     this.indexingServerUrl = indexingServerUrl
     this.fetch = fetch
     this.listingIpfsStore = new ListingIpfsStore(this.ipfsService)
-    this.apolloServer = apolloServer
-    this.apolloServerPort = apolloServerPort
+    this.discoveryServer = discoveryServer
+    this.discoveryServerPort = discoveryServerPort
 
     // initialize notifications
     if (!store.get(storeKeys.notificationSubscriptionStart)) {
@@ -119,7 +119,7 @@ class Marketplace extends Adaptable {
       }
     }`
 
-    return this.fetch(`${this.apolloServer}:${this.apolloServerPort}`, {
+    return this.fetch(`${this.discoveryServer}:${this.discoveryServerPort}`, {
         method: 'POST',
         body: JSON.stringify({
           query:query

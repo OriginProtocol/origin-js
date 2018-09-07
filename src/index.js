@@ -10,8 +10,8 @@ import store from 'store'
 
 const defaultBridgeServer = 'https://bridge.originprotocol.com'
 const defaultIpfsDomain = 'gateway.originprotocol.com'
-const defaultApolloServer = 'http://apollo.originprotocol.com'
-const defaultApolloServerPort = '4000'
+const defaultDiscoveryServer = 'https://discovery.originprotocol.com'
+const defaultDiscoveryServerPort = '4000'
 const defaultIpfsApiPort = '5002'
 const defaultIpfsGatewayPort = '443'
 const defaultIpfsGatewayProtocol = 'https'
@@ -27,8 +27,8 @@ class Origin {
     ipfsGatewayProtocol = defaultIpfsGatewayProtocol,
     attestationServerUrl = defaultAttestationServerUrl,
     indexingServerUrl = defaultIndexingServerUrl,
-    apolloServer = defaultApolloServer,
-    apolloServerPort = defaultApolloServerPort,
+    discoveryServer = defaultDiscoveryServer,
+    discoveryServerPort = defaultDiscoveryServerPort,
     contractAddresses,
     web3,
     ipfsCreator,
@@ -56,8 +56,8 @@ class Origin {
       contractService: this.contractService,
       ipfsService: this.ipfsService,
       indexingServerUrl,
-      apolloServer,
-      apolloServerPort,
+      discoveryServer,
+      discoveryServerPort,
       fetch,
       store
     })
