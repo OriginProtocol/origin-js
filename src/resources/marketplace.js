@@ -104,16 +104,17 @@ class Marketplace extends Adaptable {
     {
       listings (
         searchQuery: "${searchQuery}"
-        filters: [${filters.map(filter => {
-          return `
-          {
-            name: "${filter.name}"
-            value: "${String(filter.value)}"
-            valueType: ${filter.valueType}
-            operator: ${filter.operator}
-          }
-          `
-        }).join(',')}]
+        filters: [${filters.map(filter => 
+  {
+    return `
+    {
+      name: "${filter.name}"
+      value: "${String(filter.value)}"
+      valueType: ${filter.valueType}
+      operator: ${filter.operator}
+    }
+    `
+  }).join(',')}]
       ) {
         pageNumber
         itemsPerPage
@@ -125,15 +126,14 @@ class Marketplace extends Adaptable {
     }`
 
     return this.fetch(`${this.discoveryServer}:${this.discoveryServerPort}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          query:query
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        },
-      }
-    )
+      method: 'POST',
+      body: JSON.stringify({
+        query:query
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
   }
 
   // async getOffersCount(listingId) {}
