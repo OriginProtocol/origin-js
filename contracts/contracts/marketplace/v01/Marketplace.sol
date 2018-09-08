@@ -243,7 +243,7 @@ contract V01_Marketplace is Ownable {
     delete offers[listingID][offerID];
   }
 
-  // @dev Buyer can dispute transaction during finalization window
+  // @dev Buyer or seller can dispute transaction during finalization window
   function dispute(uint listingID, uint offerID, bytes32 _ipfsHash) public {
     Listing storage listing = listings[listingID];
     Offer storage offer = offers[listingID][offerID];
