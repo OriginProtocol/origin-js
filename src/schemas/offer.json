@@ -23,7 +23,7 @@
       "type": "object",
       "required": [
         "startDate",
-        "endDate",
+        "endDate"
       ],
       "properties": {
         "startDate": {
@@ -37,7 +37,7 @@
       },
       "required": [
         "startDate",
-        "endDate",
+        "endDate"
       ]
     },
     "unitOffer": {
@@ -83,6 +83,9 @@
         "unit",
         "fractional"
       ]
+    },
+    "unitsPurchased": {
+      "type": "number"
     }
   },
   "oneOf": [
@@ -95,6 +98,7 @@
   ],
   "required": [
     "schemaVersion",
-    "listingType"
+    "listingType",
+    "unitsPurchased"
   ]
 }

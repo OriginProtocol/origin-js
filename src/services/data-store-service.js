@@ -1,9 +1,4 @@
-import {
-  dataAdapterFactory,
-  LISTING_DATA_TYPE,
-  OFFER_DATA_TYPE,
-  REVIEW_DATA_TYPE
-} from './_data-store-adapter'
+import { dataAdapterFactory } from './_data-store-adapter'
 
 //
 // JSON data store backed by IPFS.
@@ -34,6 +29,17 @@ class IpfsDataStoreBase {
 
     // Decode and validate the data.
     const data = adapter.decode(ipfsData)
+
+    // Apply any post-processing after loading data.
+    if (adapter.postProcessor)
+      adapter.postProcessor(data, this.ipfsService)
+
+    // Add the IPFS hash and raw data to the object.
+    data.ipfs = {
+      hash: ipfsHash,
+      data: ipfsData
+    }
+
     return data
   }
 
@@ -47,8 +53,12 @@ class IpfsDataStoreBase {
     // Get a data specific adapter.
     const adapter = dataAdapterFactory(this.dataType, data.schemaVersion)
 
+    // Apply any pre-processing before storing data.
+    if (adapter.preProcessor)
+      await adapter.preProcessor(data, this.ipfsService)
+
     // Validate and encode the input data.
-    const ipfsData = await adapter.encode(data)
+    const ipfsData = adapter.encode(data)
 
     // Write data to storage.
     const ipfsHash = await this.ipfsService.saveObjAsFile(ipfsData)
@@ -61,7 +71,7 @@ class IpfsDataStoreBase {
 //
 export class ListingIpfsStore extends IpfsDataStoreBase {
   constructor(ipfsService) {
-    super(ipfsService, LISTING_DATA_TYPE)
+    super(ipfsService, 'listing')
   }
 }
 
@@ -70,7 +80,7 @@ export class ListingIpfsStore extends IpfsDataStoreBase {
 //
 export class OfferIpfsStore extends IpfsDataStoreBase {
   constructor(ipfsService) {
-    super(ipfsService, OFFER_DATA_TYPE)
+    super(ipfsService, 'offer')
   }
 }
 
@@ -79,6 +89,6 @@ export class OfferIpfsStore extends IpfsDataStoreBase {
 //
 export class ReviewIpfsStore extends IpfsDataStoreBase {
   constructor(ipfsService) {
-    super(ipfsService, REVIEW_DATA_TYPE)
+    super(ipfsService, 'review')
   }
 }

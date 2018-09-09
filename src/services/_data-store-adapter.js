@@ -15,52 +15,6 @@ ajv.addSchema([
   reviewSchemaV1
 ])
 
-const SCHEMA_V1 = '1.0.0'
-
-export const LISTING_DATA_TYPE = 'listing'
-export const OFFER_DATA_TYPE = 'offer'
-export const REVIEW_DATA_TYPE = 'review'
-
-
-const adapterConfig = {
-  LISTING_DATA_TYPE: {
-    SCHEMA_V1: {
-      schemaId: 'http://schema.originprotocol.com/listing-v1.0.0',
-      adapter: ListingAdapterV1
-    }
-  },
-  OFFER_DATA_TYPE: {
-    SCHEMA_V1: {
-      schemaId: 'http://schema.originprotocol.com/offer-v1.0.0',
-      adapter: OfferAdapterV1
-    }
-  },
-  REVIEW_DATA_TYPE: {
-    SCHEMA_V1: {
-      schemaId: 'http://schema.originprotocol.com/review-v1.0.0',
-      adapter: ReviewAdapterV1
-    }
-  }
-}
-
-/**
- * Returns an adapter based on a data type and version.
- * @param {string} dataType - 'listing', 'offer', 'review'
- * @param {string} schemaVersion
- * @returns {SchemaAdapter}
- * @throws {Error}
- */
-export function dataAdapterFactory(dataType, schemaVersion) {
-  if (!adapterConfig[dataType]) {
-    throw new Error(`Unsupported data type: ${dataType}`)
-  }
-  if (!adapterConfig[dataType][schemaVersion]) {
-    throw new Error(`Unsupported schema version ${schemaVersion} for type ${dataType}`)
-  }
-  const {schemaId, adapter } = adapterConfig[dataType][schemaVersion]
-  return new adapter(dataType, schemaId, schemaVersion)
-}
-
 class AdapterBase {
   constructor(dataType, schemaId, schemaVersion) {
     Object.assign(this, {dataType, schemaId, schemaVersion})
@@ -93,7 +47,7 @@ class AdapterBase {
    * @param data
    * @return {object} - Data to be written in storage.
    */
-  async encode(data) {
+  encode(data) {
     this.validate(data)
     return data
   }
@@ -110,21 +64,23 @@ class AdapterBase {
 class ListingAdapterV1 extends AdapterBase {
 
   /**
-   * Rewrites IPFS media URLs to point to the configured IPFS gateway. Used at decoding time.
+   * Rewrites IPFS media URLs to point to the configured IPFS gateway.
+   * Applied after loading data from storage and decoding it.
    */
-  _rewriteIpfsUrls(listing) {
+  postProcessor(listing, ipfsService) {
     if (!listing.media) {
       return
     }
     for (const medium of listing.media) {
-      medium.url = this.ipfsService.rewriteUrl(medium.url)
+      medium.url = ipfsService.rewriteUrl(medium.url)
     }
   }
 
   /**
-   * Uploads to IPFS content passed in as data URL. Used at encoding time.
+   * Uploads to IPFS content passed in as data URL.
+   * Applied before encoding data and writing it to storage.
    */
-  async _uploadDataUrlContent(listing) {
+  async preProcessor(listing, ipfsService) {
     if (!listing.media) {
       return
     }
@@ -147,22 +103,11 @@ class ListingAdapterV1 extends AdapterBase {
     // Upload any data URL content to IPFS.
     const uploads = listing.media.map(async medium => {
       if (medium.url.startsWith('data:')) {
-        const ipfsHash = await this.ipfsService.saveDataURIAsFile(medium.url)
+        const ipfsHash = await ipfsService.saveDataURIAsFile(medium.url)
         medium.url = `ipfs://${ipfsHash}`
       }
     })
     return Promise.all(uploads)
-  }
-
-  /**
-   * Encode a listing data before storage.
-   * @param listing
-   * @return {Promise<*>}
-   */
-  async encode(listing) {
-    await this._uploadDataUrlContent(listing)
-    this.validate(listing)
-    return listing
   }
 
   /**
@@ -199,7 +144,6 @@ class ListingAdapterV1 extends AdapterBase {
       throw new Error(`Unexpected listing type: ${listing.type}`)
     }
 
-    this._rewriteIpfsUrls(listing)
     return listing
   }
 }
@@ -252,4 +196,43 @@ class ReviewAdapterV1 extends AdapterBase {
 
     return review
   }
+}
+
+const adapterConfig = {
+  'listing': {
+    '1.0.0': {
+      schemaId: 'http://schema.originprotocol.com/listing-core-v1.0.0',
+      adapter: ListingAdapterV1
+    }
+  },
+  'offer': {
+    '1.0.0': {
+      schemaId: 'http://schema.originprotocol.com/offer-v1.0.0',
+      adapter: OfferAdapterV1
+    }
+  },
+  'review': {
+    '1.0.0': {
+      schemaId: 'http://schema.originprotocol.com/review-v1.0.0',
+      adapter: ReviewAdapterV1
+    }
+  }
+}
+
+/**
+ * Returns an adapter based on a data type and version.
+ * @param {string} dataType - 'listing', 'offer', 'review'
+ * @param {string} schemaVersion
+ * @returns {SchemaAdapter}
+ * @throws {Error}
+ */
+export function dataAdapterFactory(dataType, schemaVersion) {
+  if (!adapterConfig[dataType]) {
+    throw new Error(`Unsupported data type: ${dataType}`)
+  }
+  if (!adapterConfig[dataType][schemaVersion]) {
+    throw new Error(`Unsupported schema version ${schemaVersion} for type ${dataType}`)
+  }
+  const {schemaId, adapter } = adapterConfig[dataType][schemaVersion]
+  return new adapter(dataType, schemaId, schemaVersion)
 }
