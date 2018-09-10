@@ -3,7 +3,7 @@
 //
 export class Offer {
   /**
-   * A Listing is constructed based on its on-chain and off-chain data.
+   * An Offer is constructed based on its on-chain and off-chain data.
    * @param {string} offerId - Unique offer ID.
    * @param {string} listingId - Unique listing ID.
    * @param {Object} chainOffer - Offer data from the blockchain.

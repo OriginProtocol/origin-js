@@ -1,10 +1,11 @@
 import Ajv from 'ajv'
+import URL from 'url-parse'
+
 import Money from '../utils/money'
 
 import listingSchemaV1 from '../schemas/listing-core.json'
 import offerSchemaV1 from '../schemas/offer.json'
 import reviewSchemaV1 from '../schemas/review.json'
-import URL from 'url-parse'
 
 const ajv = new Ajv({allErrors: true})
 // To use the draft-06 JSON schema, we need to explicitly add it to ajv.
