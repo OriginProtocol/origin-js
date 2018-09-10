@@ -9,25 +9,17 @@ import Token from './resources/token'
 import fetch from 'cross-fetch'
 import store from 'store'
 
-const defaultBridgeServer = process.env.BRIDGE_SERVER
-const defaultIpfsDomain = process.env.IPFS_DOMAIN
-const defaultDiscoveryServer = process.env.DISCOVERY_SERVER_URL
-const defaultDiscoveryServerPort = process.env.DISCOVERY_SERVER_PORT
-const defaultIpfsApiPort = process.env.IPFS_API_PORT
-const defaultIpfsGatewayPort = process.env.IPFS_GATEWAY_PORT
-const defaultIpfsGatewayProtocol = process.env.IPFS_GATEWAY_PROTOCOL
-const defaultAttestationServerUrl = `${defaultBridgeServer}/api/attestations`
 const VERSION = require('.././package.json').version
 
 class Origin {
   constructor({
-    ipfsDomain = defaultIpfsDomain,
-    ipfsApiPort = defaultIpfsApiPort,
-    ipfsGatewayPort = defaultIpfsGatewayPort,
-    ipfsGatewayProtocol = defaultIpfsGatewayProtocol,
-    attestationServerUrl = defaultAttestationServerUrl,
-    discoveryServer = defaultDiscoveryServer,
-    discoveryServerPort = defaultDiscoveryServerPort,
+    ipfsDomain = process.env.IPFS_DOMAIN,
+    ipfsApiPort = process.env.IPFS_API_PORT,
+    ipfsGatewayPort = process.env.IPFS_GATEWAY_PORT,
+    ipfsGatewayProtocol = process.env.IPFS_GATEWAY_PROTOCOL,
+    attestationServerUrl = `${process.env.BRIDGE_SERVER}/api/attestations`,
+    discoveryServer = process.env.DISCOVERY_SERVER_PORT,
+    discoveryServerPort = process.env.DISCOVERY_SERVER_PORT,
     contractAddresses,
     web3,
     ipfsCreator,
