@@ -7,8 +7,8 @@ class Discovery {
     this.fetch = fetch
   }
 
-   /**
-   * Issues a sarch request to the indexing server which returns Listings result as a promise.
+  /**
+   * Issues a search request to the indexing server which returns Listings result as a promise.
    * This way the caller of the function can implement error checks when results is something
    * unexpected. To get JSON result caller should call `await searchResponse.json()` to get the
    * actual JSON.
