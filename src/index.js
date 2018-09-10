@@ -18,7 +18,7 @@ class Origin {
     ipfsGatewayPort = process.env.IPFS_GATEWAY_PORT,
     ipfsGatewayProtocol = process.env.IPFS_GATEWAY_PROTOCOL,
     attestationServerUrl = `${process.env.BRIDGE_SERVER}/api/attestations`,
-    discoveryServer = process.env.DISCOVERY_SERVER_PORT,
+    discoveryServer = process.env.DISCOVERY_SERVER_URL,
     discoveryServerPort = process.env.DISCOVERY_SERVER_PORT,
     contractAddresses,
     web3,
