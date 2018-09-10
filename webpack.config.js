@@ -1,4 +1,11 @@
 var nodeExternals = require('webpack-node-externals');
+var Dotenv = require('dotenv-webpack');
+
+var dotEnvConfig = {
+  path: './.env',
+  safe: './dev.env', // load '.dev.env' to verify the '.env' variables are all set. Can also be a string to a different file.
+  systemvars: true, // load all the predefined 'process.env' variables which will trump anything local per dotenv specs.
+}
 
 var serverConfig = {
   entry: ["babel-polyfill", './src/index.js'],
@@ -10,6 +17,9 @@ var serverConfig = {
   devtool: 'inline-cheap-module-source-map',
   target: 'node',
   externals: [nodeExternals()],
+  plugins: [
+    new Dotenv(dotEnvConfig)
+  ],
   resolve: {
     /**
     * Overriding the default to allow jsx to be resolved automatically.
@@ -44,6 +54,9 @@ var clientConfig = {
   mode: 'production',
   devtool: false,
   target: 'web',
+  plugins: [
+    new Dotenv(dotEnvConfig)
+  ],
   module: {
     rules: [
       {

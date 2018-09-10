@@ -9,13 +9,13 @@ import Token from './resources/token'
 import fetch from 'cross-fetch'
 import store from 'store'
 
-const defaultBridgeServer = 'https://bridge.originprotocol.com'
-const defaultIpfsDomain = 'gateway.originprotocol.com'
-const defaultDiscoveryServer = 'https://discovery.originprotocol.com'
-const defaultDiscoveryServerPort = '443'
-const defaultIpfsApiPort = '5002'
-const defaultIpfsGatewayPort = '443'
-const defaultIpfsGatewayProtocol = 'https'
+const defaultBridgeServer = process.env.BRIDGE_SERVER
+const defaultIpfsDomain = process.env.IPFS_DOMAIN
+const defaultDiscoveryServer = process.env.DISCOVERY_SERVER_URL
+const defaultDiscoveryServerPort = process.env.DISCOVERY_SERVER_PORT
+const defaultIpfsApiPort = process.env.IPFS_API_PORT
+const defaultIpfsGatewayPort = process.env.IPFS_GATEWAY_PORT
+const defaultIpfsGatewayProtocol = process.env.IPFS_GATEWAY_PROTOCOL
 const defaultAttestationServerUrl = `${defaultBridgeServer}/api/attestations`
 const VERSION = require('.././package.json').version
 
