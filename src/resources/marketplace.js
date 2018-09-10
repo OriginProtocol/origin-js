@@ -16,18 +16,15 @@ const storeKeys = {
 }
 
 class Marketplace extends Adaptable {
+
   constructor({
     contractService,
     ipfsService,
-    fetch,
-    indexingServerUrl,
     store
   }) {
     super(...arguments)
     this.contractService = contractService
     this.ipfsService = ipfsService
-    this.indexingServerUrl = indexingServerUrl
-    this.fetch = fetch
     this.listingIpfsStore = new ListingIpfsStore(this.ipfsService)
     this.offerIpfsStore = new OfferIpfsStore(this.ipfsService)
     this.reviewIpfsStore = new ReviewIpfsStore(this.ipfsService)
