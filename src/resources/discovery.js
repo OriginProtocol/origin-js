@@ -17,7 +17,7 @@ class Discovery {
       }
     })
     if(resp.status != 200){
-      throw Error("Got non-sucess code from GraphQL server")
+      throw Error('Got non-sucess code from GraphQL server')
     }
     return await resp.json()
   }
