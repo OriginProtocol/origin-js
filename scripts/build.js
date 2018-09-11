@@ -2,17 +2,24 @@ const chalk = require('chalk')
 const startGanache = require('./helpers/start-ganache')
 const buildContracts = require('./helpers/build-contracts')
 const deployContracts = require('./helpers/deploy-contracts')
+const preBuild = require('./helpers/pre-build')
 const startIpfs = require('./helpers/start-ipfs')
 const startTestServer = require('./helpers/start-test-server')
 const watch = require('node-watch')
 const webpack = require('webpack')
-const webpackConfig = require('../webpack.config.js')
 
 const args = process.argv.slice(2)
 const shouldWatch = args.length && args[0] === 'serve'
 const noGanache = args.length && args[1] === 'no-ganache'
 
 const start = async () => {
+  console.log(chalk`\n{bold.hex('#26d198') ⬢  STARTING BUILD }\n`)
+  preBuild()
+
+  /* We need to load webpack config after preBuild step, because if .evn file does not exist pre-build
+   * copies contents from dev.env to .env. Without .env file webpack config load command fails
+   */
+  const webpackConfig = require('../webpack.config.js')
   const compiler = webpack(webpackConfig)
 
   if (shouldWatch) {
