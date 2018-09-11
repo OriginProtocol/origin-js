@@ -246,7 +246,7 @@ const resolvers = {
       return { walletAddress: 'S_WADDR' }
     },
     title(listing) {
-      return listing.title || "Untitled"
+      return listing.title
     },
     category(listing) {
       return listing.type
