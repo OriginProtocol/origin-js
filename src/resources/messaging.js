@@ -704,7 +704,7 @@ class Messaging extends ResourceBase {
     }
   }
 
-  async initRoom(room_id_or_address, keys) {
+  async initRoom(room_id_or_address, keys = []) {
     let room_id, writers
     // called by an arbitrator who has key(s)
     if (this.isRoomId(room_id_or_address)) {
