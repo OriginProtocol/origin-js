@@ -1,4 +1,11 @@
-const OFFER_STATUS = ['error','created', 'accepted', 'disputed', 'finalized', 'buyerReviewed']
+const OFFER_STATUS = [
+  'error',
+  'created',
+  'accepted',
+  'disputed',
+  'finalized',
+  'sellerReviewed'
+]
 const emptyAddress = '0x0000000000000000000000000000000000000000'
 
 class V00_MarkeplaceAdapter {
@@ -62,7 +69,7 @@ class V00_MarkeplaceAdapter {
       finalizes,
       affiliate,
       commission,
-      price,
+      priceWei,
       arbitrator,
       currencyAddr
     } = data
@@ -73,13 +80,13 @@ class V00_MarkeplaceAdapter {
       finalizes || Math.round(+new Date() / 1000) + 60 * 60 * 24, // 24 hrs
       affiliate || emptyAddress,
       commission || '0',
-      price,
+      priceWei,
       currencyAddr || emptyAddress,
       arbitrator || emptyAddress
     ]
     const opts = { confirmationCallback }
     if (!currencyAddr) {
-      opts.value = price
+      opts.value = priceWei
     }
 
     const { transactionReceipt, timestamp } = await this.call(
@@ -146,7 +153,7 @@ class V00_MarkeplaceAdapter {
       } else if (event.event === 'OfferFinalized') {
         offers[event.returnValues.offerID] = { status: 'finalized', event }
       } else if (event.event === 'OfferData') {
-        offers[event.returnValues.offerID] = { status: 'buyerReviewed', event }
+        offers[event.returnValues.offerID] = { status: 'sellerReviewed', event }
       }
     })
 
@@ -214,12 +221,16 @@ class V00_MarkeplaceAdapter {
     })
 
     // Loop through the events looking and update the IPFS hash appropriately
-    let ipfsHash, createdAt
+    let buyer, ipfsHash, createdAt
     for (const e of events) {
       const timestamp = await this.contractService.getTimestamp(e)
       if (e.event === 'OfferCreated') {
+        buyer = e.returnValues.party
         ipfsHash = e.returnValues.ipfsHash
         createdAt = timestamp
+      }
+      if (e.event === 'OfferAccepted') {
+        rawOffer.status = '2'
       }
       // Override status if offer was deleted from blockchain state
       if (e.event === 'OfferFinalized') {
@@ -229,13 +240,14 @@ class V00_MarkeplaceAdapter {
       if (e.event === 'OfferData') {
         rawOffer.status = '5'
       }
-      // Translate status number to string
-      rawOffer.status = OFFER_STATUS[rawOffer.status]
       e.timestamp = timestamp
     }
 
+    // Translate status number to string
+    rawOffer.status = OFFER_STATUS[rawOffer.status]
+
     // Return the raw listing along with events and IPFS hash
-    return Object.assign({}, rawOffer, { ipfsHash, events, createdAt })
+    return Object.assign({}, rawOffer, { buyer, ipfsHash, events, createdAt })
   }
 
   async addData(ipfsBytes, listingIndex, offerIndex, confirmationCallback) {
