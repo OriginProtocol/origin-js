@@ -56,6 +56,8 @@ We recommend using [Origin Box](https://github.com/OriginProtocol/origin-box) fo
 git clone https://github.com/OriginProtocol/origin-js.git && cd origin-js
 ```
 
+1. Copy contents of `dev.env` to `.env` and keep the file in the root folder of `origin-js`. Both files `dev.env` and `.env` should be present. The former is used by `webpack` to verify the different variables that need to be set, the latter one is where you set your environmental variables. If you change `.env` variables the build script watching and building `origin-js` needs to be restarted in order to pick up the changes.
+
 1.  Install dependencies and link by running `npm run install:dev`. This script is a shortcut for `npm install && npm link`. Linking means that changes to `origin-js` code are immediately available to local DApps without an `npm install`.
 
 1.  Start the local blockchain and build origin-js by running `npm start`. Code changes will trigger a live rebuild.
