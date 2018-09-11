@@ -331,6 +331,7 @@ async function handleLog(log, rule, contractVersion, context) {
     console.log('INDEXING ', listingId)
     const listingData = listing.ipfs.data
     listingData.priceEth = listingData.price
+    listingData.priceEth.amount = parseFloat(listingData.price.amount)
     await withRetrys(async () => {
       await search.Listing.index(
         listingId,
