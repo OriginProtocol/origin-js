@@ -18,8 +18,7 @@ class Origin {
     ipfsGatewayPort = process.env.IPFS_GATEWAY_PORT,
     ipfsGatewayProtocol = process.env.IPFS_GATEWAY_PROTOCOL,
     attestationServerUrl = `${process.env.BRIDGE_SERVER}/api/attestations`,
-    discoveryServer = process.env.DISCOVERY_SERVER_URL,
-    discoveryServerPort = process.env.DISCOVERY_SERVER_PORT,
+    discoveryServerUrl = process.env.DISCOVERY_SERVER_URL,
     contractAddresses,
     web3,
     ipfsCreator,
@@ -50,8 +49,7 @@ class Origin {
     })
 
     this.discovery = new Discovery({
-      discoveryServer,
-      discoveryServerPort,
+      discoveryServerUrl,
       fetch
     })
 
