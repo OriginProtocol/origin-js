@@ -9,25 +9,16 @@ import Token from './resources/token'
 import fetch from 'cross-fetch'
 import store from 'store'
 
-const defaultBridgeServer = 'https://bridge.originprotocol.com'
-const defaultIpfsDomain = 'gateway.originprotocol.com'
-const defaultDiscoveryServer = 'https://discovery.originprotocol.com'
-const defaultDiscoveryServerPort = '443'
-const defaultIpfsApiPort = '5002'
-const defaultIpfsGatewayPort = '443'
-const defaultIpfsGatewayProtocol = 'https'
-const defaultAttestationServerUrl = `${defaultBridgeServer}/api/attestations`
 const VERSION = require('.././package.json').version
 
 class Origin {
   constructor({
-    ipfsDomain = defaultIpfsDomain,
-    ipfsApiPort = defaultIpfsApiPort,
-    ipfsGatewayPort = defaultIpfsGatewayPort,
-    ipfsGatewayProtocol = defaultIpfsGatewayProtocol,
-    attestationServerUrl = defaultAttestationServerUrl,
-    discoveryServer = defaultDiscoveryServer,
-    discoveryServerPort = defaultDiscoveryServerPort,
+    ipfsDomain = process.env.IPFS_DOMAIN,
+    ipfsApiPort = process.env.IPFS_API_PORT,
+    ipfsGatewayPort = process.env.IPFS_GATEWAY_PORT,
+    ipfsGatewayProtocol = process.env.IPFS_GATEWAY_PROTOCOL,
+    attestationServerUrl = `${process.env.BRIDGE_SERVER}/api/attestations`,
+    discoveryServerUrl = process.env.DISCOVERY_SERVER_URL,
     contractAddresses,
     web3,
     ipfsCreator,
@@ -58,8 +49,7 @@ class Origin {
     })
 
     this.discovery = new Discovery({
-      discoveryServer,
-      discoveryServerPort,
+      discoveryServerUrl,
       fetch
     })
 

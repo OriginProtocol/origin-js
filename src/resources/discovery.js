@@ -1,7 +1,6 @@
 class Discovery {
-  constructor({ discoveryServer, discoveryServerPort, fetch }) {
-    this.discoveryServer = discoveryServer
-    this.discoveryServerPort = discoveryServerPort
+  constructor({ discoveryServerUrl, fetch }) {
+    this.discoveryServerUrl = discoveryServerUrl
     this.fetch = fetch
   }
 
@@ -39,7 +38,7 @@ class Discovery {
       }
     }`
 
-    return this.fetch(`${this.discoveryServer}:${this.discoveryServerPort}`, {
+    return this.fetch(this.discoveryServerUrl, {
       method: 'POST',
       body: JSON.stringify({
         query: query

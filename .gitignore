@@ -38,3 +38,4 @@ npm-debug.log
 testem.log
 /typings
 .DS_Store
+.env
