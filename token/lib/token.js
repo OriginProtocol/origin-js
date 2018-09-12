@@ -172,10 +172,8 @@ class Token {
    */
   async sendTransaction(networkId, transaction, opts = {}) {
     // TODO: support multisig wallets
-
     const web3 = this.web3(networkId)
 
-    let transactionHash
     if (!opts.gas) {
       opts.gas = await transaction.estimateGas({ from: opts.from })
       this.vlog('estimated gas:', opts.gas)
@@ -183,6 +181,7 @@ class Token {
 
     // Send the transaction and grab the transaction hash when it's available.
     this.vlog('sending transaction')
+    let transactionHash
     transaction.send(opts)
       .on('transactionHash', (hash) => {
         transactionHash = hash
