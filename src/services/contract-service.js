@@ -2,7 +2,7 @@ import ClaimHolderRegisteredContract from './../../contracts/build/contracts/Cla
 import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
-import UserRegistryContract from './../../contracts/build/contracts/UserRegistry.json'
+import V00_UserRegistryContract from './../../contracts/build/contracts/V00_UserRegistry.json'
 import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
 import OriginTokenContract from './../../contracts/build/contracts/OriginToken.json'
 
@@ -29,7 +29,7 @@ class ContractService {
 
     const contracts = Object.assign(
       {
-        UserRegistry: UserRegistryContract,
+        V00_UserRegistry: V00_UserRegistryContract,
         ClaimHolderRegistered: ClaimHolderRegisteredContract,
         ClaimHolderPresigned: ClaimHolderPresignedContract,
         OriginIdentity: OriginIdentityContract,
@@ -104,9 +104,13 @@ class ContractService {
   // Returns the first account listed, unless a default account has been set
   // explicitly
   async currentAccount() {
-    const accounts = await this.web3.eth.getAccounts()
     const defaultAccount = this.web3.eth.defaultAccount
-    return defaultAccount || accounts[0]
+    if (defaultAccount) {
+      return defaultAccount
+    } else {
+      const accounts = await this.web3.eth.getAccounts()
+      return accounts[0]
+    }
   }
 
   // async convenience method for getting block details
@@ -188,7 +192,9 @@ class ContractService {
   ) {
     const contractDefinition = this.contracts[contractName]
     if (typeof contractDefinition === 'undefined') {
-      throw new Error(`Contract not defined on contract service: ${contractName}`)
+      throw new Error(
+        `Contract not defined on contract service: ${contractName}`
+      )
     }
     // Setup options
     const opts = { from, gas, value }
@@ -201,7 +207,7 @@ class ContractService {
       return await method.call(opts)
     }
     // set gas
-    opts.gas = opts.gas || await method.estimateGas(opts)
+    opts.gas = opts.gas || (await method.estimateGas(opts))
     const transactionReceipt = await new Promise((resolve, reject) => {
       method
         .send(opts)

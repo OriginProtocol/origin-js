@@ -1,10 +1,24 @@
-
-
 class Discovery {
-  constructor({ discoveryServer, discoveryServerPort, fetch }) {
-    this.discoveryServer = discoveryServer
-    this.discoveryServerPort = discoveryServerPort
+  constructor({ discoveryServerUrl, fetch }) {
+    this.discoveryServerUrl = discoveryServerUrl
     this.fetch = fetch
+  }
+
+  async query(graphQlQuery){
+    const url = this.discoveryServerUrl
+    const resp = await this.fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: graphQlQuery
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    if(resp.status != 200){
+      throw Error('Got non-sucess code from GraphQL server')
+    }
+    return await resp.json()
   }
 
   /**
@@ -22,9 +36,9 @@ class Discovery {
     {
       listings (
         searchQuery: "${searchQuery}"
-        filters: [${filters.map(filter => 
-  {
-    return `
+        filters: [${filters
+    .map(filter => {
+      return `
     {
       name: "${filter.name}"
       value: "${String(filter.value)}"
@@ -32,7 +46,8 @@ class Discovery {
       operator: ${filter.operator}
     }
     `
-  }).join(',')}]
+    })
+    .join(',')}]
       ) {
         nodes {
           id
@@ -40,15 +55,7 @@ class Discovery {
       }
     }`
 
-    return this.fetch(`${this.discoveryServer}:${this.discoveryServerPort}`, {
-      method: 'POST',
-      body: JSON.stringify({
-        query:query
-      }),
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    })
+    return this.query(query)
   }
 }
 
