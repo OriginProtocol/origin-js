@@ -236,7 +236,7 @@ class Marketplace extends Adaptable {
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
    * @return {Promise<{timestamp, transactionReceipt}>}
    */
-  async acceptOffer(id, data, confirmationCallback) {
+  async acceptOffer(id, data = {}, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
 
     const ipfsHash = await this.ipfsDataStore.save(OFFER_ACCEPTED_DATA_TYPE, data)
@@ -348,7 +348,7 @@ class Marketplace extends Adaptable {
       const ipfsHash = this.contractService.getIpfsHashFromBytes32(
         event.returnValues.ipfsHash
       )
-      const ipfsReview = await this.reviewIpfsStore.load(ipfsHash)
+      const ipfsReview = await this.ipfsDataStore.load(REVIEW_DATA_TYPE, ipfsHash)
 
       const offerIndex = event.returnValues.offerID
       const offerId = generateOfferId({
