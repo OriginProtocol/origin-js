@@ -196,10 +196,14 @@ class Token {
     // `await contract.methods.MyMethod(...).send(...)`:
     //
     // https://github.com/INFURA/infura/issues/95
-    const maxSleep = 15 * 60 * 1000 // 15 minutes, in milliseconds
+
+    // Blocks are mined every ~15 seconds, but it sometimes takes ~40-60 seconds
+    // to get a transaction receipt from rinkeby.infura.io.
+    const maxSleep = 120000
     let totalSleep = 0
     let sleepTime = 1000
     while (totalSleep <= maxSleep) {
+      this.vlog(`waiting ${sleepTime / 1000}s for transaction receipt`)
       await sleep(sleepTime)
 
       if (transactionHash) {
@@ -212,11 +216,9 @@ class Token {
           } else {
             throw new Error('transaction failed')
           }
-        } else {
-          this.vlog('waiting for transaction receipt')
         }
       } else {
-        this.vlog('waiting for transaction hash')
+        this.vlog('still waiting for transaction hash')
       }
 
       sleepTime *= 2
