@@ -2018,7 +2018,7 @@ async function createSampleData() {
     */
   const accounts = await web3.eth.getAccounts()
   const users = []
-  for (i in NAMES) {
+  for (let i in accounts) {
     const firstName = NAMES[i]
     const lastName = randomWord().toUpperCase()[0] + '.'
     const account = accounts[i]
