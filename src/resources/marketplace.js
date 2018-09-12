@@ -9,9 +9,12 @@ import { Listing } from '../models/listing'
 import { Offer } from '../models/offer'
 import { Review } from '../models/review'
 import {
-  ListingIpfsStore,
-  OfferIpfsStore,
-  ReviewIpfsStore
+  LISTING_CREATED_DATA_TYPE,
+  LISTING_WITHDRAWN_DATA_TYPE,
+  OFFER_CREATED_DATA_TYPE,
+  OFFER_ACCEPTED_DATA_TYPE,
+  REVIEW_DATA_TYPE,
+  IpfsDataStore,
 } from '../services/data-store-service'
 
 const unreadStatus = 'unread'
@@ -28,9 +31,7 @@ class Marketplace extends Adaptable {
     super(...arguments)
     this.contractService = contractService
     this.ipfsService = ipfsService
-    this.listingIpfsStore = new ListingIpfsStore(this.ipfsService)
-    this.offerIpfsStore = new OfferIpfsStore(this.ipfsService)
-    this.reviewIpfsStore = new ReviewIpfsStore(this.ipfsService)
+    this.ipfsDataStore = new IpfsDataStore(this.ipfsService)
 
     // initialize notifications
     if (!store.get(storeKeys.notificationSubscriptionStart)) {
@@ -86,7 +87,7 @@ class Marketplace extends Adaptable {
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(
       chainListing.ipfsHash
     )
-    const ipfsListing = await this.listingIpfsStore.load(ipfsHash)
+    const ipfsListing = await this.ipfsDataStore.load(LISTING_CREATED_DATA_TYPE, ipfsHash)
 
     // Create and return a Listing from on-chain and off-chain data .
     return new Listing(listingId, chainListing, ipfsListing)
@@ -134,7 +135,7 @@ class Marketplace extends Adaptable {
     const ipfsHash = this.contractService.getIpfsHashFromBytes32(
       chainOffer.ipfsHash
     )
-    const ipfsOffer = await this.offerIpfsStore.load(ipfsHash)
+    const ipfsOffer = await this.ipfsDataStore.load(OFFER_CREATED_DATA_TYPE, ipfsHash)
 
     // Create an Offer from on-chain and off-chain data.
     return new Offer(offerId, listingId, chainOffer, ipfsOffer)
@@ -148,7 +149,7 @@ class Marketplace extends Adaptable {
    */
   async createListing(ipfsData, confirmationCallback) {
     // Validate and save the data to IPFS.
-    const ipfsHash = await this.listingIpfsStore.save(ipfsData)
+    const ipfsHash = await this.ipfsDataStore.save(LISTING_CREATED_DATA_TYPE, ipfsData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     const transactionReceipt = await this.currentAdapter.createListing(
@@ -168,7 +169,8 @@ class Marketplace extends Adaptable {
 
   async withdrawListing(listingId, ipfsData, confirmationCallback) {
     const { adapter, listingIndex } = this.parseListingId(listingId)
-    const ipfsHash = await this.ipfsService.saveObjAsFile({ data: ipfsData })
+
+    const ipfsHash = await this.ipfsDataStore.save(LISTING_WITHDRAWN_DATA_TYPE, ipfsData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await adapter.withdrawListing(
@@ -197,7 +199,7 @@ class Marketplace extends Adaptable {
       )
 
     // Save the offer data in IPFS.
-    const ipfsHash = await this.offerIpfsStore.save(offerData)
+    const ipfsHash = await this.ipfsDataStore.save(OFFER_CREATED_DATA_TYPE, offerData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     // Record the offer on chain.
@@ -237,10 +239,8 @@ class Marketplace extends Adaptable {
   async acceptOffer(id, data, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
 
-    // FIXME(franck): implement support for empty data.
-    //const ipfsHash = await this.offerIpfsStore.save(data)
-    //const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
-    const ipfsBytes = '0x0000000000000000000000000000000000000000'
+    const ipfsHash = await this.ipfsDataStore.save(OFFER_ACCEPTED_DATA_TYPE, data)
+    const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await adapter.acceptOffer(
       listingIndex,
@@ -260,7 +260,7 @@ class Marketplace extends Adaptable {
   async finalizeOffer(id, reviewData, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
 
-    const ipfsHash = await this.reviewIpfsStore.save(reviewData)
+    const ipfsHash = await this.ipfsDataStore.save(REVIEW_DATA_TYPE, reviewData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await adapter.finalizeOffer(
@@ -293,7 +293,7 @@ class Marketplace extends Adaptable {
       const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
 
       // We expect this to be review data from the seller.
-      const ipfsHash = await this.reviewIpfsStore.save(data)
+      const ipfsHash = await this.ipfsDataStore.save(REVIEW_DATA_TYPE, data)
       const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
       return await adapter.addData(
@@ -303,9 +303,11 @@ class Marketplace extends Adaptable {
         confirmationCallback
       )
     } else if (listingId) {
+      throw new Error('Code path not supported yet')
+      /*
       const { adapter, listingIndex } = this.parseListingId(listingId)
 
-      const ipfsHash = await this.listingIpfsStore.save(data)
+      const ipfsHash = await this.ipfsDataStore.save('TO BE DEFINED', data)
       const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
       return await adapter.addData(
@@ -314,6 +316,7 @@ class Marketplace extends Adaptable {
         null,
         confirmationCallback
       )
+      */
     } else {
       throw new Error(
         'addData must be called with either a listing or offer id.'

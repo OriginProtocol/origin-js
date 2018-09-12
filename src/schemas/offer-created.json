@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
-  "$id": "http://schema.originprotocol.com/offer-v1.0.0",
+  "$id": "http://schema.originprotocol.com/offer-created_v1.0.0",
   "title": "Origin Protocol offer schema",
   "definitions": {
     "money": {
@@ -75,7 +75,7 @@
     }
   },
   "properties": {
-    "schemaVersion": {
+    "schemaId": {
       "type": "string"
     },
     "listingType": {
@@ -97,7 +97,7 @@
     }
   ],
   "required": [
-    "schemaVersion",
+    "schemaId",
     "listingType",
     "unitsPurchased"
   ]
