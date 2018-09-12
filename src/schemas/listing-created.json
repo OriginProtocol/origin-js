@@ -119,6 +119,7 @@
       ]
     }
   },
+  "type": "object",
   "properties": {
     "schemaId": {
       "type": "string"
