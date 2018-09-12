@@ -149,7 +149,7 @@ describe('Marketplace Resource', function() {
     it('should changed the status to accepted', async () => {
       let offer = await marketplace.getOffer('999-001-0-0')
       expect(offer.status).to.equal('created')
-      await marketplace.acceptOffer('999-001-0-0')
+      await marketplace.acceptOffer('999-001-0-0', {})
       offer = await marketplace.getOffer('999-001-0-0')
       expect(offer.status).to.equal('accepted')
     })
@@ -159,7 +159,7 @@ describe('Marketplace Resource', function() {
     it('should changed the status to finalized', async () => {
       let offer = await marketplace.getOffer('999-001-0-0')
       expect(offer.status).to.equal('created')
-      await marketplace.acceptOffer('999-001-0-0')
+      await marketplace.acceptOffer('999-001-0-0', {})
       await marketplace.finalizeOffer('999-001-0-0', reviewData)
       offer = await marketplace.getOffer('999-001-0-0')
       expect(offer.status).to.equal('finalized')
@@ -168,7 +168,7 @@ describe('Marketplace Resource', function() {
 
   describe('getListingReviews', () => {
     it('should get reviews', async () => {
-      await marketplace.acceptOffer('999-001-0-0')
+      await marketplace.acceptOffer('999-001-0-0', {})
       await marketplace.finalizeOffer('999-001-0-0', reviewData)
       const reviews = await marketplace.getListingReviews('999-001-0')
       expect(reviews.length).to.equal(1)
@@ -184,7 +184,7 @@ describe('Marketplace Resource', function() {
       expect(notifications[0].type).to.equal('seller_listing_purchased')
       expect(notifications[0].status).to.equal('unread')
 
-      await marketplace.acceptOffer('999-001-0-0')
+      await marketplace.acceptOffer('999-001-0-0', {})
       notifications = await marketplace.getNotifications()
       expect(notifications.length).to.equal(1)
       expect(notifications[0].type).to.equal('buyer_listing_shipped')

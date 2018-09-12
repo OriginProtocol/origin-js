@@ -236,7 +236,7 @@ class Marketplace extends Adaptable {
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
    * @return {Promise<{timestamp, transactionReceipt}>}
    */
-  async acceptOffer(id, data = {}, confirmationCallback) {
+  async acceptOffer(id, data, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(id)
 
     const ipfsHash = await this.ipfsDataStore.save(OFFER_ACCEPT_DATA_TYPE, data)
