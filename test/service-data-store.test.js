@@ -4,19 +4,17 @@ import sinon from 'sinon'
 
 import {
   IpfsDataStore,
-  BASE_SCHEMA_URL,
-  LISTING_CREATED_DATA_TYPE,
-  OFFER_CREATED_DATA_TYPE,
+  BASE_SCHEMA_ID,
+  LISTING_DATA_TYPE,
+  LISTING_WITHDRAW_DATA_TYPE,
+  OFFER_DATA_TYPE,
+  OFFER_ACCEPT_DATA_TYPE,
   REVIEW_DATA_TYPE
 } from '../src/services/data-store-service'
-import listingValid from './fixtures/listing-valid.json'
-import offerValid from './fixtures/offer-valid.json'
-import reviewValid from './fixtures/review-valid.json'
+import validListing from './fixtures/listing-valid.json'
+import validOffer from './fixtures/offer-valid.json'
+import validReview from './fixtures/review-valid.json'
 
-// oddly changing an imported object here can affect other or subsequent tests that import the same file
-const goodListing = Object.assign({}, listingValid)
-const goodOffer = Object.assign({}, offerValid)
-const goodReview = Object.assign({}, reviewValid)
 
 chai.use(chaiAsPromised)
 const expect = chai.expect
@@ -24,19 +22,19 @@ const expect = chai.expect
 describe('IpfsDataStore', () => {
   it(`Should parse a valid schemaId`, () => {
     const { dataType, schemaVersion } = IpfsDataStore.parseSchemaId(
-      BASE_SCHEMA_URL+'my-data-type_v1.0.0')
+      BASE_SCHEMA_ID+'my-data-type_v1.0.0')
     expect(dataType).to.equal('my-data-type')
     expect(schemaVersion).to.equal('1.0.0')
   })
 
   it(`Should generate a valid schemaId`, () => {
     const { schemaId, schemaVersion } = IpfsDataStore.generateSchemaId('my-data-type')
-    expect(schemaId).to.equal(BASE_SCHEMA_URL+'my-data-type_v1.0.0')
+    expect(schemaId).to.equal(BASE_SCHEMA_ID+'my-data-type_v1.0.0')
     expect(schemaVersion).to.equal('1.0.0')
   })
 })
 
-describe('ListingCreated IpfsDataStore load', () => {
+describe('Listing IpfsDataStore load', () => {
   let mockIpfsService, store
 
   before(() => {
@@ -45,12 +43,10 @@ describe('ListingCreated IpfsDataStore load', () => {
   })
 
   it(`Should load a valid object`, async () => {
-    mockIpfsService.loadObjFromFile = sinon
-      .stub()
-      .resolves(Object.assign({}, goodListing))
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(validListing)
     mockIpfsService.rewriteUrl = sinon.stub().returns('http://test-gateway')
 
-    const listing = await store.load(LISTING_CREATED_DATA_TYPE, 'TestHash')
+    const listing = await store.load(LISTING_DATA_TYPE, 'TestHash')
 
     expect(listing.type).to.equal('unit')
     expect(listing.category).to.equal('ForSale')
@@ -69,29 +65,29 @@ describe('ListingCreated IpfsDataStore load', () => {
       currency: 'ETH'
     })
     expect(listing.ipfs.hash).to.equal('TestHash')
-    expect(listing.ipfs.data).to.deep.equal(goodListing)
+    expect(listing.ipfs.data).to.deep.equal(validListing)
   })
 
   it(`Should throw an exception on listing using invalid schema Id`, () => {
-    const listingInvalidSchemaId = Object.assign({}, goodListing, {
+    const listingInvalidSchemaId = Object.assign({}, validListing, {
       schemaId: 'badSchemaId'
     })
     mockIpfsService.loadObjFromFile = sinon
       .stub()
       .resolves(listingInvalidSchemaId)
 
-    expect(store.load(LISTING_CREATED_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    expect(store.load(LISTING_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 
   it(`Should throw an exception on listing data with missing fields`, () => {
     const badListing = { title: 'bad listing' }
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(badListing)
 
-    expect(store.load(LISTING_CREATED_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    expect(store.load(LISTING_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 })
 
-describe('ListingCreated IpfsDataStore save', () => {
+describe('Listing IpfsDataStore save', () => {
   let mockIpfsService, store
 
   before(() => {
@@ -106,7 +102,7 @@ describe('ListingCreated IpfsDataStore save', () => {
       .stub()
       .returns('http://test-gateway')
 
-    expect(store.save(LISTING_CREATED_DATA_TYPE, goodListing)).to.eventually.equal('ListingHash')
+    expect(store.save(LISTING_DATA_TYPE, validListing)).to.eventually.equal('ListingHash')
 
     expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(0)
     expect(mockIpfsService.gatewayUrlForHash.callCount).to.equal(0)
@@ -125,8 +121,8 @@ describe('ListingCreated IpfsDataStore save', () => {
         { url: 'data:image/jpeg;name=test2.jpg;base64,/CC/DD' }
       ]
     }
-    const listing = Object.assign({}, goodListing, media)
-    const ipfsHash = await store.save(LISTING_CREATED_DATA_TYPE, listing)
+    const listing = Object.assign({}, validListing, media)
+    const ipfsHash = await store.save(LISTING_DATA_TYPE, listing)
 
     expect(ipfsHash).to.equal('ListingHash')
 
@@ -147,8 +143,8 @@ describe('ListingCreated IpfsDataStore save', () => {
         { url: 'http://notallowed' } // Only ipfs and dwed URL are allowed.
       ]
     }
-    const listing = Object.assign({}, goodListing, media)
-    await store.save(LISTING_CREATED_DATA_TYPE, listing)
+    const listing = Object.assign({}, validListing, media)
+    await store.save(LISTING_DATA_TYPE, listing)
 
     // Check all the entries were filtered out in the listing data saved to IPFS.
     const ipfsData = mockIpfsService.saveObjAsFile.firstCall.args[0]
@@ -158,12 +154,12 @@ describe('ListingCreated IpfsDataStore save', () => {
   it(`Should throw an exception on invalid listing`, async () => {
     const badListing = { title: 'bad listing' }
     expect(store.save(
-      LISTING_CREATED_DATA_TYPE,
+      LISTING_DATA_TYPE,
       badListing)).to.eventually.be.rejectedWith(Error)
   })
 })
 
-describe('OfferCreated IpfsStore load', () => {
+describe('ListingWithdraw IpfsDataStore load', () => {
   let mockIpfsService, store
 
   before(() => {
@@ -172,38 +168,75 @@ describe('OfferCreated IpfsStore load', () => {
   })
 
   it(`Should load a valid object`, async () => {
-    mockIpfsService.loadObjFromFile = sinon.stub().resolves(goodOffer)
+    // Empty besides schemaId since withdrawal does not have any data yet.
+    const validWithdrawal = { schemaId: BASE_SCHEMA_ID+'listing-withdraw_v1.0.0' }
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(validWithdrawal)
+
+    const withdraw = await store.load(LISTING_WITHDRAW_DATA_TYPE, 'WithdrawalHash')
+
+    expect(withdraw.ipfs.hash).to.equal('WithdrawalHash')
+    expect(withdraw.ipfs.data).to.deep.equal(validWithdrawal)
+  })
+})
+
+describe('ListingWithdraw IpfsDataStore save', () => {
+  let mockIpfsService, store
+
+  before(() => {
+    mockIpfsService = new Object()
+    store = new IpfsDataStore(mockIpfsService)
+  })
+
+  it(`Should save a valid withdrawal`, () => {
+    mockIpfsService.saveObjAsFile = sinon.stub().returns('WithdrawHash')
+    const validWithdrawal = {}
+    expect(store.save(
+      LISTING_WITHDRAW_DATA_TYPE,
+      validWithdrawal)).to.eventually.equal('WithdrawHash')
+  })
+})
+
+describe('Offer IpfsStore load', () => {
+  let mockIpfsService, store
+
+  before(() => {
+    mockIpfsService = new Object()
+    store = new IpfsDataStore(mockIpfsService)
+  })
+
+  it(`Should load a valid object`, async () => {
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(validOffer)
     mockIpfsService.rewriteUrl = sinon.stub().returns('http://test-gateway')
 
-    const offer = await store.load(OFFER_CREATED_DATA_TYPE, 'TestHash')
+    const offer = await store.load(OFFER_DATA_TYPE, 'TestHash')
 
     expect(offer.listingType).to.equal('unit')
     expect(offer.unitsPurchased).to.equal(1)
     expect(offer.totalPrice).to.deep.equal({ amount: '0.033', currency: 'ETH' })
     expect(offer.ipfs.hash).to.equal('TestHash')
-    expect(offer.ipfs.data).to.deep.equal(goodOffer)
+    expect(offer.ipfs.data).to.deep.equal(validOffer)
   })
 
   it(`Should throw an exception on offer using invalid schema Id`, () => {
-    const offerInvalidSchemaId = Object.assign({}, goodReview, {
+    const offerInvalidSchemaId = Object.assign({}, validReview, {
       schemaId: 'badSchemaId'
     })
     mockIpfsService.loadObjFromFile = sinon
       .stub()
       .resolves(offerInvalidSchemaId)
 
-    expect(store.load(OFFER_CREATED_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 
   it(`Should throw an exception on offer data with missing fields`, () => {
     const badOffer = { title: 'bad offer' }
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(badOffer)
 
-    expect(store.load(OFFER_CREATED_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 })
 
-describe('OfferCreated IpfsStore save', () => {
+describe('Offer IpfsStore save', () => {
   let mockIpfsService, store
 
   before(() => {
@@ -213,25 +246,24 @@ describe('OfferCreated IpfsStore save', () => {
 
   it(`Should save a valid offer`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('OfferHash')
-    mockIpfsService.saveDataURIAsFile = sinon.stub().returns('DataHash')
     mockIpfsService.gatewayUrlForHash = sinon
       .stub()
       .returns('http://test-gateway')
 
     expect(store.save(
-      OFFER_CREATED_DATA_TYPE,
-      goodOffer)).to.eventually.equal('OfferHash')
+      OFFER_DATA_TYPE,
+      validOffer)).to.eventually.equal('OfferHash')
   })
 
   it(`Should throw an exception on invalid offer`, async () => {
     const badOffer = { title: 'bad offer' }
     expect(store.save(
-      OFFER_CREATED_DATA_TYPE,
+      OFFER_DATA_TYPE,
       badOffer)).to.eventually.be.rejectedWith(Error)
   })
 })
 
-describe('Review IpfsDateStore load', () => {
+describe('OfferAccept IpfsDataStore load', () => {
   let mockIpfsService, store
 
   before(() => {
@@ -239,20 +271,56 @@ describe('Review IpfsDateStore load', () => {
     store = new IpfsDataStore(mockIpfsService)
   })
 
-  it(`Should load a valid object`, async () => {
-    mockIpfsService.loadObjFromFile = sinon.stub().resolves(goodReview)
-    mockIpfsService.rewriteUrl = sinon.stub().returns('http://test-gateway')
+  it(`Should load a valid accept`, async () => {
+    // Empty besides schemaId since accept does not have any data yet.
+    const validAccept = { schemaId: BASE_SCHEMA_ID+'offer-accept_v1.0.0' }
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(validAccept)
 
-    const review = await store.load(REVIEW_DATA_TYPE, 'TestHash')
+    const accept = await store.load(OFFER_ACCEPT_DATA_TYPE, 'AcceptHash')
+
+    expect(accept.ipfs.hash).to.equal('AcceptHash')
+    expect(accept.ipfs.data).to.deep.equal(validAccept)
+  })
+})
+
+describe('OfferAccept IpfsDataStore save', () => {
+  let mockIpfsService, store
+
+  before(() => {
+    mockIpfsService = new Object()
+    store = new IpfsDataStore(mockIpfsService)
+  })
+
+  it(`Should save a valid accept`, () => {
+    mockIpfsService.saveObjAsFile = sinon.stub().returns('AcceptHash')
+    const validAccept = {}
+    expect(store.save(
+      OFFER_ACCEPT_DATA_TYPE,
+      validAccept)).to.eventually.equal('AcceptHash')
+  })
+})
+
+describe('Review IpfsDataStore load', () => {
+  let mockIpfsService, store
+
+  before(() => {
+    mockIpfsService = new Object()
+    store = new IpfsDataStore(mockIpfsService)
+  })
+
+  it(`Should load a valid withdrawal`, async () => {
+    mockIpfsService.loadObjFromFile = sinon.stub().resolves(validReview)
+
+    const review = await store.load(REVIEW_DATA_TYPE, 'ReviewHash')
 
     expect(review.rating).to.equal(3)
     expect(review.text).to.equal('Good stuff')
-    expect(review.ipfs.hash).to.equal('TestHash')
-    expect(review.ipfs.data).to.deep.equal(goodReview)
+    expect(review.ipfs.hash).to.equal('ReviewHash')
+    expect(review.ipfs.data).to.deep.equal(validReview)
   })
 
   it(`Should throw an exception on review using invalid schema Id`, () => {
-    const reviewInvalidSchemaId = Object.assign({}, goodReview, {
+    const reviewInvalidSchemaId = Object.assign({}, validReview, {
       schemaId: 'badSchemaId'
     })
     mockIpfsService.loadObjFromFile = sinon
@@ -280,14 +348,9 @@ describe('Review IpfsDataStore save', () => {
 
   it(`Should save a valid review`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('ReviewHash')
-    mockIpfsService.saveDataURIAsFile = sinon.stub().returns('DataHash')
-    mockIpfsService.gatewayUrlForHash = sinon
-      .stub()
-      .returns('http://test-gateway')
-
     expect(store.save(
       REVIEW_DATA_TYPE,
-      goodReview)).to.eventually.equal('ReviewHash')
+      validReview)).to.eventually.equal('ReviewHash')
   })
 
   it(`Should throw an exception on invalid review`, async () => {

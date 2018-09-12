@@ -3,10 +3,10 @@ import URL from 'url-parse'
 
 import Money from '../utils/money'
 
-import listingSchemaV1 from '../schemas/listing-created.json'
-import listingWithdrawnSchemaV1 from '../schemas/listing-withdrawn.json'
-import offerSchemaV1 from '../schemas/offer-created.json'
-import offerAcceptedSchemaV1 from '../schemas/offer-accepted.json'
+import listingSchemaV1 from '../schemas/listing.json'
+import listingWithdrawnSchemaV1 from '../schemas/listing-withdraw.json'
+import offerSchemaV1 from '../schemas/offer.json'
+import offerAcceptedSchemaV1 from '../schemas/offer-accept.json'
 import reviewSchemaV1 from '../schemas/review.json'
 
 const ajv = new Ajv({ allErrors: true })
@@ -64,17 +64,15 @@ class AdapterBase {
   }
 
   /**
-   * Decodes data coming from storage. Must be implemented by derived class.
+   * Decodes data coming from storage.
    * @param ipfsData
    */
   decode(ipfsData) {
-    throw new Error(
-      `Implement me. Cannot call decode with ${ipfsData} on AdapterBase`
-    )
+    return { schemaId: ipfsData.schemaId }
   }
 }
 
-class ListingCreatedAdapterV1 extends AdapterBase {
+class ListingAdapterV1 extends AdapterBase {
   /**
    * Rewrites IPFS media URLs to point to the configured IPFS gateway.
    * Applied after loading data from storage and decoding it.
@@ -166,9 +164,9 @@ class ListingCreatedAdapterV1 extends AdapterBase {
   }
 }
 // Note: uses base implementation since currently no data stored in this object.
-class ListingWithdrawnAdapterV1 extends AdapterBase {}
+class ListingWithdrawAdapterV1 extends AdapterBase {}
 
-class OfferCreatedAdapterV1 extends AdapterBase {
+class OfferAdapterV1 extends AdapterBase {
   /**
    * Populates an IpfsOffer object based on offer data encoded using V1 schema.
    * @param {object} data - Listing data, expected to use schema V1.
@@ -199,7 +197,7 @@ class OfferCreatedAdapterV1 extends AdapterBase {
 }
 
 // Note: uses base implementation since currently no data stored in this object.
-class OfferAcceptedAdapterV1 extends AdapterBase {}
+class OfferAcceptAdapterV1 extends AdapterBase {}
 
 class ReviewAdapterV1 extends AdapterBase {
   /**
@@ -224,17 +222,17 @@ class ReviewAdapterV1 extends AdapterBase {
 
 
 const adapterConfig = {
-  'listing-created': {
-    '1.0.0': ListingCreatedAdapterV1
+  'listing': {
+    '1.0.0': ListingAdapterV1
   },
-  'listing-withdrawn': {
-    '1.0.0': ListingWithdrawnAdapterV1
+  'listing-withdraw': {
+    '1.0.0': ListingWithdrawAdapterV1
   },
-  'offer-created': {
-    '1.0.0': OfferCreatedAdapterV1,
+  'offer': {
+    '1.0.0': OfferAdapterV1,
   },
-  'offer-accepted': {
-    '1.0.0': OfferAcceptedAdapterV1,
+  'offer-accept': {
+    '1.0.0': OfferAcceptAdapterV1,
   },
   'review': {
     '1.0.0': ReviewAdapterV1,

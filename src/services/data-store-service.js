@@ -1,20 +1,20 @@
 import { dataAdapterFactory } from './_data-store-adapter'
 
-export const LISTING_CREATED_DATA_TYPE = 'listing-created'
-export const LISTING_WITHDRAWN_DATA_TYPE = 'listing-withdrawn'
-export const OFFER_CREATED_DATA_TYPE = 'offer-created'
-export const OFFER_ACCEPTED_DATA_TYPE = 'offer-accepted'
+export const LISTING_DATA_TYPE = 'listing'
+export const LISTING_WITHDRAW_DATA_TYPE = 'listing-withdraw'
+export const OFFER_DATA_TYPE = 'offer'
+export const OFFER_ACCEPT_DATA_TYPE = 'offer-accept'
 export const REVIEW_DATA_TYPE = 'review'
 
 const DATA_TYPES = [
-  LISTING_CREATED_DATA_TYPE,
-  LISTING_WITHDRAWN_DATA_TYPE,
-  OFFER_CREATED_DATA_TYPE,
-  OFFER_ACCEPTED_DATA_TYPE,
+  LISTING_DATA_TYPE,
+  LISTING_WITHDRAW_DATA_TYPE,
+  OFFER_DATA_TYPE,
+  OFFER_ACCEPT_DATA_TYPE,
   REVIEW_DATA_TYPE,
 ]
 
-export const BASE_SCHEMA_URL = 'http://schema.originprotocol.com/'
+export const BASE_SCHEMA_ID = 'http://schema.originprotocol.com/'
 
 //
 // JSON data store backed by IPFS.
@@ -29,13 +29,13 @@ export class IpfsDataStore {
   }
 
   /**
-   * Formats of a schema ID is BASE_SCHEMA_URL/<dataType>_v<version>
-   * Ex.: http://schema.originprotocol.com/listing-created_v1.0.0
+   * Formats of a schema ID is BASE_SCHEMA_ID/<dataType>_v<version>
+   * Ex.: http://schema.originprotocol.com/listing_v1.0.0
    * @param (string} schemaId
    * @return {{dataType: string, schemaVersion: string}}
    */
   static parseSchemaId(schemaId) {
-    const str = schemaId.replace(BASE_SCHEMA_URL, '')
+    const str = schemaId.replace(BASE_SCHEMA_ID, '')
     const splits = str.split('_v')
     if (splits.length != 2) {
       throw new Error(`Invalid schemaId: ${schemaId}`)
@@ -51,7 +51,7 @@ export class IpfsDataStore {
   static generateSchemaId(dataType) {
     // TODO: should lookup in a config to get most recent version to use.
     const schemaVersion = '1.0.0'
-    const schemaId = `${BASE_SCHEMA_URL}${dataType}_v${schemaVersion}`
+    const schemaId = `${BASE_SCHEMA_ID}${dataType}_v${schemaVersion}`
     return { schemaId, schemaVersion }
   }
 
