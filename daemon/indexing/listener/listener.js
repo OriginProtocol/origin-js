@@ -329,20 +329,17 @@ async function handleLog(log, rule, contractVersion, context) {
 
   if (context.config.elasticsearch) {
     console.log('INDEXING ', listingId)
-    const listingData = listing.ipfs.data
-    listingData.priceEth = listingData.price
-    listingData.priceEth.amount = parseFloat(listingData.price.amount)
+
     await withRetrys(async () => {
       await search.Listing.index(
         listingId,
         userAddress,
         ipfsHash,
-        listingData
+        listing
       )
     })
     if (output.related.offer !== undefined) {
       const offer = output.related.offer
-      offer.priceEth = web3.utils.fromWei(offer.ipfs.data.price, 'ether')
       await withRetrys(async () => {
         await search.Offer.index(offer, listing)
       })
