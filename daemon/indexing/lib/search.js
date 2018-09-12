@@ -81,26 +81,42 @@ class Listing {
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query) {
-    const esQuery = {}
-    if (query !== undefined){
-      esQuery.match = {'description': query}
-    } else {
-      esQuery.match_all = {}
+  static async search(query, filters) {
+    console.log("OUTPUT THE QUERY STUFF XXXX", filters)
+    const esQuery = {
+      bool: {
+        must: []
+      }
     }
+    if (query !== undefined){
+      esQuery.bool.must.push({ match: { description: query } })
+    } else {
+      esQuery.bool.must.push({ match_all: {} })
+    }
+
+    filters
+      .forEach(filter => {
+
+        // let innerFilter = {}
+        //   innerFilter[filter.name] = 
+      })
+
+    console.log("OUTPUT THE QUERY STUFF", esQuery)
+
     const resp = await client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
       // TODO(franck): update query to search against other fields than just description.
       body: {
         query: esQuery,
+        _source: ['title', 'description', 'priceEth']
       }
     })
     const listings = []
     resp.hits.hits.forEach((hit) => {
       const listing = {
         id: hit._id,
-        name: hit._source.name,
+        name: hit._source.title,
         description: hit._source.description,
         priceEth: hit._source.priceEth,
       }

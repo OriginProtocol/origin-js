@@ -216,7 +216,7 @@ const resolvers = {
     async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       let listings = []
-      listings = await search.Listing.search(args.searchQuery)
+      listings = await search.Listing.search(args.searchQuery, args.filters)
       return {
         pageNumber: 1,
         itemsPerPage: listings.length,
