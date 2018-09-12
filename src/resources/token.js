@@ -99,7 +99,7 @@ class Token extends ResourceBase {
   /**
    * Get the total allowance of OGN that the marketplace contract has been approved to transfer
    */
-  async getAllowance(tokenOwnerAddress, confirmationCallback) {
+  async getAllowance(tokenOwnerAddress) {
     await this.getContract()
     await this.setMarketplaceContractAddress()
 
