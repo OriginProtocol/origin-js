@@ -67,22 +67,22 @@ class Token {
   }
 
   /*
-   * Credits tokens to a wallet.
+   * Credits tokens to a address.
    * @params {string} networkId - Test network Id.
-   * @params {string} wallet - Address of the recipient wallet.
+   * @params {string} address - Address for the recipient.
    * @params {int} value - Value to credit, in natural unit.
    * @throws Throws an error if the operation failed.
-   * @returns {BigNumber} - Token balance of the wallet, in natural unit.
+   * @returns {BigNumber} - Token balance of the address, in natural unit.
    */
-  async credit(networkId, wallet, value) {
+  async credit(networkId, address, value) {
     const contract = this.contract(networkId)
 
     // At token contract deployment, the entire initial supply of tokens is assigned to
-    // the first wallet generated using the mnemonic.
+    // the first address generated using the mnemonic.
     const provider = this.config.providers[networkId]
     const tokenSupplier = provider.addresses[0]
 
-    // Transfer numTokens from the supplier to the target wallet.
+    // Transfer numTokens from the supplier to the target address.
     const supplierBalance = await contract.methods.balanceOf(tokenSupplier).call()
     if (value > supplierBalance) {
       throw new Error('insufficient funds for token transfer')
@@ -91,23 +91,23 @@ class Token {
     if (paused) {
       throw new Error('token transfers are paused')
     }
-    const transaction = contract.methods.transfer(wallet, value)
+    const transaction = contract.methods.transfer(address, value)
     await this.sendTransaction(networkId, transaction, { from: tokenSupplier })
 
-    // Return wallet's balance after credit.
-    return this.balance(networkId, wallet)
+    // Return address's balance after credit.
+    return this.balance(networkId, address)
   }
 
   /*
-   * Returns the token balance for a wallet on the specified network.
+   * Returns the token balance for a address on the specified network.
    * @params {string} networkId - Test network Id.
-   * @params {string} wallet - Address of the recipient wallet.
+   * @params {string} address - Address to query balance of.
    * @throws Throws an error if the operation failed.
-   * @returns {BigNumber} - Token balance of the wallet, in natural unit.
+   * @returns {BigNumber} - Token balance of the address, in natural unit.
    */
-  async balance(networkId, wallet) {
+  async balance(networkId, address) {
     const contract = this.contract(networkId)
-    const balance = await contract.methods.balanceOf(wallet).call()
+    const balance = await contract.methods.balanceOf(address).call()
     return BigNumber(balance)
   }
 
@@ -171,7 +171,7 @@ class Token {
    * @returns {Object} - Transaction receipt.
    */
   async sendTransaction(networkId, transaction, opts = {}) {
-    // TODO: support multisig wallets
+    // TODO: support multisig wallet
     const web3 = this.web3(networkId)
 
     if (!opts.gas) {

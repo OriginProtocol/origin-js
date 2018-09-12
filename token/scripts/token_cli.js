@@ -10,9 +10,9 @@ const usage = `
 syntax: ${command} --action=ACTION ...
 
 * Transfer 100 OGN to ADDRESS:
-  ${command} --action=credit [--network_id=NETWORK_ID] --wallet=ADDRESS
+  ${command} --action=credit [--network_id=NETWORK_ID] --address=ADDRESS
 * Print OGN balance for ADDRESS:
- ${command} --action=balance [--network_id=NETWORK_ID] --wallet=ADDRESS
+ ${command} --action=balance [--network_id=NETWORK_ID] --address=ADDRESS
 * Print address of token contract:
 ${command} --action=address [--network_id=NETWORK_ID]
 * Pause all token transfers and approvals:
@@ -39,31 +39,24 @@ async function run(config) {
   switch (config.action) {
   case 'balance': {
     // Check wallet balance.
-    if (!config.wallet) {
-      errorAndExit('--wallet=ADDRESS must be specified')
+    if (!config.address) {
+      errorAndExit('--address=ADDRESS must be specified')
     }
-    const balance = await token.balance(config.networkId, config.wallet)
-    const displayBalance = Number(balance)
-      .toLocaleString(undefined, {
-        maximumFractionDigits: 5,
-        useGrouping: true
-      })
+    const balance = await token.balance(config.networkId, config.address)
+    const displayBalance = balance.toFixed(0)
     console.log(`Balance (natural unit) = ${displayBalance}`)
-    const displayOgnBalance = Number(token.toTokenUnit(balance))
-      .toLocaleString(undefined, {
-        maximumFractionDigits: 5,
-        useGrouping: true
-      })
+    const displayOgnBalance = token.toTokenUnit(balance).toFixed(5)
     console.log(`Balance (in OGN) = ${displayOgnBalance}`)
     break
   }
   case 'credit': {
     // Credit 100 OGN.
-    if (!config.wallet) {
-      errorAndExit('--wallet=ADDRESS must be specified')
+    if (!config.address) {
+      errorAndExit('--address=ADDRESS must be specified')
     }
-    const newBalance = await token.credit(config.networkId, config.wallet, token.toNaturalUnit(100))
-    console.log(`Credited 100 OGN tokens to wallet. New balance (natural unit) = ${newBalance}`)
+    const newBalance = await token.credit(config.networkId, config.address, token.toNaturalUnit(100))
+    const newBalanceDisplay = newBalance.toFixed()
+    console.log(`Credited 100 OGN tokens to wallet. New balance (natural unit) = ${newBalanceDisplay}`)
     break
   }
   case 'address': {
@@ -104,8 +97,8 @@ const config = {
   // If no network ids specified, defaults to using local blockchain.
   networkId: args['--network_id'] || DEFAULT_NETWORK_ID,
 
-  // Target wallet for the action.
-  wallet: args['--wallet'],
+  // Target address for the action.
+  address: args['--address'],
 
   // Verbose logs.
   verbose: false,
