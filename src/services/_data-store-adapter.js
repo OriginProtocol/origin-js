@@ -243,7 +243,8 @@ const adapterConfig = {
 
 /**
  * Returns an adapter based on a data type and version.
- * @param {string} dataType - 'listing', 'offer', 'review'
+ * @param {string} schemaId - Unique ID of the schema to use.
+ * @param {string} dataType - 'listing', 'offer', 'review', etc...
  * @param {string} schemaVersion - version of the schema to use.
  * @returns {SchemaAdapter}
  * @throws {Error}

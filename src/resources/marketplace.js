@@ -103,9 +103,9 @@ class Marketplace {
 
   /**
    * Creates a new listing in the system. Data is recorded both on-chain and off-chain in IPFS.
-   * @param {object} ipfsData - Listing data to store in IPFS
+   * @param {object} data - Listing data to store in IPFS
    * @param {func(confirmationCount, transactionReceipt)} confirmationCallback
-   * @returns {Promise<object>} - Object with listingId and transactionReceipt fields.
+   * @return {Promise<{listingId, ...transactionReceipt}>}
    */
   async createListing(ipfsData, confirmationCallback) {
     // Validate and save the data to IPFS.
@@ -121,7 +121,14 @@ class Marketplace {
 
   // updateListing(listingId, data) {}
 
-  async withdrawListing(listingId, ipfsData, confirmationCallback) {
+  /**
+   * Closes a listing.
+   * @param listingId
+   * @param ipfsData - Data to store in IPFS. For future use, currently empty.
+   * @param {func(confirmationCount, transactionReceipt)} confirmationCallback
+   * @return {Promise<{timestamp, ...transactionReceipt}>}
+   */
+  async withdrawListing(listingId, ipfsData = {}, confirmationCallback) {
     const ipfsHash = await this.ipfsDataStore.save(LISTING_WITHDRAW_DATA_TYPE, ipfsData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
@@ -169,12 +176,12 @@ class Marketplace {
   /**
    * Accepts an offer.
    * @param {string} id - Offer unique ID.
-   * @param data - Empty object. Currently not used.
+   * @param ipfsData - Data to store in IPFS. For future use, currently empty.
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
-   * @return {Promise<{timestamp, transactionReceipt}>}
+   * @return {Promise<{timestamp, ...transactionReceipt}>}
    */
-  async acceptOffer(id, data, confirmationCallback) {
-    const ipfsHash = await this.ipfsDataStore.save(OFFER_ACCEPT_DATA_TYPE, data)
+  async acceptOffer(id, ipfsData = {}, confirmationCallback) {
+    const ipfsHash = await this.ipfsDataStore.save(OFFER_ACCEPT_DATA_TYPE, ipfsData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
     return await this.resolver.acceptOffer(id, ipfsBytes, confirmationCallback)
@@ -185,7 +192,7 @@ class Marketplace {
    * @param {string} id - Offer unique ID.
    * @param {object} reviewData - Buyer's review. Data expected in schema version 1.0 format.
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
-   * @return {Promise<{timestamp, transactionReceipt}>}
+   * @return {Promise<{timestamp, ...transactionReceipt}>}
    */
   async finalizeOffer(id, reviewData, confirmationCallback) {
     const ipfsHash = await this.ipfsDataStore.save(REVIEW_DATA_TYPE, reviewData)
@@ -213,7 +220,7 @@ class Marketplace {
    * @param offerId
    * @param {object} data - In case of an offer, Seller review data in schema 1.0 format.
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
-   * @return {Promise<{timestamp, transactionReceipt}>}
+   * @return {Promise<{timestamp, ...transactionReceipt}>}
    */
   async addData(listingId, offerId, data, confirmationCallback) {
     let ipfsHash
