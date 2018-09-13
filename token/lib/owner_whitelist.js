@@ -35,12 +35,7 @@ const validTokenOwners = {
 const isValidTokenOwner = (networkId, newOwner) => {
   const newOwnerLower = newOwner.toLowerCase()
   const whitelist = validTokenOwners[networkId]
-  for (const address of whitelist) {
-    if (address.toLowerCase() === newOwnerLower) {
-      return true
-    }
-  }
-  return false
+  return whitelist.filter(address => address.toLowerCase() === newOwnerLower).length > 0
 }
 
 module.exports = { isValidTokenOwner }

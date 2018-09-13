@@ -1,9 +1,13 @@
 const BigNumber = require('bignumber.js')
-const TokenContract = require('../../contracts/build/contracts/OriginToken.json')
-const IMultiSigWallet = require('../../contracts/build/contracts/IMultiSigWallet.json')
 const Web3 = require('web3')
 
+const TokenContract = require('../../contracts/build/contracts/OriginToken.json')
+const IMultiSigWallet = require('../../contracts/build/contracts/IMultiSigWallet.json')
+const { withRetries } = require('../../src/utils/retries.js')
+
 const { isValidTokenOwner } = require('./owner_whitelist.js')
+
+const RETRIES = 7
 
 // Token helper class.
 class Token {
@@ -131,12 +135,15 @@ class Token {
 
     const transaction = contract.methods.pause()
     await this.sendTransaction(networkId, transaction, { from: sender })
-    if (
-      !this.config.multisig &&
-      await contract.methods.paused().call() !== true
-    ) {
-      throw new Error('Token should be paused but is not')
-    }
+
+    await withRetries(RETRIES, async () => {
+      if (
+        !this.config.multisig &&
+        await contract.methods.paused().call() !== true
+      ) {
+        throw new Error('Token should be paused but is not')
+      }
+    })
   }
 
   /**
@@ -156,12 +163,14 @@ class Token {
 
     const transaction = contract.methods.unpause()
     await this.sendTransaction(networkId, transaction, { from: sender })
-    if (
-      !this.config.multisig &&
-      await contract.methods.paused().call() !== false
-    ) {
-      throw new Error('Token should be unpaused but is not')
-    }
+    await withRetries(RETRIES, async () => {
+      if (
+        !this.config.multisig &&
+        await contract.methods.paused().call() !== false
+      ) {
+        throw new Error('Token should be unpaused but is not')
+      }
+    })
   }
 
     /**
@@ -182,19 +191,22 @@ class Token {
       throw new Error(`${newOwner} is not a valid owner for the token contract`)
     }
     await this.ensureContractOwner(networkId, sender)
+    const oldOwner = await this.owner(networkId)
     if (oldOwner.toLowerCase() === newOwnerLower) {
       throw new Error('old and new owner are the same')
     }
 
     const transaction = contract.methods.transferOwnership(newOwner)
     await this.sendTransaction(networkId, transaction, { from: sender })
-    const ownerAfterTransaction = (await this.owner(networkId)).toLowerCase()
-    if (
-      !this.config.multisig &&
-      ownerAfterTransaction !== newOwner.toLowerCase()
-    ) {
-      throw new Error(`New owner should be ${newOwner} but is ${ownerAfterTransaction}`)
-    }
+    await withRetries(RETRIES, async () => {
+      const ownerAfterTransaction = (await this.owner(networkId)).toLowerCase()
+      if (
+        !this.config.multisig &&
+        ownerAfterTransaction !== newOwner.toLowerCase()
+      ) {
+        throw new Error(`New owner should be ${newOwner} but is ${ownerAfterTransaction}`)
+      }
+    })
   }
 
   /**
@@ -263,32 +275,27 @@ class Token {
     const maxSleep = 120000
     let totalSleep = 0
     let sleepTime = 1000
-    while (totalSleep <= maxSleep) {
-      this.vlog(`waiting ${sleepTime / 1000}s for transaction receipt`)
-      await sleep(sleepTime)
-
+    await withRetries(RETRIES, async () => {
       if (transactionHash) {
         const receipt = await web3.eth.getTransactionReceipt(transactionHash)
         if (receipt) {
           this.vlog('got transaction receipt', receipt)
-          if (receipt.status) {
-            if (this.config.multisig) {
-              this.vlog('multi-sig transaction submitted for further signatures')
-            } else {
-              this.vlog('transaction successful')
-            }
-            return receipt
-          } else {
+          if (!receipt.status) {
             throw new Error('transaction failed')
           }
+          if (this.config.multisig) {
+            this.vlog('multi-sig transaction submitted for further signatures')
+          } else {
+            this.vlog('transaction successful')
+          }
+            return receipt
+        } else {
+          console.log('waiting for transaction receipt')
         }
       } else {
         this.vlog('still waiting for transaction hash')
       }
-
-      sleepTime *= 2
-      totalSleep += sleepTime
-    }
+    })
   }
 
   /**
