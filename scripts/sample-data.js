@@ -1,7 +1,5 @@
 const chalk = require('chalk')
 const urllib = require('url')
-const fs = require('fs')
-const path = require('path')
 const WORDLIST = require('./sample-words.json')
 const Web3 = require('web3')
 const Origin = require('../dist/index.js')
