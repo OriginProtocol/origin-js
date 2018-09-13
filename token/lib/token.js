@@ -2,7 +2,7 @@ const BigNumber = require('bignumber.js')
 const TokenContract = require('../../contracts/build/contracts/OriginToken.json')
 const Web3 = require('web3')
 
-const { TokenOwnerWhitelist } = require('./owner_whitelist.js')
+const { isValidTokenOwner } = require('./owner_whitelist.js')
 
 // Token helper class.
 class Token {
@@ -173,19 +173,10 @@ class Token {
     const sender = this.defaultAccount(networkId)
     const newOwnerLower = newOwner.toLowerCase()
 
-    const whitelist = TokenOwnerWhitelist[networkId]
-    let inWhitelist = false
-    for (const address of whitelist) {
-      if (address.toLowerCase() === newOwnerLower) {
-        inWhitelist = true
-        break
-      }
-    }
-    if (!inWhitelist) {
-      throw new Error(`${newOwner} is not in owner whitelist [${whitelist}]`)
-    }
-
     // Pre-contract call validations.
+    if (!isValidTokenOwner(networkId, newOwner)) {
+      throw new Error(`${newOwner} is not a valid owner for the token contract`)
+    }
     const oldOwner = await this.owner(networkId)
     if (sender.toLowerCase() != oldOwner.toLowerCase()) {
       throw new Error(
