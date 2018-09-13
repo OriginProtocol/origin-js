@@ -97,10 +97,12 @@ async function createSampleData() {
     const userFirst = NAMES[user_i]
     o.contractService.web3.eth.defaultAccount = user.address
     const price = Math.floor(Math.pow(Math.random() * 10, 3.0)) / 100.0
+    const commission = Math.floor(Math.random() * 1000)
     const description = `${randomTitleWord()} is ${randomWord()}, ${randomWord()} ${randomWord()}.`
     console.log(
       chalk` ⬢  Creating listing {bold.hex('#d408f4') ${listingName}} from {bold.hex('#09f4a6') ${userFirst}}`
     )
+
     const newListing = await o.marketplace.createListing({
       schemaVersion: '1.0.0',
       listingType: 'unit',
@@ -110,6 +112,7 @@ async function createSampleData() {
       language: 'en-US',
       description: description,
       price: { currency: 'ETH', amount: price.toString() },
+      commission: { currency: 'OGN', amount: commission.toString() },
       unitsTotal: 1
     })
     listings.push(await o.marketplace.getListing(newListing.listingId))
