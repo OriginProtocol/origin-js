@@ -103,7 +103,6 @@ describe('Listing IpfsDataStore save', () => {
       .returns('http://test-gateway')
 
     expect(store.save(LISTING_DATA_TYPE, validListing)).to.eventually.equal('ListingHash')
-
     expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(0)
     expect(mockIpfsService.gatewayUrlForHash.callCount).to.equal(0)
   })
@@ -190,6 +189,7 @@ describe('ListingWithdraw IpfsDataStore save', () => {
   it(`Should save a valid withdrawal`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('WithdrawHash')
     const validWithdrawal = {}
+
     expect(store.save(
       LISTING_WITHDRAW_DATA_TYPE,
       validWithdrawal)).to.eventually.equal('WithdrawHash')
@@ -224,7 +224,6 @@ describe('Offer IpfsStore load', () => {
     mockIpfsService.loadObjFromFile = sinon
       .stub()
       .resolves(offerInvalidSchemaId)
-
     expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 
@@ -246,9 +245,6 @@ describe('Offer IpfsStore save', () => {
 
   it(`Should save a valid offer`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('OfferHash')
-    mockIpfsService.gatewayUrlForHash = sinon
-      .stub()
-      .returns('http://test-gateway')
 
     expect(store.save(
       OFFER_DATA_TYPE,
@@ -257,6 +253,7 @@ describe('Offer IpfsStore save', () => {
 
   it(`Should throw an exception on invalid offer`, async () => {
     const badOffer = { title: 'bad offer' }
+
     expect(store.save(
       OFFER_DATA_TYPE,
       badOffer)).to.eventually.be.rejectedWith(Error)
@@ -310,9 +307,7 @@ describe('Review IpfsDataStore load', () => {
 
   it(`Should load a valid withdrawal`, async () => {
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(validReview)
-
     const review = await store.load(REVIEW_DATA_TYPE, 'ReviewHash')
-
     expect(review.rating).to.equal(3)
     expect(review.text).to.equal('Good stuff')
     expect(review.ipfs.hash).to.equal('ReviewHash')
@@ -333,7 +328,6 @@ describe('Review IpfsDataStore load', () => {
   it(`Should throw an exception on review data with missing fields`, () => {
     const badReview = { title: 'bad review' }
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(badReview)
-
     expect(store.load(REVIEW_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 })
