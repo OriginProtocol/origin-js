@@ -291,7 +291,41 @@ class Token {
     }
   }
 
+  /**
+   * Displays status of the token.
+   * @param {string} networkId - Ethereum network ID.
+   */
+  async logStatus(networkId) {
+    const contract = await this.contract(networkId)
+    const name = await contract.methods.name().call()
+    const decimals = await contract.methods.decimals().call()
+    const symbol = await contract.methods.symbol().call()
+    const totalSupply = BigNumber(await contract.methods.totalSupply().call())
+    const totalSupplyTokens = this.toTokenUnit(totalSupply)
+    const paused = await contract.methods.paused().call()
+    const address = await this.contractAddress(networkId)
+    const owner = await this.owner(networkId)
+    console.log(`Token status for network ${networkId}:`)
+    console.log(`contract address:        ${address}`)
+    console.log(`name:                    ${name}`)
+    console.log(`decimals:                ${decimals}`)
+    console.log(`symbol:                  ${symbol}`)
+    console.log(`total supply (natural):  ${totalSupply.toFixed(0)}`)
+    console.log(`total supply (tokens):   ${totalSupplyTokens}`)
+    console.log(`contract owner:          ${owner}`)
+    console.log(`transfers paused:        ${paused ? 'YES' : 'no'}`)
+  }
+
   // TODO: refactor this into a base class
+  /**
+   * Sends the given transaction to the multi-sig wallet for potentially further
+   * signatures.
+   * @param {string} networkId - Ethereum network ID.
+   * @param {string} sender - Transaction sender address.
+   * @param {string} multiSigWalletAddress - Address of multi-sig wallet.
+   * @param {string} contractAddress - Address of contract for which we're making the contract call.
+   * @param {Object} transaction - Ethereum transaction to be sent to the multi-sig wallet.
+   */
   async multiSigTransaction({
     networkId,
     sender,

@@ -9,6 +9,9 @@ const command = `node ${path.basename(__filename)}`
 const usage = `
 syntax: ${command} --action=ACTION ...
 
+Print status of token contract:
+${command} --action=status [--network_id=NETWORK_ID]
+
 Transfer 100 OGN to ADDRESS:
 ${command} --action=credit [--network_id=NETWORK_ID] --address=ADDRESS
 
@@ -103,6 +106,10 @@ async function run(config) {
   }
   case `owner`: {
     console.log('token owner:', await token.owner(config.networkId))
+    break
+  }
+  case `status`: {
+    await token.logStatus(config.networkId)
     break
   }
   case undefined:
