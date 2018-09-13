@@ -2,6 +2,8 @@ const BigNumber = require('bignumber.js')
 const TokenContract = require('../../contracts/build/contracts/OriginToken.json')
 const Web3 = require('web3')
 
+const { TokenOwnerWhitelist } = require('./owner_whitelist.js')
+
 // Token helper class.
 class Token {
   /*
@@ -124,7 +126,7 @@ class Token {
     if (alreadyPaused) {
       throw new Error('Token is already paused')
     }
-    const tokenOwner = await contract.methods.owner().call()
+    const tokenOwner = await await this.owner(networkId)
     if (tokenOwner.toLowerCase() != sender.toLowerCase()) {
       throw new Error(`Sender ${sender} is not owner of token contract (${tokenOwner})`)
     }
@@ -149,7 +151,7 @@ class Token {
     if (!paused) {
       throw new Error('Token is already unpaused')
     }
-    const tokenOwner = await contract.methods.owner().call()
+    const tokenOwner = await this.owner(networkId)
     if (tokenOwner.toLowerCase() != sender.toLowerCase()) {
       throw new Error(`Sender ${sender} is not owner of token contract (${tokenOwner})`)
     }
@@ -159,6 +161,57 @@ class Token {
     if (await contract.methods.paused().call() !== false) {
       throw new Error('Token should be unpaused but is not')
     }
+  }
+
+    /**
+   * Changes the owner of the token contract to the given address.
+   * @param {string} networkId - Ethereum network ID.
+   * @param {string} newOwner - Address of the new owner.
+   */
+  async setOwner(networkId, newOwner) {
+    const contract = await this.contract(networkId)
+    const sender = this.defaultAccount(networkId)
+    const newOwnerLower = newOwner.toLowerCase()
+
+    const whitelist = TokenOwnerWhitelist[networkId]
+    let inWhitelist = false
+    for (const address of whitelist) {
+      if (address.toLowerCase() === newOwnerLower) {
+        inWhitelist = true
+        break
+      }
+    }
+    if (!inWhitelist) {
+      throw new Error(`${newOwner} is not in owner whitelist [${whitelist}]`)
+    }
+
+    // Pre-contract call validations.
+    const oldOwner = await this.owner(networkId)
+    if (sender.toLowerCase() != oldOwner.toLowerCase()) {
+      throw new Error(
+        `Only the current owner ${oldOwner} may change ownership of the token contract`
+      )
+    }
+    if (oldOwner.toLowerCase() === newOwnerLower) {
+      throw new Error('old and new owner are the same')
+    }
+
+    const transaction = contract.methods.transferOwnership(newOwner)
+    await this.sendTransaction(networkId, transaction, { from: sender })
+    const ownerAfterTransaction = (await this.owner(networkId)).toLowerCase()
+    if (ownerAfterTransaction !== newOwner.toLowerCase()) {
+      throw new Error(`New owner should be ${newOwner} but is ${ownerAfterTransaction}`)
+    }
+  }
+
+  /**
+   * Returns the owner of the token contract.
+   * @param {string} networkId - Ethereum network ID.
+   * @param {returns} - Address of the token owner.
+   */
+  async owner(networkId) {
+    const contract = await this.contract(networkId)
+    return await contract.methods.owner().call()
   }
 
   // TODO: refactor into separate base class, to support other contracts such
@@ -242,7 +295,7 @@ class Token {
    */
   defaultAccount(networkId) {
     const provider = this.config.providers[networkId]
-    return provider.addresses[0]
+    return provider.address || provider.addresses[0]
   }
 }
 
