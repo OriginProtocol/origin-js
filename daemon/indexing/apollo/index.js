@@ -97,7 +97,7 @@ const typeDefs = gql`
     # itemsPerPage: Int!
     # totalNumberOfPages: Int!
     nodes: [Listing]
-    maxPriceEth: Float
+    maxPrice: Float
   }
 
   ######################
@@ -221,7 +221,7 @@ const resolvers = {
         pageNumber: 1,
         itemsPerPage: response.listings.length,
         totalNumberOfPages: 1,
-        maxPriceEth: 100.0,//response.max_price_eth
+        maxPrice: 100.0,//response.max_price_eth
         nodes: response.listings
       }
     },
