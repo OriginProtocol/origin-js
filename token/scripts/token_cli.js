@@ -66,7 +66,9 @@ async function run(config) {
     }
     const newBalance = await token.credit(config.networkId, config.address, token.toNaturalUnit(100))
     const newBalanceDisplay = newBalance.toFixed()
-    console.log(`Credited 100 OGN tokens to wallet. New balance (natural unit) = ${newBalanceDisplay}`)
+    if (!config.multisig) {
+      console.log(`Credited 100 OGN tokens to wallet. New balance (natural unit) = ${newBalanceDisplay}`)
+    }
     break
   }
   case 'address': {
@@ -78,13 +80,17 @@ async function run(config) {
   case 'pause': {
     config.verbose = true
     await token.pause(config.networkId)
-    console.log('Token transfers have been paused.')
+    if (!config.multisig) {
+      console.log('Token transfers have been paused.')
+    }
     break
   }
   case 'unpause': {
     config.verbose = true
     await token.unpause(config.networkId)
-    console.log('Token transfers have been unpaused.')
+    if (!config.multisig) {
+      console.log('Token transfers have been unpaused.')
+    }
     break
   }
   case 'setOwner': {
@@ -124,6 +130,14 @@ const config = {
 
   // Verbose logs.
   verbose: args['--verbose'],
+
+  // When the sender of a contract call is a multisig wallet, this contains the
+  // address of the multisig wallet.
+  multisig: args['--multisig'],
+
+  // Override owner whitelist. NEVER use this unless you're on a local dev
+  // blockchain.
+  overrideOwnerWhitelist: args['--OVERRIDE_OWNER_WHITELIST_DO_NOT_USE'],
 }
 
 try {

@@ -1,5 +1,6 @@
 const BigNumber = require('bignumber.js')
 const TokenContract = require('../../contracts/build/contracts/OriginToken.json')
+const IMultiSigWallet = require('../../contracts/build/contracts/IMultiSigWallet.json')
 const Web3 = require('web3')
 
 const { isValidTokenOwner } = require('./owner_whitelist.js')
@@ -126,14 +127,14 @@ class Token {
     if (alreadyPaused) {
       throw new Error('Token is already paused')
     }
-    const tokenOwner = await await this.owner(networkId)
-    if (tokenOwner.toLowerCase() != sender.toLowerCase()) {
-      throw new Error(`Sender ${sender} is not owner of token contract (${tokenOwner})`)
-    }
+    await this.ensureContractOwner(networkId, sender)
 
     const transaction = contract.methods.pause()
     await this.sendTransaction(networkId, transaction, { from: sender })
-    if (await contract.methods.paused().call() !== true) {
+    if (
+      !this.config.multisig &&
+      await contract.methods.paused().call() !== true
+    ) {
       throw new Error('Token should be paused but is not')
     }
   }
@@ -151,14 +152,14 @@ class Token {
     if (!paused) {
       throw new Error('Token is already unpaused')
     }
-    const tokenOwner = await this.owner(networkId)
-    if (tokenOwner.toLowerCase() != sender.toLowerCase()) {
-      throw new Error(`Sender ${sender} is not owner of token contract (${tokenOwner})`)
-    }
+    await this.ensureContractOwner(networkId, sender)
 
     const transaction = contract.methods.unpause()
     await this.sendTransaction(networkId, transaction, { from: sender })
-    if (await contract.methods.paused().call() !== false) {
+    if (
+      !this.config.multisig &&
+      await contract.methods.paused().call() !== false
+    ) {
       throw new Error('Token should be unpaused but is not')
     }
   }
@@ -174,15 +175,13 @@ class Token {
     const newOwnerLower = newOwner.toLowerCase()
 
     // Pre-contract call validations.
-    if (!isValidTokenOwner(networkId, newOwner)) {
+    if (
+      !this.config.overrideOwnerWhitelist &&
+      !isValidTokenOwner(networkId, newOwner)
+    ) {
       throw new Error(`${newOwner} is not a valid owner for the token contract`)
     }
-    const oldOwner = await this.owner(networkId)
-    if (sender.toLowerCase() != oldOwner.toLowerCase()) {
-      throw new Error(
-        `Only the current owner ${oldOwner} may change ownership of the token contract`
-      )
-    }
+    await this.ensureContractOwner(networkId, sender)
     if (oldOwner.toLowerCase() === newOwnerLower) {
       throw new Error('old and new owner are the same')
     }
@@ -190,7 +189,10 @@ class Token {
     const transaction = contract.methods.transferOwnership(newOwner)
     await this.sendTransaction(networkId, transaction, { from: sender })
     const ownerAfterTransaction = (await this.owner(networkId)).toLowerCase()
-    if (ownerAfterTransaction !== newOwner.toLowerCase()) {
+    if (
+      !this.config.multisig &&
+      ownerAfterTransaction !== newOwner.toLowerCase()
+    ) {
       throw new Error(`New owner should be ${newOwner} but is ${ownerAfterTransaction}`)
     }
   }
@@ -215,8 +217,24 @@ class Token {
    * @returns {Object} - Transaction receipt.
    */
   async sendTransaction(networkId, transaction, opts = {}) {
-    // TODO: support multisig wallet
     const web3 = this.web3(networkId)
+
+    if (!opts.from) {
+      opts.from = await this.defaultAccount(networkId)
+    }
+
+    if (this.config.multisig) {
+      // For multi-sig transactions, we submit the transaction to the multi-sig
+      // wallet instead of the token contract.
+      const contract = await this.contract(networkId)
+      transaction = await this.multiSigTransaction({
+        networkId,
+        sender: opts.from,
+        multiSigWalletAddress: this.config.multisig,
+        contractAddress: contract._address,
+        transaction
+      })
+    }
 
     if (!opts.gas) {
       opts.gas = await transaction.estimateGas({ from: opts.from })
@@ -254,7 +272,11 @@ class Token {
         if (receipt) {
           this.vlog('got transaction receipt', receipt)
           if (receipt.status) {
-            this.vlog('transaction successful')
+            if (this.config.multisig) {
+              this.vlog('multi-sig transaction submitted for further signatures')
+            } else {
+              this.vlog('transaction successful')
+            }
             return receipt
           } else {
             throw new Error('transaction failed')
@@ -266,6 +288,51 @@ class Token {
 
       sleepTime *= 2
       totalSleep += sleepTime
+    }
+  }
+
+  // TODO: refactor this into a base class
+  async multiSigTransaction({
+    networkId,
+    sender,
+    multiSigWalletAddress,
+    contractAddress,
+    transaction
+  }) {
+    const web3 = this.web3(networkId)
+    const data = await transaction.encodeABI()
+    const wallet = new web3.eth.Contract(IMultiSigWallet.abi, multiSigWalletAddress)
+    this.vlog('transaction data:', data)
+    this.vlog(`using multi-sig wallet ${multiSigWalletAddress} for txn to ${contractAddress}`)
+
+    // Ensure that the sender is a signer/owner for the wallet.
+    const isOwner = await wallet.methods.isOwner(sender).call()
+    if (!isOwner) {
+      throw `${from} is not an owner of the multisig wallet`
+    }
+
+    return wallet.methods.submitTransaction(contractAddress, 0, data)
+  }
+
+  // TODO: extract this into a separate base class
+  /**
+   * Throws an error if 'address' isn't the owner of the contract.
+   * @param {string} networkId - Ethereum network ID.
+   * @param {string} address - Address to check.
+   */
+  async ensureContractOwner(networkId, address) {
+    const owner = (await this.owner(networkId))
+    const multisig = this.config.multisig
+
+    if (multisig) {
+      // Ensure that the multisig wallet is the owner of the contract.
+      if (multisig.toLowerCase() !== owner.toLowerCase()) {
+        throw new Error(`multi-sig wallet ${opts.multisig} isn't contract owner ${owner}`)
+      }
+    } else {
+      if (address.toLowerCase() !== owner.toLowerCase()) {
+        throw new Error(`sender ${address} isn't contract owner ${owner}`)
+      }
     }
   }
 
