@@ -2,6 +2,7 @@ const chalk = require('chalk')
 const urllib = require('url')
 const fs = require('fs')
 const path = require('path')
+const WORDLIST = require('./sample-words.json')
 const Web3 = require('web3')
 const Origin = require('../dist/index.js')
 
@@ -32,8 +33,6 @@ const NAMES = [
   'Urist'
 ]
 const CATEGORIES = ['Housing', 'Collectibles', 'For Sale', 'Services']
-const wordsFilePath = path.join(__dirname, 'sample-words.json')
-const WORDLIST = JSON.parse(fs.readFileSync(wordsFilePath))
 
 function randomWord() {
   return WORDLIST[Math.floor(Math.random() * WORDLIST.length)]
