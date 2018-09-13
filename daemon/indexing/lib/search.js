@@ -153,11 +153,25 @@ class Listing {
         esQuery.bool.filter.push(innerFilter)
       })
 
+    /* When users boost their listing using OGN tokens we boost that listing in elasticSearch.
+     * For more details see document: https://docs.google.com/spreadsheets/d/1bgBlwWvYL7kgAb8aUH4cwDtTHQuFThQ4BCp870O-zEs/edit#gid=0
+     */
+    const boostScoreQuery = {
+      function_score: {
+        query: esQuery,
+        field_value_factor: {
+          field: 'commission.amount',
+          factor: 0.005 // the same as delimited by 200
+        },
+        boost_mode: 'sum'
+      }
+    }
+
     const resp = await client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
       body: {
-        query: esQuery,
+        query: boostScoreQuery,
         _source: ['title', 'description', 'priceEth']
       }
     })
