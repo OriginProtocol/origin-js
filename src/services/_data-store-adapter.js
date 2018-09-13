@@ -65,6 +65,8 @@ class AdapterBase {
 
   /**
    * Decodes data coming from storage.
+   * In most cases derived class should override this default implementation which
+   * only returns an empty object besides the schemaId.
    * @param ipfsData
    */
   decode(ipfsData) {
