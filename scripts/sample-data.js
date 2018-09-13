@@ -5,7 +5,6 @@ const path = require('path')
 const Web3 = require('web3')
 const Origin = require('../dist/index.js')
 
-
 // This script creates randomly generated sample listings for testing purposes.
 // Currently only written to run against local setup.
 
@@ -28,12 +27,12 @@ const NAMES = [
   'Daniel',
   'Matthew',
   'Kay',
-  'Пётр',
+  'Franck',
   '계룡/鷄龍',
   'Urist'
 ]
 const CATEGORIES = ['Housing', 'Collectibles', 'For Sale', 'Services']
-const wordsFilePath = path.join(__dirname, "sample-words.json")
+const wordsFilePath = path.join(__dirname, 'sample-words.json')
 const WORDLIST = JSON.parse(fs.readFileSync(wordsFilePath))
 
 function randomWord() {
