@@ -81,37 +81,93 @@ class Listing {
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query, filters) {
-    console.log("OUTPUT THE QUERY STUFF XXXX", filters)
+  static async search(query, category, filters) {
     const esQuery = {
       bool: {
-        must: []
+        must: [],
+        should: [],
+        filter: []
       }
     }
-    if (query !== undefined){
-      esQuery.bool.must.push({ match: { description: query } })
+    if (category !== undefined){
+      esQuery.bool.filter.push({ 
+        term: { category: category } 
+      })
+    }
+
+    if (query !== undefined && query !== ""){
+      // all_text is a field where all searchable fields get copied to
+      esQuery.bool.must.push({ match: { all_text: query } })
+      // give extra score if the search query matches in the title
+      esQuery.bool.should.push({ match: { title: query } })
     } else {
       esQuery.bool.must.push({ match_all: {} })
     }
 
+    //TODO: replace with proper deep copy
+    const esQueryWithoutFilters = JSON.parse(JSON.stringify(esQuery))
+
     filters
       .forEach(filter => {
+        let innerFilter = {}
 
-        // let innerFilter = {}
-        //   innerFilter[filter.name] = 
+        if (filter.operator === 'GREATER_OR_EQUAL'){
+          innerFilter = {
+            range: {
+              [filter.name]: {
+                gte: filter.value
+              }
+            }
+          }
+        } else if (filter.operator === 'LESSER_OR_EQUAL'){
+          innerFilter = {
+            range: {
+              [filter.name]: {
+                lte: filter.value
+              }
+            }
+          }
+        } else if (filter.operator === 'CONTAINS' && filter.valueType === 'ARRAY_STRING'){
+          innerFilter = {
+            bool: {
+              should: filter
+                .value
+                .split(',')
+                .map(singleValue => {
+                  return { term: {[filter.name]: singleValue} }
+                })
+            }
+          }
+        } else if (filter.operator === 'EQUALS'){
+          innerFilter = { term: {[filter.name]: filter.value} }
+        }
+
+
+        esQuery.bool.filter.push(innerFilter)
       })
-
-    console.log("OUTPUT THE QUERY STUFF", esQuery)
 
     const resp = await client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
-      // TODO(franck): update query to search against other fields than just description.
       body: {
         query: esQuery,
         _source: ['title', 'description', 'priceEth']
       }
     })
+    // TODO: make this 2 run symultaneously
+    const aggregationResponse = await client.search({
+      index: LISTINGS_INDEX,
+      type: LISTINGS_TYPE,
+      // TODO: only return aggregator
+      body: {
+        query: esQueryWithoutFilters,
+        _source: ['_id'],
+        aggs : {
+          'max_price' : { 'max' : { 'field' : 'priceEth.amount' } }
+        }
+      }
+    })
+
     const listings = []
     resp.hits.hits.forEach((hit) => {
       const listing = {
@@ -125,7 +181,11 @@ class Listing {
       }
       listings.push(listing)
     })
-    return listings
+
+    return {
+      listings: listings,
+      max_price_eth: aggregationResponse.aggregations.max_price.value
+    }
   }
 }
 

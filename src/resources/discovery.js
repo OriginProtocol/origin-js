@@ -14,9 +14,17 @@ class Discovery {
       headers: {
         'Content-Type': 'application/json'
       }
+    },
+    function(error, meta, body){
+      if (error !== undefined)
+        throw Error(`An error occured when reaching discovery server: ${error}`)  
     })
 
-    return resp
+    if(resp.status !== 200){
+      //TODO: also report error message here
+      throw Error(`Discovery server retuned unexpected status code ${resp.status} with error `)
+    }
+    return await resp.json()
   }
 
   /**
@@ -25,15 +33,20 @@ class Discovery {
    * unexpected. To get JSON result caller should call `await searchResponse.json()` to get the
    * actual JSON.
    * @param searchQuery {string} general search query
-   * @param listingType {string} one of the supported listingTypes
+   * @param category {string} one of the supported categories
    * @param filters {object} object with properties: name, value, valueType, operator
    * @returns {Promise<HTTP_Response>}
    */
-  async search(searchQuery, listingType, filters = []) {
+  async search(searchQuery, category, filters = []) {
+    const categoryFilterOption = category === 'all'
+      ? ''
+      // category is indexed as upper case
+      : `category: "${category[0].toUpperCase() + category.substring(1)}"`
     const query = `
     {
       listings (
         searchQuery: "${searchQuery}"
+        ${categoryFilterOption}
         filters: [${filters
     .map(filter => {
       return `
