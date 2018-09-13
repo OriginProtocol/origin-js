@@ -12,12 +12,13 @@ async function withRetries(maxRetries, fn) {
     try {
       return await fn() // Do our action.
     } catch (e) {
-      // Roughly double wait time each failure
-      let waitTime = Math.pow(1000, 1 + tryCount / 6)
+      // Double wait time each failure
+      let waitTime = 500 * 2**(tryCount - 1)
       // Randomly jiggle wait time by 20% either way. No thundering herd.
       waitTime = Math.floor(waitTime * (1.2 - Math.random() * 0.4))
       // Max out at two minutes
       waitTime = Math.min(waitTime, MAX_RETRY_WAIT_MS)
+      console.log('retryable error:', e)
       console.log(`will retry in ${waitTime / 1000} seconds`)
       tryCount += 1
       await new Promise(resolve => setTimeout(resolve, waitTime))
