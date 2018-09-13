@@ -8,12 +8,12 @@ const MAX_RETRY_WAIT_MS = 2 * 60 * 1000
  */
 async function withRetries(maxRetries, fn) {
   let tryCount = 0
-  while (true) {
+  while (tryCount < maxRetries) {
     try {
       return await fn() // Do our action.
     } catch (e) {
       // Double wait time each failure
-      let waitTime = 500 * 2**(tryCount - 1)
+      let waitTime = 1000 * 2**(tryCount - 1)
       // Randomly jiggle wait time by 20% either way. No thundering herd.
       waitTime = Math.floor(waitTime * (1.2 - Math.random() * 0.4))
       // Max out at two minutes
@@ -23,10 +23,8 @@ async function withRetries(maxRetries, fn) {
       tryCount += 1
       await new Promise(resolve => setTimeout(resolve, waitTime))
     }
-    if (tryCount >= maxRetries) {
-      throw new Error('number of retries exceeded')
-    }
   }
+  throw new Error('number of retries exceeded')
 }
 
 module.exports = { withRetries }
