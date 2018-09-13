@@ -76,14 +76,14 @@ describe('Listing IpfsDataStore load', () => {
       .stub()
       .resolves(listingInvalidSchemaId)
 
-    expect(store.load(LISTING_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    return expect(store.load(LISTING_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 
   it(`Should throw an exception on listing data with missing fields`, () => {
     const badListing = { title: 'bad listing' }
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(badListing)
 
-    expect(store.load(LISTING_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    return expect(store.load(LISTING_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 })
 
@@ -102,9 +102,10 @@ describe('Listing IpfsDataStore save', () => {
       .stub()
       .returns('http://test-gateway')
 
-    expect(store.save(LISTING_DATA_TYPE, validListing)).to.eventually.equal('ListingHash')
-    expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(0)
-    expect(mockIpfsService.gatewayUrlForHash.callCount).to.equal(0)
+    return expect(store.save(LISTING_DATA_TYPE, validListing)).to.eventually.equal('ListingHash')
+      .then(() => expect(mockIpfsService.saveDataURIAsFile.callCount).to.equal(0))
+      .then(() => expect(mockIpfsService.gatewayUrlForHash.callCount).to.equal(0))
+      .then(() => expect(mockIpfsService.saveObjAsFile.firstCall.args[0]).to.have.property('schemaId'))
   })
 
   it(`Should save a valid listing with data`, async () => {
@@ -152,7 +153,7 @@ describe('Listing IpfsDataStore save', () => {
 
   it(`Should throw an exception on invalid listing`, async () => {
     const badListing = { title: 'bad listing' }
-    expect(store.save(
+    return expect(store.save(
       LISTING_DATA_TYPE,
       badListing)).to.eventually.be.rejectedWith(Error)
   })
@@ -190,9 +191,9 @@ describe('ListingWithdraw IpfsDataStore save', () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('WithdrawHash')
     const validWithdrawal = {}
 
-    expect(store.save(
-      LISTING_WITHDRAW_DATA_TYPE,
-      validWithdrawal)).to.eventually.equal('WithdrawHash')
+    return expect(
+      store.save(LISTING_WITHDRAW_DATA_TYPE, validWithdrawal)).to.eventually.equal('WithdrawHash')
+      .then(() => expect(mockIpfsService.saveObjAsFile.firstCall.args[0]).to.have.property('schemaId'))
   })
 })
 
@@ -224,14 +225,14 @@ describe('Offer IpfsStore load', () => {
     mockIpfsService.loadObjFromFile = sinon
       .stub()
       .resolves(offerInvalidSchemaId)
-    expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    return expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 
   it(`Should throw an exception on offer data with missing fields`, () => {
     const badOffer = { title: 'bad offer' }
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(badOffer)
 
-    expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    return expect(store.load(OFFER_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 })
 
@@ -246,15 +247,15 @@ describe('Offer IpfsStore save', () => {
   it(`Should save a valid offer`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('OfferHash')
 
-    expect(store.save(
-      OFFER_DATA_TYPE,
-      validOffer)).to.eventually.equal('OfferHash')
+    return expect(
+      store.save(OFFER_DATA_TYPE, validOffer)).to.eventually.equal('OfferHash')
+      .then(() => expect(mockIpfsService.saveObjAsFile.firstCall.args[0]).to.have.property('schemaId'))
   })
 
   it(`Should throw an exception on invalid offer`, async () => {
     const badOffer = { title: 'bad offer' }
 
-    expect(store.save(
+    return expect(store.save(
       OFFER_DATA_TYPE,
       badOffer)).to.eventually.be.rejectedWith(Error)
   })
@@ -291,9 +292,9 @@ describe('OfferAccept IpfsDataStore save', () => {
   it(`Should save a valid accept`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('AcceptHash')
     const validAccept = {}
-    expect(store.save(
-      OFFER_ACCEPT_DATA_TYPE,
-      validAccept)).to.eventually.equal('AcceptHash')
+    return expect(
+      store.save(OFFER_ACCEPT_DATA_TYPE, validAccept)).to.eventually.equal('AcceptHash')
+      .then(() => expect(mockIpfsService.saveObjAsFile.firstCall.args[0]).to.have.property('schemaId'))
   })
 })
 
@@ -322,13 +323,13 @@ describe('Review IpfsDataStore load', () => {
       .stub()
       .resolves(reviewInvalidSchemaId)
 
-    expect(store.load(REVIEW_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    return expect(store.load(REVIEW_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 
   it(`Should throw an exception on review data with missing fields`, () => {
     const badReview = { title: 'bad review' }
     mockIpfsService.loadObjFromFile = sinon.stub().resolves(badReview)
-    expect(store.load(REVIEW_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
+    return expect(store.load(REVIEW_DATA_TYPE, 'TestHash')).to.eventually.be.rejectedWith(Error)
   })
 })
 
@@ -342,14 +343,15 @@ describe('Review IpfsDataStore save', () => {
 
   it(`Should save a valid review`, () => {
     mockIpfsService.saveObjAsFile = sinon.stub().returns('ReviewHash')
-    expect(store.save(
-      REVIEW_DATA_TYPE,
-      validReview)).to.eventually.equal('ReviewHash')
+    return expect(
+      store.save(REVIEW_DATA_TYPE, validReview)).to.eventually.equal('ReviewHash')
+      .then(() => expect(mockIpfsService.saveObjAsFile.firstCall.args[0]).to.have.property('schemaId'))
+
   })
 
   it(`Should throw an exception on invalid review`, async () => {
     const badReview = { title: 'bad review' }
-    expect(store.save(
+    return expect(store.save(
       REVIEW_DATA_TYPE,
       badReview)).to.eventually.be.rejectedWith(Error)
   })
