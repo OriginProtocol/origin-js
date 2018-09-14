@@ -15,7 +15,7 @@ class Discovery {
         'Content-Type': 'application/json'
       }
     },
-    function(error, meta, body){
+    function(error, meta){
       if (error !== undefined)
         throw Error(`An error occured when reaching discovery server: ${error}`)  
     })
