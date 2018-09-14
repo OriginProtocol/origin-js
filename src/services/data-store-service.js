@@ -93,7 +93,7 @@ export class IpfsDataStore {
     // Add the IPFS hash and raw data to the object.
     data.ipfs = {
       hash: ipfsHash,
-      data: ipfsData
+      data: Object.assign({}, ipfsData)
     }
 
     return data

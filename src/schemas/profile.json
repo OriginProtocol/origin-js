@@ -3,7 +3,6 @@
   "$id": "http://schema.originprotocol.com/profile_v1.0.0",
   "title": "User",
   "type": "object",
-  "required": ["schemaId"],
   "properties": {
     "schemaId": {
       "type": "string"
@@ -19,21 +18,11 @@
     },
     "avatar": {
       "type": "string"
-    },
-    "customFields": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["field", "value"],
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      }
     }
-  }
+  },
+  "required": [
+    "schemaId",
+    "firstName",
+    "lastName",
+  ]
 }

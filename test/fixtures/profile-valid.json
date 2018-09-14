@@ -2,15 +2,6 @@
   "schemaId": "http://schema.originprotocol.com/profile_v1.0.0",
   "firstName": "originus",
   "lastName": "protocolus",
+  "description": "Semper Fidelis",
   "avatar": "data:,Avatar",
-  "customFields": [
-    {
-      "field": "key1",
-      "value": "val1"
-    },
-    {
-      "field": "key2",
-      "value": "val2"
-    }
-  ]
 }
