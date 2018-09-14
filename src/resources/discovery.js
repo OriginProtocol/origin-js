@@ -63,6 +63,7 @@ class Discovery {
         nodes {
           id
         }
+        maxPrice
       }
     }`
 

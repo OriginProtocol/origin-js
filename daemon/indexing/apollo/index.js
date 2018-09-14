@@ -221,7 +221,7 @@ const resolvers = {
         pageNumber: 1,
         itemsPerPage: response.listings.length,
         totalNumberOfPages: 1,
-        maxPrice: 100.0,//response.max_price_eth
+        maxPrice: response.max_price,
         nodes: response.listings
       }
     },

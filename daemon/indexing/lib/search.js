@@ -172,7 +172,7 @@ class Listing {
       type: LISTINGS_TYPE,
       body: {
         query: boostScoreQuery,
-        _source: ['title', 'description', 'priceEth']
+        _source: ['title', 'description', 'price']
       }
     })
     // TODO: make this 2 run symultaneously
@@ -184,7 +184,7 @@ class Listing {
         query: esQueryWithoutFilters,
         _source: ['_id'],
         aggs : {
-          'max_price' : { 'max' : { 'field' : 'priceEth.amount' } }
+          'max_price' : { 'max' : { 'field' : 'price.amount' } }
         }
       }
     })
@@ -203,9 +203,10 @@ class Listing {
       listings.push(listing)
     })
 
+    const maxPrice = aggregationResponse.aggregations.max_price.value
     return {
       listings: listings,
-      max_price_eth: aggregationResponse.aggregations.max_price.value
+      max_price: maxPrice ? maxPrice : 0
     }
   }
 }
