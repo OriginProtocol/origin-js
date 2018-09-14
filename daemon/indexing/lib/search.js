@@ -111,7 +111,9 @@ class Listing {
       esQuery.bool.must.push({ match_all: {} })
     }
 
-    //TODO: replace with proper deep copy
+    /* interestingly JSON.strigify performs pretty well:
+     * https://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-deep-clone-an-object-in-javascript/5344074#5344074
+     */
     const esQueryWithoutFilters = JSON.parse(JSON.stringify(esQuery))
 
     filters
