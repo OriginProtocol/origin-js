@@ -167,7 +167,7 @@ class Listing {
       }
     }
 
-    const resp = await client.search({
+    const searchRequest = client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
       body: {
@@ -175,11 +175,10 @@ class Listing {
         _source: ['title', 'description', 'price']
       }
     })
-    // TODO: make this 2 run symultaneously
-    const aggregationResponse = await client.search({
+
+    const aggregationRequest = client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
-      // TODO: only return aggregator
       body: {
         query: esQueryWithoutFilters,
         _source: ['_id'],
@@ -189,8 +188,10 @@ class Listing {
       }
     })
 
+    const [searchResponse, aggregationResponse] = await Promise.all([searchRequest, aggregationRequest])  
+
     const listings = []
-    resp.hits.hits.forEach((hit) => {
+    searchResponse.hits.hits.forEach((hit) => {
       const listing = {
         id: hit._id,
         title: hit._source.title,
@@ -204,8 +205,9 @@ class Listing {
     })
 
     const maxPrice = aggregationResponse.aggregations.max_price.value
+
     return {
-      listings: listings,
+      listings,
       max_price: maxPrice ? maxPrice : 0
     }
   }
