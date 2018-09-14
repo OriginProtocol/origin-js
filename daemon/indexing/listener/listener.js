@@ -329,7 +329,6 @@ async function handleLog(log, rule, contractVersion, context) {
 
   if (context.config.elasticsearch) {
     console.log('INDEXING ', listingId)
-
     await withRetrys(async () => {
       await search.Listing.index(
         listingId,
