@@ -74,7 +74,7 @@ class AdapterBase {
    */
   decode(ipfsData) {
     this.validate(ipfsData)
-    return ipfsData
+    return Object.assign({}, ipfsData)
   }
 }
 

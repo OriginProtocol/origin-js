@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
   "$id": "http://schema.originprotocol.com/profile_v1.0.0",
-  "title": "User",
+  "title": "Origin Protocol user profile schema",
   "type": "object",
   "properties": {
     "schemaId": {
@@ -23,6 +23,6 @@
   "required": [
     "schemaId",
     "firstName",
-    "lastName",
+    "lastName"
   ]
 }
