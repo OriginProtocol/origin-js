@@ -44,34 +44,59 @@ contract OriginToken is BurnableToken, MintableToken, WhitelistedPausableToken {
     _burn(_who, _value);
   }
 
-  // whitelist would contain addresses for all active marketplace contracts
+  //
+  // approveAndCall methods
+  //
+
+  // @dev Add spender to whitelist of spenders for approveAndCall
+  // @param _spender Address to add
   function addCallSpenderWhitelist(address _spender) public onlyOwner {
-      callSpenderWhitelist[_spender] = true;
-      emit AddCallSpenderWhitelist(msg.sender, _spender);
+    callSpenderWhitelist[_spender] = true;
+    emit AddCallSpenderWhitelist(msg.sender, _spender);
   }
 
+  // @dev Remove spender from whitelist of spenders for approveAndCall
+  // @param _spender Address to remove
   function removeCallSpenderWhitelist(address _spender) public onlyOwner {
-      delete callSpenderWhitelist[_spender];
-      emit RemoveCallSpenderWhitelist(msg.sender, _spender);
+    delete callSpenderWhitelist[_spender];
+    emit RemoveCallSpenderWhitelist(msg.sender, _spender);
   }
 
+  // @dev Approve transfer of tokens and make a contract call in a single
+  // @dev transaction. This allows a DApp to avoid requiring two MetaMask
+  // @dev approvals for a single logical action, such as creating a listing,
+  // @dev which requires the seller to approve a token transfer and the
+  // @dev marketplace contract to transfer tokens from the seller.
+  //
+  // @dev This is based on the ERC827 function approveAndCall and avoids
+  // @dev security issues by only working with a whitelisted set of _spender
+  // @dev addresses. The other difference is that the combination of this
+  // @dev function and the function identified by _selector ensures that the
+  // @dev proxied function call always has the msg.sender that called this
+  // @dev function.
+  //
+  // @param _spender The address that will spend the funds.
+  // @param _value The amount of tokens to be spent.
+  // @param _selector Function selector for function to be called.
+  // @param _callParams Packed, encoded parameters
   function approveAndCallWithSender(
-        address _spender,
-        uint256 _value,
-        bytes4 selector,
-        bytes call_params
-    )
-        public
-        payable
-        returns (bool)
-    {
-      require(_spender != address(this), "token contract can't be approved");
-      require(callSpenderWhitelist[_spender], "sender not in whitelist");
+    address _spender,
+    uint256 _value,
+    bytes4 _selector,
+    bytes _callParams
+  )
+    public
+    payable
+    returns (bool)
+  {
+    require(_spender != address(this), "token contract can't be approved");
+    require(callSpenderWhitelist[_spender], "sender not in whitelist");
 
-      super.approve(_spender, _value);
+    super.approve(_spender, _value);
 
-      bytes memory call_data = abi.encodePacked(selector, uint256(msg.sender), call_params);
-      require(_spender.call.value(msg.value)(call_data), "proxied call failed");
-      return true;
-    }
+    bytes memory callData = abi.encodePacked(_selector, msg.sender, _callParams);
+    // solium-disable-next-line security/no-call-value
+    require(_spender.call.value(msg.value)(callData), "proxied call failed");
+    return true;
+  }
 }
