@@ -91,7 +91,7 @@ contract OriginToken is BurnableToken, MintableToken, WhitelistedPausableToken {
     require(_spender != address(this), "token contract can't be approved");
     require(callSpenderWhitelist[_spender], "sender not in whitelist");
 
-    super.approve(_spender, _value);
+    require(super.approve(_spender, _value), "approve failed");
 
     bytes memory callData = abi.encodePacked(_selector, msg.sender, _callParams);
     // solium-disable-next-line security/no-call-value
