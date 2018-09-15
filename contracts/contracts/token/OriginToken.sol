@@ -71,14 +71,13 @@ contract OriginToken is BurnableToken, MintableToken, WhitelistedPausableToken {
   // @dev This is based on the ERC827 function approveAndCall and avoids
   // @dev security issues by only working with a whitelisted set of _spender
   // @dev addresses. The other difference is that the combination of this
-  // @dev function and the function identified by _selector ensures that the
-  // @dev proxied function call always has the msg.sender that called this
-  // @dev function.
+  // @dev function ensures that the proxied function call receives the
+  // @dev msg.sender for this function as its first parameter.
   //
   // @param _spender The address that will spend the funds.
   // @param _value The amount of tokens to be spent.
   // @param _selector Function selector for function to be called.
-  // @param _callParams Packed, encoded parameters
+  // @param _callParams Packed, encoded parameters, omitting the first parameter which is always msg.sender
   function approveAndCallWithSender(
     address _spender,
     uint256 _value,
