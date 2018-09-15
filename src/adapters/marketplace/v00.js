@@ -122,6 +122,36 @@ class V00_MarkeplaceAdapter {
     return Object.assign({ timestamp }, transactionReceipt)
   }
 
+  async initiateDispute(
+    listingIndex,
+    offerIndex,
+    ipfsBytes,
+    confirmationCallback
+  ) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'dispute',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  async resolveDispute(
+    listingIndex,
+    offerIndex,
+    ipfsBytes,
+    ruling,
+    refund,
+    confirmationCallback
+  ) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'executeRuling',
+      [listingIndex, offerIndex, ipfsBytes, ruling, refund],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
   async getListing(listingId) {
     await this.getContract()
 

@@ -206,10 +206,54 @@ class Marketplace {
   }
 
   // setOfferRefund(listingId, offerId, data) {}
-
-  // initiateDispute(listingId, offerId) {}
-  // disputeRuling(listingId, offerId, data) {}
   // manageListingDeposit(listingId, data) {}
+
+  /**
+   * Initiate a dispute regarding an offer. Puts the offer into "Disputed" status. 
+   * @param {string} listingId - Listing ID
+   * @param {string} offerId - Offer ID
+   * @param {object} ipfsData - Data to store in IPFS. For future use, currently empty.
+   * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
+   * @return {Promise<{timestamp, ...transactionReceipt}>}
+   */
+  async initiateDispute(listingId, offerId, ipfsData = {}, confirmationCallback) {
+    const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, ipfsData)
+    const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+
+    return await this.resolver.initiateDispute(listingId, offerId, ipfsBytes, confirmationCallback)
+  }
+
+  /**
+   * Resolve a dispute by executing a ruling - either refund to buyer or payment to seller
+   * @param {string} listingId - Listing ID
+   * @param {string} offerId - Offer ID
+   * @param {object} ipfsData - Data to store in IPFS. For future use, currently empty.
+   * @param {number} ruling - 0: Seller, 1: Buyer, 2: Com + Seller, 3: Com + Buyer
+   * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
+   * @return {Promise<{timestamp, ...transactionReceipt}>}
+   */
+  async resolveDispute(
+    listingId,
+    offerId,
+    ipfsData = {},
+    ruling,
+    confirmationCallback
+  ) {
+    const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, ipfsData)
+    const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    const offerData = await this.getOffer(offerId) || {}
+    const offerType = offerData.unitOffer ? 'unitOffer' : 'fractionalOffer'
+    const offerPrice = offerData[offerType].totalPrice.amount
+
+    return await this.resolver.resolveDispute(
+      listingId,
+      offerId,
+      ipfsBytes,
+      ruling,
+      offerPrice,
+      confirmationCallback
+    )
+  }
 
   /**
    * Adds data to either a listing or an offer.

@@ -151,6 +151,39 @@ class MarketplaceResolver {
     )
   }
 
+  async initiateDispute(
+    listingId,
+    offerId,
+    ipfsBytes,
+    confirmationCallback
+  ) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+
+    return await adapter.initiateDispute(
+      listingIndex,
+      offerIndex,
+      ipfsBytes,
+      confirmationCallback
+    )
+  }
+
+  async resolveDispute(
+    listingId,
+    offerId,
+    ipfsData = {},
+    ruling,
+    confirmationCallback
+  ) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+
+    return await adapter.resolveDispute(
+      listingIndex,
+      offerIndex,
+      ipfsBytes,
+      confirmationCallback
+    )
+  }
+
   async addData(listingId, offerId, ipfsBytes, confirmationCallback) {
     if (offerId) {
       const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
