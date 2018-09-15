@@ -93,7 +93,7 @@ contract OriginToken is BurnableToken, MintableToken, WhitelistedPausableToken {
 
     require(super.approve(_spender, _value), "approve failed");
 
-    bytes memory callData = abi.encodePacked(_selector, msg.sender, _callParams);
+    bytes memory callData = abi.encodePacked(_selector, uint256(msg.sender), _callParams);
     // solium-disable-next-line security/no-call-value
     require(_spender.call.value(msg.value)(callData), "proxied call failed");
     return true;

@@ -528,7 +528,7 @@ describe('Marketplace.sol', async function() {
       )
       const params = web3.eth.abi.encodeParameters(
         ['bytes32', 'uint', 'address'],
-        [IpfsHash, 5, Seller2]
+        [IpfsHash, 5, ArbitratorAddr]
       )
 
       await OriginToken.methods
