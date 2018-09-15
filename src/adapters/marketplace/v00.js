@@ -13,6 +13,7 @@ class V00_MarkeplaceAdapter {
     this.web3 = contractService.web3
     this.contractService = contractService
     this.contractName = 'V00_Marketplace'
+    this.tokenContractName = 'OriginToken'
   }
 
   async getContract() {
@@ -44,11 +45,25 @@ class V00_MarkeplaceAdapter {
   ) {
     const from = await this.contractService.currentAccount()
 
-    const { transactionReceipt, timestamp } = await this.call(
-      'createListing',
-      [ipfsBytes, deposit, arbitrator || from],
-      { from, confirmationCallback }
-    )
+    let result
+    if (deposit && this.web3.toBN(deposit) > 0)
+    {
+      const {market_address, selector, call_params} = await this._getTokenCreateListingParams(ipfsBytes, deposit, arbitrator || from)
+
+      result = await this.contractService.call( 
+        this.tokenContractName, 'approveAndCallWithSender', 
+        [market_address, deposit, selector, call_params],
+        { from, confirmationCallback } )
+    }
+    else
+    {
+      result = await this.call(
+        'createListing',
+        [ipfsBytes, deposit, arbitrator || from],
+        { from, confirmationCallback }
+      )
+    }
+    const { transactionReceipt, timestamp } = result
     const listingIndex =
       transactionReceipt.events['ListingCreated'].returnValues.listingID
     return Object.assign({ timestamp, listingIndex }, transactionReceipt)
@@ -328,6 +343,26 @@ class V00_MarkeplaceAdapter {
 
   padTopic(id) {
     return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
+  }
+
+  async _getTokenCreateListingParams(/*variable argument accepted here*/) {
+    const contract = await this.getContract()
+    for (const call of contract.options.jsonInterface)
+    {
+      if (call.name == 'createListingWithSender' && call.type == 'function' && call.signature)
+      {
+        const market_address = contract.options.address
+        // take out the first parameter which is hopefully the seller address
+        const input_types = call.inputs.slice(1).map(e => e.type)
+        if (input_types.length != arguments.length){
+          throw('The number of parameters passed does not match the contract parameters')
+        }
+        const call_params = this.web3.eth.abi.encodeParameters(input_types, arguments)
+        const selector = call.signature
+        return {market_address, selector, call_params}
+      }
+    }
+    throw('Invalid Marketplace contract for getting create parameters')
   }
 }
 
