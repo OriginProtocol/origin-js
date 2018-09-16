@@ -6,6 +6,7 @@ const OFFER_STATUS = [
   'finalized',
   'sellerReviewed'
 ]
+const SUPPORTED_DEPOSIT_CURRENCIES = ['OGN']
 const emptyAddress = '0x0000000000000000000000000000000000000000'
 
 class V00_MarkeplaceAdapter {
@@ -40,23 +41,28 @@ class V00_MarkeplaceAdapter {
 
   async createListing(
     ipfsBytes,
-    { deposit = '0', arbitrator },
+    { deposit = '0', arbitrator, commission = {} },
     confirmationCallback
   ) {
     const from = await this.contractService.currentAccount()
+    const { amount, currency } = commission
 
+    if (currency && !SUPPORTED_DEPOSIT_CURRENCIES.includes(currency)) {
+      throw(`${currency} is not a supported deposit currency`)
+    }
     let result
-    if (deposit && this.web3.toBN(deposit) > 0)
-    {
+    if (amount > 0) {
+      deposit = this.contractService.web3.utils.toWei(
+        amount.toString()
+      )
+
       const {market_address, selector, call_params} = await this._getTokenCreateListingParams(ipfsBytes, deposit, arbitrator || from)
 
       result = await this.contractService.call( 
         this.tokenContractName, 'approveAndCallWithSender', 
         [market_address, deposit, selector, call_params],
         { from, confirmationCallback } )
-    }
-    else
-    {
+    } else {
       result = await this.call(
         'createListing',
         [ipfsBytes, deposit, arbitrator || from],
@@ -346,12 +352,12 @@ class V00_MarkeplaceAdapter {
   }
 
   async _getTokenCreateListingParams(/*variable argument accepted here*/) {
-    const contract = await this.getContract()
-    for (const call of contract.options.jsonInterface)
+    await this.getContract()
+    for (const call of this.contract.options.jsonInterface)
     {
-      if (call.name == 'createListingWithSender' && call.type == 'function' && call.signature)
+      if (call.name === 'createListingWithSender' && call.type === 'function' && call.signature)
       {
-        const market_address = contract.options.address
+        const market_address = this.contract.options.address
         // take out the first parameter which is hopefully the seller address
         const input_types = call.inputs.slice(1).map(e => e.type)
         if (input_types.length != arguments.length){
