@@ -209,4 +209,15 @@ describe('Marketplace Resource', function() {
       expect(notifications[0].status).to.equal('read')
     })
   })
+
+  describe('initiateDispute', () => {
+    it('should put an offer into "Disputed" state', async () => {
+      await marketplace.acceptOffer('999-001-0-0')
+      let offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('accepted')
+      await marketplace.initiateDispute('999-001-0-0')
+      offer = await marketplace.getOffer('999-001-0-0-0')
+      expect(offer.status).to.equal('disputed')
+    })
+  })
 })
