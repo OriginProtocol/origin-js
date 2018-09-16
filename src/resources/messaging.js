@@ -518,9 +518,9 @@ class Messaging extends ResourceBase {
   }
 
   getSharedKeys(room_id) {
-    const { keys } = this.convs[room_id]
+    const room = this.convs[room_id]
 
-    return keys || []
+    return room ? (room.keys || []) : []
   }
 
   getConvo(eth_address) {
