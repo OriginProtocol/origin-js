@@ -41,10 +41,15 @@ class V00_MarkeplaceAdapter {
 
   async createListing(
     ipfsBytes,
-    { deposit = '0', arbitrator },
+    { deposit = '0', arbitrator, commission },
     confirmationCallback
   ) {
     const from = await this.contractService.currentAccount()
+    deposit = commission && commission.amount || '0'
+
+    if (deposit !== '0') {
+      deposit = (Number(deposit)*10**18).toString()
+    }    
 
     const { transactionReceipt, timestamp } = await this.call(
       'createListing',

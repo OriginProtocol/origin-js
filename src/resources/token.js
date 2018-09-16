@@ -16,6 +16,10 @@ class Token extends ResourceBase {
     this.getTokenAddress = async function() {
       return await marketplace.getTokenAddress()
     }
+
+    this.contractService = contractService
+    this.marketplace = marketplace
+    this.contractName = 'OriginToken'
   }
 
   /**
@@ -53,6 +57,62 @@ class Token extends ResourceBase {
   async isPaused() {
     await this.getContract()
     return await this.contract.methods.paused().call()
+  }
+
+  /**
+   * Relays calls to the contract service
+   */
+  async call(methodName, args, opts) {
+    return await this.contractService.call(
+      this.contractName,
+      methodName,
+      args,
+      opts
+    )
+  }
+
+  async setMarketplaceContractAddress() {
+    if (!this.marketplaceContractAddress) {
+      const { marketplace, contractService } = this
+      const { currentVersion, adapters } = marketplace
+      const { web3 } = contractService
+      const contractName = adapters[currentVersion].contractName
+      const networkId = await web3.eth.net.getId()
+      this.marketplaceContractAddress = contractService.contracts[contractName].networks[networkId].address
+    }
+  }
+
+  /**
+   * Approve the marketplace contract to transfer OGN on behalf of the seller.
+   */
+  async approveContract(numTokens, confirmationCallback) {
+    await this.getContract()
+    await this.setMarketplaceContractAddress()
+
+    const { transactionReceipt, timestamp } = await this.call(
+      'approve',
+      [this.marketplaceContractAddress, numTokens],
+      { confirmationCallback }
+    )
+
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  /**
+   * Get the total allowance of OGN that the marketplace contract has been approved to transfer
+   */
+  async getAllowance(tokenOwnerAddress) {
+    await this.getContract()
+    await this.setMarketplaceContractAddress()
+
+    const allowanceRemaining = await this.call(
+      'allowance',
+      [tokenOwnerAddress, this.marketplaceContractAddress],
+    )
+    
+    const allowanceNum = parseFloat(allowanceRemaining)
+
+    return allowanceNum / 10 ** this.decimals
   }
 }
 
