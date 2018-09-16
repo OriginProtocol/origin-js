@@ -151,11 +151,7 @@ class MarketplaceResolver {
     )
   }
 
-  async initiateDispute(
-    offerId,
-    ipfsBytes,
-    confirmationCallback
-  ) {
+  async initiateDispute(offerId, ipfsBytes, confirmationCallback) {
     const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
 
     return await adapter.initiateDispute(
