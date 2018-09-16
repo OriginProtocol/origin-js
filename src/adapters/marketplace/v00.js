@@ -351,19 +351,17 @@ class V00_MarkeplaceAdapter {
     return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
   }
 
-  async _getTokenCreateListingParams(/*variable argument accepted here*/) {
+  async _getTokenCreateListingParams(...args) {
     await this.getContract()
-    for (const call of this.contract.options.jsonInterface)
-    {
-      if (call.name === 'createListingWithSender' && call.type === 'function' && call.signature)
-      {
+    for (const call of this.contract.options.jsonInterface) {
+      if (call.name === 'createListingWithSender' && call.type === 'function' && call.signature) {
         const market_address = this.contract.options.address
         // take out the first parameter which is hopefully the seller address
         const input_types = call.inputs.slice(1).map(e => e.type)
-        if (input_types.length != arguments.length){
+        if (input_types.length != args.length){
           throw('The number of parameters passed does not match the contract parameters')
         }
-        const call_params = this.web3.eth.abi.encodeParameters(input_types, arguments)
+        const call_params = this.web3.eth.abi.encodeParameters(input_types, args)
         const selector = call.signature
         return {market_address, selector, call_params}
       }
