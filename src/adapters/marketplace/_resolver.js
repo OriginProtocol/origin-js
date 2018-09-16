@@ -152,7 +152,6 @@ class MarketplaceResolver {
   }
 
   async initiateDispute(
-    listingId,
     offerId,
     ipfsBytes,
     confirmationCallback
@@ -170,7 +169,7 @@ class MarketplaceResolver {
   async resolveDispute(
     listingId,
     offerId,
-    ipfsData = {},
+    ipfsBytes,
     ruling,
     confirmationCallback
   ) {

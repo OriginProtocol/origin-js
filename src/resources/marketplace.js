@@ -7,6 +7,7 @@ import {
   LISTING_WITHDRAW_DATA_TYPE,
   OFFER_DATA_TYPE,
   OFFER_ACCEPT_DATA_TYPE,
+  DISPUTE_DATA_TYPE,
   REVIEW_DATA_TYPE,
   IpfsDataStore,
 } from '../services/data-store-service'
@@ -210,17 +211,16 @@ class Marketplace {
 
   /**
    * Initiate a dispute regarding an offer. Puts the offer into "Disputed" status. 
-   * @param {string} listingId - Listing ID
    * @param {string} offerId - Offer ID
-   * @param {object} ipfsData - Data to store in IPFS. For future use, currently empty.
+   * @param {object} disputeData - Data describing this dispute - stored in IPFS
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
    * @return {Promise<{timestamp, ...transactionReceipt}>}
    */
-  async initiateDispute(listingId, offerId, ipfsData = {}, confirmationCallback) {
-    const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, ipfsData)
+  async initiateDispute(offerId, disputeData = {}, confirmationCallback) {
+    const ipfsHash = await this.ipfsDataStore.save(DISPUTE_DATA_TYPE, disputeData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    return await this.resolver.initiateDispute(listingId, offerId, ipfsBytes, confirmationCallback)
+    return await this.resolver.initiateDispute(offerId, ipfsBytes, confirmationCallback)
   }
 
   /**

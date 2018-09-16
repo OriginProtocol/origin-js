@@ -4,6 +4,7 @@ export const LISTING_DATA_TYPE = 'listing'
 export const LISTING_WITHDRAW_DATA_TYPE = 'listing-withdraw'
 export const OFFER_DATA_TYPE = 'offer'
 export const OFFER_ACCEPT_DATA_TYPE = 'offer-accept'
+export const DISPUTE_DATA_TYPE = 'dispute'
 export const PROFILE_DATA_TYPE = 'profile'
 export const REVIEW_DATA_TYPE = 'review'
 
@@ -12,6 +13,7 @@ const DATA_TYPES = [
   LISTING_WITHDRAW_DATA_TYPE,
   OFFER_DATA_TYPE,
   OFFER_ACCEPT_DATA_TYPE,
+  DISPUTE_DATA_TYPE,
   REVIEW_DATA_TYPE,
   PROFILE_DATA_TYPE,
 ]
