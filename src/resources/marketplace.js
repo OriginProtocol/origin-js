@@ -116,8 +116,10 @@ class Marketplace {
         )
       }
       const listingCommision = listing.commission && listing.commission.amount
+      const currency = this.contractService.currencies[listingCurrency]
+      const currencyAddress = currency && currency.address
 
-      if (this.contractService.currencies[listingCurrency].address !== chainOffer.currency) {
+      if (currencyAddress !== chainOffer.currency) {
         throw new Error('Invalid offer: currency does not match listing')
       }
 
