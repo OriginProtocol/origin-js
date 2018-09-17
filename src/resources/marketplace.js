@@ -12,6 +12,10 @@ import {
 } from '../services/data-store-service'
 import MarketplaceResolver from '../adapters/marketplace/_resolver'
 
+const currencyAddresses = {
+  ETH: '0x0000000000000000000000000000000000000000'
+}
+
 class Marketplace {
   constructor({ contractService, ipfsService, store }) {
     this.contractService = contractService
@@ -74,11 +78,17 @@ class Marketplace {
     if (opts.idsOnly) {
       return offerIds
     } else {
-      return await Promise.all(
+      const allOffers = await Promise.all(
         offerIds.map(offerId => {
-          return this.getOffer(offerId)
+          try {
+            return this.getOffer(offerId)
+          } catch(e) {
+            return null
+          }
         })
       )
+      // filter out invalid offers
+      return allOffers.filter(offer => Boolean(offer))
     }
   }
 
@@ -96,6 +106,33 @@ class Marketplace {
       chainOffer.ipfsHash
     )
     const ipfsOffer = await this.ipfsDataStore.load(OFFER_DATA_TYPE, ipfsHash)
+
+    // validate offers awaiting approval
+    if (chainOffer.status === 'created') {
+      const listing = await this.getListing(listingId)
+
+      const listingCurrency = listing.price && listing.price.currency
+      let listingPrice = listing.price && listing.price.amount
+      if (listingCurrency === 'ETH') {
+        listingPrice = this.contractService.web3.utils.toWei(
+          listingPrice,
+          'ether'
+        )
+      }
+      const listingCommision = listing.commission && listing.commission.amount
+
+      if (currencyAddresses[listingCurrency] !== chainOffer.currency) {
+        throw new Error('Invalid offer: currency does not match listing')
+      }
+
+      if (listingPrice > chainOffer.value) {
+        throw new Error('Invalid offer: insufficient offer amount for listing')
+      }
+
+      if (listingCommision > chainOffer.commission) {
+        throw new Error('Invalid offer: insufficient commission amount for listing')
+      }
+    }
 
     // Create an Offer from on-chain and off-chain data.
     return new Offer(offerId, listingId, chainOffer, ipfsOffer)
