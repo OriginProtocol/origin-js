@@ -190,14 +190,23 @@ class Marketplace {
     const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, offerData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
+    // Convert price to correct units for blockchain
+    let price
+    if (offerData.totalPrice.currency === 'ETH') {
+      price = this.contractService.web3.utils.toWei(
+        offerData.totalPrice.amount,
+        'ether'
+      )
+    } else {
+      // handle ERC20
+      const currency = this.contractService.currencies[offerData.totalPrice.currency]
+      // TODO consider using ERCStandardDetailed.decimals() (for tokens that support this) so that we don't have to track decimals ourselves
+      // https://github.com/OpenZeppelin/openzeppelin-solidity/blob/6c4c8989b399510a66d8b98ad75a0979482436d2/contracts/token/ERC20/ERC20Detailed.sol
+      const currencyDecimals = currency && currency.decimals
+      price = String(Number(offerData.totalPrice.amount) * 10**currencyDecimals)
+    }
+
     // Record the offer on chain.
-    const priceWei = this.contractService.web3.utils.toWei(
-      offerData.totalPrice.amount,
-      'ether'
-    )
-    const price = offerData.totalPrice.currency === 'ETH'
-      ? priceWei
-      : offerData.totalPrice.amount
     return await this.resolver.makeOffer(
       listingId,
       ipfsBytes,
