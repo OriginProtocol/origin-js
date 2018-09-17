@@ -93,14 +93,15 @@ describe('Marketplace Resource', function() {
     })
   })
 
-  // TODO: either don't return withdrawn listings, or have some property that indicates withdraws status
-  describe.skip('withdrawListing', () => {
+  describe('withdrawListing', () => {
     it('should delete a listing', async () => {
       let listings = await marketplace.getListings()
       expect(listings.length).to.equal(1)
-      await marketplace.withdrawListing(listings[0])
+      expect(listings[0].status).to.equal('active')
+      await marketplace.withdrawListing(listings[0].id)
       listings = await marketplace.getListings()
-      expect(listings.length).to.equal(0)
+      expect(listings.length).to.equal(1)
+      expect(listings[0].status).to.equal('inactive')
     })
   })
 
@@ -145,6 +146,16 @@ describe('Marketplace Resource', function() {
     })
   })
 
+  describe('withdrawOffer', () => {
+    it('should delete an offer', async () => {
+      let offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('created')
+      await marketplace.withdrawOffer(offer.id)
+      offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('withdrawn')
+    })
+  })
+
   describe('acceptOffer', () => {
     it('should changed the status to accepted', async () => {
       let offer = await marketplace.getOffer('999-001-0-0')
@@ -163,6 +174,18 @@ describe('Marketplace Resource', function() {
       await marketplace.finalizeOffer('999-001-0-0', reviewData)
       offer = await marketplace.getOffer('999-001-0-0')
       expect(offer.status).to.equal('finalized')
+    })
+  })
+
+  describe('sellerReview', () => {
+    it('should changed the status to sellerReviewed', async () => {
+      let offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('created')
+      await marketplace.acceptOffer('999-001-0-0')
+      await marketplace.finalizeOffer('999-001-0-0', reviewData)
+      await marketplace.addData(0, offer.id, reviewData)
+      offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('sellerReviewed')
     })
   })
 
@@ -207,6 +230,42 @@ describe('Marketplace Resource', function() {
       marketplace.setNotification(notifications[0])
       notifications = await marketplace.getNotifications()
       expect(notifications[0].status).to.equal('read')
+    })
+  })
+
+  describe('initiateDispute', () => {
+    it('should put an offer into "Disputed" state', async () => {
+      await marketplace.acceptOffer('999-001-0-0')
+      let offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('accepted')
+      await marketplace.initiateDispute('999-001-0-0')
+      offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('disputed')
+    })
+  })
+
+  describe('resolveDispute', () => {
+    it('should resolve a disputed offer with a ruling', async () => {
+      const accounts = await web3.eth.getAccounts()
+      const anotherOffer = Object.assign({}, offerData, {
+        arbitrator: accounts[0]
+      })
+      await marketplace.makeOffer('999-001-0', anotherOffer)
+      let offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.equal('created')
+
+      await marketplace.acceptOffer('999-001-0-1')
+      offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.equal('accepted')
+
+      await marketplace.initiateDispute('999-001-0-1')
+      offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.equal('disputed')
+
+      const offerPrice = Web3.utils.toWei(offer.totalPrice.amount)
+      await marketplace.resolveDispute('999-001-0-1', {}, 1, offerPrice)
+      offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.be.equal('ruled')
     })
   })
 })

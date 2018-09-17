@@ -303,7 +303,7 @@ contract V01_Marketplace is Ownable {
     delete offers[listingID][offerID];
   }
 
-  // @dev Update the refund amount
+  // @dev Sets the amount that a seller wants to refund to a buyer.
   function updateRefund(uint listingID, uint offerID, uint _refund, bytes32 _ipfsHash) public {
     Offer storage offer = offers[listingID][offerID];
     Listing storage listing = listings[listingID];
@@ -314,7 +314,7 @@ contract V01_Marketplace is Ownable {
     emit OfferData(msg.sender, listingID, offerID, _ipfsHash);
   }
 
-  // @dev Refunds buyer in ETH or ERC20
+  // @dev Refunds buyer in ETH or ERC20 - used by 1) executeRuling() and 2) to allow a seller to refund a purchase
   function refundBuyer(uint listingID, uint offerID) private {
     Offer storage offer = offers[listingID][offerID];
     if (address(offer.currency) == 0x0) {
