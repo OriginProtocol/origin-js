@@ -8,6 +8,7 @@ import {
   OFFER_DATA_TYPE,
   OFFER_ACCEPT_DATA_TYPE,
   DISPUTE_DATA_TYPE,
+  RESOLUTION_DATA_TYPE,
   REVIEW_DATA_TYPE,
   IpfsDataStore,
 } from '../services/data-store-service'
@@ -147,7 +148,7 @@ class Marketplace {
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
    * @return {Promise<{listingId, offerId, ...transactionReceipt}>}
    */
-  async makeOffer(listingId, offerData, confirmationCallback) {
+  async makeOffer(listingId, offerData = {}, confirmationCallback) {
     // For V1, we only support quantity of 1.
     if (offerData.unitsPurchased != 1)
       throw new Error(
@@ -163,10 +164,13 @@ class Marketplace {
       offerData.totalPrice.amount,
       'ether'
     )
+
+    offerData.priceWei = priceWei
+
     return await this.resolver.makeOffer(
       listingId,
       ipfsBytes,
-      priceWei,
+      offerData,
       confirmationCallback
     )
   }
@@ -227,30 +231,27 @@ class Marketplace {
    * Resolve a dispute by executing a ruling - either refund to buyer or payment to seller
    * @param {string} listingId - Listing ID
    * @param {string} offerId - Offer ID
-   * @param {object} ipfsData - Data to store in IPFS. For future use, currently empty.
+   * @param {object} resolutionData - Data describing this resolution - stored in IPFS
    * @param {number} ruling - 0: Seller, 1: Buyer, 2: Com + Seller, 3: Com + Buyer
+   * @param {number} refund - Amount (in wei) to be refunded to buyer
    * @param {function(confirmationCount, transactionReceipt)} confirmationCallback
    * @return {Promise<{timestamp, ...transactionReceipt}>}
    */
   async resolveDispute(
-    listingId,
     offerId,
-    ipfsData = {},
+    resolutionData = {},
     ruling,
+    refund,
     confirmationCallback
   ) {
-    const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, ipfsData)
+    const ipfsHash = await this.ipfsDataStore.save(RESOLUTION_DATA_TYPE, resolutionData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
-    const offerData = await this.getOffer(offerId) || {}
-    const offerType = offerData.unitOffer ? 'unitOffer' : 'fractionalOffer'
-    const offerPrice = offerData[offerType].totalPrice.amount
 
     return await this.resolver.resolveDispute(
-      listingId,
       offerId,
       ipfsBytes,
       ruling,
-      offerPrice,
+      refund,
       confirmationCallback
     )
   }

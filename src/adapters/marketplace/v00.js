@@ -86,6 +86,7 @@ class V00_MarkeplaceAdapter {
       currencyAddr || emptyAddress,
       arbitrator || emptyAddress
     ]
+
     const opts = { confirmationCallback }
     if (!currencyAddr) {
       opts.value = priceWei
