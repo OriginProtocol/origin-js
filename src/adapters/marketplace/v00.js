@@ -54,14 +54,15 @@ class V00_MarkeplaceAdapter {
       deposit = this.contractService.web3.utils.toWei(
         amount.toString()
       )
+      const {market_address, selector, call_params} = await this._getTokenAndCallWithSenderParams('createListingWithSender', ipfsBytes, deposit, arbitrator || from)
 
-      const {market_address, selector, call_params} = await this._getTokenCreateListingParams(ipfsBytes, deposit, arbitrator || from)
-
+      // In order to estimate gas correctly, we need to add the call to a create listing since that's called by the token
+      const extra_estimated_gas = await this.contract.methods["createListing"](ipfsBytes, 0, arbitrator || from).estimateGas({from})
 
       const { transactionReceipt, timestamp } = await this.contractService.call( 
         this.tokenContractName, 'approveAndCallWithSender', 
         [market_address, deposit, selector, call_params],
-        { from, confirmationCallback, gas:1000000} ) 
+        { from, confirmationCallback, extra_gas:extra_estimated_gas} ) 
       const events = await this.contract.getPastEvents('ListingCreated', {fromBlock:transactionReceipt.blockNumber, toBlock:transactionReceipt.blockNumber})
 
       for (const e of events)
@@ -362,10 +363,10 @@ class V00_MarkeplaceAdapter {
     return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
   }
 
-  async _getTokenCreateListingParams(...args) {
+  async _getTokenAndCallWithSenderParams(call_name, ...args) {
     await this.getContract()
     for (const call of this.contract.options.jsonInterface) {
-      if (call.name === 'createListingWithSender' && call.type === 'function' && call.signature) {
+      if (call.name === call_name && call.type === 'function' && call.signature) {
         const market_address = this.contract.options.address
         // take out the first parameter which is hopefully the seller address
         const input_types = call.inputs.slice(1).map(e => e.type)
