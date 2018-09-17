@@ -37,16 +37,11 @@ class Discovery {
    * @param filters {object} object with properties: name, value, valueType, operator
    * @returns {Promise<HTTP_Response>}
    */
-  async search(searchQuery, category, filters = []) {
-    const categoryFilterOption = category === 'all'
-      ? ''
-      // category is indexed as upper case
-      : `category: "${category[0].toUpperCase() + category.substring(1)}"`
+  async search(searchQuery, filters = []) {
     const query = `
     {
       listings (
         searchQuery: "${searchQuery}"
-        ${categoryFilterOption}
         filters: [${filters
     .map(filter => {
       return `

@@ -81,18 +81,13 @@ class Listing {
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query, category, filters) {
+  static async search(query, filters) {
     const esQuery = {
       bool: {
         must: [],
         should: [],
         filter: []
       }
-    }
-    if (category !== undefined){
-      esQuery.bool.filter.push({ 
-        term: { category: category } 
-      })
     }
 
     if (query !== undefined && query !== ""){
