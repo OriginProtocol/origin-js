@@ -57,12 +57,12 @@ class V00_MarkeplaceAdapter {
       const {market_address, selector, call_params} = await this._getTokenAndCallWithSenderParams('createListingWithSender', ipfsBytes, deposit, arbitrator || from)
 
       // In order to estimate gas correctly, we need to add the call to a create listing since that's called by the token
-      const extra_estimated_gas = await this.contract.methods["createListing"](ipfsBytes, 0, arbitrator || from).estimateGas({from})
+      const extra_estimated_gas = await this.contract.methods['createListing'](ipfsBytes, 0, arbitrator || from).estimateGas({from})
 
-      const { transactionReceipt, timestamp } = await this.contractService.call( 
-        this.tokenContractName, 'approveAndCallWithSender', 
+      const { transactionReceipt, timestamp } = await this.contractService.call(
+        this.tokenContractName, 'approveAndCallWithSender',
         [market_address, deposit, selector, call_params],
-        { from, confirmationCallback, additionalGas:extra_estimated_gas} ) 
+        { from, confirmationCallback, additionalGas:extra_estimated_gas} )
       const events = await this.contract.getPastEvents('ListingCreated', {fromBlock:transactionReceipt.blockNumber, toBlock:transactionReceipt.blockNumber})
 
       for (const e of events)
