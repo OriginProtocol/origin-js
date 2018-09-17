@@ -83,7 +83,7 @@ class V00_MarkeplaceAdapter {
       affiliate || emptyAddress,
       commission || '0',
       price,
-      this.contractService.currencyAddresses[currency] || emptyAddress,
+      this.contractService.currencies[currency].address,
       arbitrator || emptyAddress
     ]
     const opts = { confirmationCallback }

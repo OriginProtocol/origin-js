@@ -12,8 +12,10 @@ import V01_MarketplaceContract from './../../contracts/build/contracts/V01_Marke
 import bs58 from 'bs58'
 import Web3 from 'web3'
 
+const emptyAddress = '0x0000000000000000000000000000000000000000'
+
 class ContractService {
-  constructor({ web3, contractAddresses, currencyAddresses = {} } = {}) {
+  constructor({ web3, contractAddresses, currencies = {} } = {}) {
     const externalWeb3 = web3 || window.web3
     if (!externalWeb3) {
       throw new Error(
@@ -55,7 +57,10 @@ class ContractService {
       }
     }
 
-    this.currencyAddresses = currencyAddresses
+    this.currencies = Object.assign(
+      { ETH: { address: emptyAddress } },
+      currencies
+    )
   }
 
   // Returns an object that describes how many marketplace

@@ -12,10 +12,6 @@ import {
 } from '../services/data-store-service'
 import MarketplaceResolver from '../adapters/marketplace/_resolver'
 
-const currencyAddresses = {
-  ETH: '0x0000000000000000000000000000000000000000'
-}
-
 class Marketplace {
   constructor({ contractService, ipfsService, store }) {
     this.contractService = contractService
@@ -121,7 +117,7 @@ class Marketplace {
       }
       const listingCommision = listing.commission && listing.commission.amount
 
-      if (currencyAddresses[listingCurrency] !== chainOffer.currency) {
+      if (this.contractService.currencies[listingCurrency].address !== chainOffer.currency) {
         throw new Error('Invalid offer: currency does not match listing')
       }
 
