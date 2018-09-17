@@ -185,7 +185,8 @@ class Listing {
         query: esQueryWithoutFilters,
         _source: ['_id'],
         aggs : {
-          'max_price' : { 'max' : { 'field' : 'price.amount' } }
+          'max_price' : { 'max' : { 'field' : 'price.amount' } },
+          'min_price' : { 'min' : { 'field' : 'price.amount' } }
         }
       }
     })
@@ -207,10 +208,12 @@ class Listing {
     })
 
     const maxPrice = aggregationResponse.aggregations.max_price.value
+    const minPrice = aggregationResponse.aggregations.min_price.value
 
     return {
       listings,
-      max_price: maxPrice ? maxPrice : 0
+      max_price: maxPrice ? maxPrice : 0,
+      min_price: minPrice ? minPrice : 0
     }
   }
 }

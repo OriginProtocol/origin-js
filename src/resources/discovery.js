@@ -63,7 +63,9 @@ class Discovery {
         nodes {
           id
         }
-        maxPrice
+        stats {
+          maxPrice
+        }
       }
     }`
 

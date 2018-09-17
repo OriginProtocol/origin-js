@@ -92,12 +92,17 @@ const typeDefs = gql`
     # reviews(page: Page, order: ReviewOrder, filter: ReviewFilter): ReviewPage
   }
 
+  type Stats {
+    maxPrice: Float
+    minPrice: Float
+  }
+
   type ListingPage { # implements OutputPage
     # pageNumber: Int!
     # itemsPerPage: Int!
     # totalNumberOfPages: Int!
     nodes: [Listing]
-    maxPrice: Float
+    stats: Stats
   }
 
   ######################
@@ -221,7 +226,10 @@ const resolvers = {
         pageNumber: 1,
         itemsPerPage: response.listings.length,
         totalNumberOfPages: 1,
-        maxPrice: response.max_price,
+        stats: {
+          maxPrice: response.max_price,
+          minPrice: response.min_price
+        },
         nodes: response.listings
       }
     },
