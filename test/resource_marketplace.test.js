@@ -39,7 +39,7 @@ class StoreMock {
 }
 
 describe('Marketplace Resource', function() {
-  this.timeout(10000) // default is 2000
+  this.timeout(5000) // default is 2000
   let marketplace, web3
 
   beforeEach(async () => {
