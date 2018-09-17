@@ -43,6 +43,8 @@ export default async function contractServiceHelper(web3) {
     )
   }
 
+await originToken.methods.addCallSpenderWhitelist(v01_marketplace.contractAddress).send({ from: accounts[0], gas: 4000000 })
+
   return new ContractService({
     web3,
     contractAddresses: {
