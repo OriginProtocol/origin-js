@@ -12,6 +12,14 @@ const listingData = Object.assign({}, listingValid)
 const offerData = Object.assign({}, offerValid)
 const reviewData = Object.assign({}, reviewValid)
 
+const invalidCurrencyOffer = Object.assign({}, offerData, {
+  totalPrice: { currency: 'OGN', amount: '1' }
+})
+
+const invalidPriceOffer = Object.assign({}, offerData, {
+  totalPrice: { currency: 'ETH', amount: '0.032' }
+})
+
 class StoreMock {
   constructor() {
     this.storage = {}
@@ -125,6 +133,14 @@ describe('Marketplace Resource', function() {
       expect(offers[1].status).to.equal('created')
       expect(offers[1].unitsPurchased).to.exist
     })
+
+    it('should exclude invalid offers', async () => {
+      await marketplace.makeOffer('999-001-0', invalidPriceOffer)
+      const offers = await marketplace.getOffers('999-001-0')
+      expect(offers.length).to.equal(1)
+      expect(offers[0].status).to.equal('created')
+      expect(offers[0].unitsPurchased).to.exist
+    })
   })
 
   describe('getOffer', () => {
@@ -135,9 +151,6 @@ describe('Marketplace Resource', function() {
     })
 
     it('should throw an error if currency does not match listing', async () => {
-      const invalidCurrencyOffer = Object.assign({}, offerData, {
-        totalPrice: { currency: 'OGN', amount: '1' }
-      })
       await marketplace.makeOffer('999-001-0', invalidCurrencyOffer)
       let errorThrown = false
       let errorMessage
@@ -153,9 +166,6 @@ describe('Marketplace Resource', function() {
 
 
     it('should throw an error if price is not sufficient', async () => {
-      const invalidPriceOffer = Object.assign({}, offerData, {
-        totalPrice: { currency: 'ETH', amount: '0.032' }
-      })
       await marketplace.makeOffer('999-001-0', invalidPriceOffer)
       let errorThrown = false
       let errorMessage
