@@ -28,6 +28,21 @@ export default async function contractServiceHelper(web3) {
     { from: accounts[0], gas: 4000000 }
   )
 
+  const decimals = await dummyContractService.call(
+    'OriginToken',
+    'decimals'
+  )
+
+  // approve usage of tokens by marketplace contract
+  for (let i = 0; i < 10; i++) {
+    await dummyContractService.call(
+      'OriginToken',
+      'approve',
+      [ v01_marketplace.contractAddress, String(100 * 10**decimals) ],
+      { from: accounts[i] }
+    )
+  }
+
   return new ContractService({
     web3,
     contractAddresses: {
