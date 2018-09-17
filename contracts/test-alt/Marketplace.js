@@ -531,10 +531,16 @@ describe('Marketplace.sol', async function() {
         [IpfsHash, 5, ArbitratorAddr]
       )
 
+      const balance_pre = await OriginToken.methods.balanceOf(Seller2).call({from:Seller2})
+
       await OriginToken.methods
         .approveAndCallWithSender(Marketplace._address, 5, fnSig, params)
         .send({ from: Seller2 })
         .once('receipt', trackGas('Create Listing via call'))
+
+      const balance_post = await OriginToken.methods.balanceOf(Seller2).call({from:Seller2})
+      assert.equal(Number(balance_pre), Number(balance_post) + 5)
+
     })
   })
 
