@@ -89,7 +89,7 @@ contract OriginToken is BurnableToken, MintableToken, WhitelistedPausableToken {
     returns (bool)
   {
     require(_spender != address(this), "token contract can't be approved");
-    require(callSpenderWhitelist[_spender], "sender not in whitelist");
+    require(callSpenderWhitelist[_spender], "spender not in whitelist");
 
     require(super.approve(_spender, _value), "approve failed");
 
