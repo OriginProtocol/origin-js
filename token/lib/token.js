@@ -294,7 +294,7 @@ class Token {
           console.log('waiting for transaction receipt')
         }
       } else {
-        this.vlog('still waiting for transaction hash')
+        throw new Error('still waiting for transaction hash')
       }
     })
   }
