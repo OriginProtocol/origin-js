@@ -33,7 +33,6 @@ class Discovery {
    * unexpected. To get JSON result caller should call `await searchResponse.json()` to get the
    * actual JSON.
    * @param searchQuery {string} general search query
-   * @param category {string} one of the supported categories
    * @param filters {object} object with properties: name, value, valueType, operator
    * @returns {Promise<HTTP_Response>}
    */
