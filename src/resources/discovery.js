@@ -65,6 +65,7 @@ class Discovery {
         }
         stats {
           maxPrice
+          minPrice
         }
       }
     }`
