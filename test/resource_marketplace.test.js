@@ -138,11 +138,11 @@ describe('Marketplace Resource', function() {
   describe('makeOffer', () => {
     it('should make an offer', async () => {
       const anotherOffer = Object.assign({}, offerData, {
-        totalPrice: { currency: 'ETH', amount: '0.02' }
+        totalPrice: { currency: 'ETH', amount: '0.033' }
       })
       await marketplace.makeOffer('999-001-0', anotherOffer)
       const offer = await marketplace.getOffer('999-001-0-1')
-      expect(offer.totalPrice.amount).to.equal('0.02')
+      expect(offer.totalPrice.amount).to.equal('0.033')
     })
   })
 
