@@ -12,7 +12,11 @@ const listingData = Object.assign({}, listingValid)
 const offerData = Object.assign({}, offerValid)
 const reviewData = Object.assign({}, reviewValid)
 
-const invalidCurrencyOffer = Object.assign({}, offerData, {
+const originTokenListing = Object.assign({}, listingData, {
+  price: { currency: 'OGN', amount: '1' }
+})
+
+const originTokenOffer = Object.assign({}, offerData, {
   totalPrice: { currency: 'OGN', amount: '1' }
 })
 
@@ -151,7 +155,7 @@ describe('Marketplace Resource', function() {
     })
 
     it('should throw an error if currency does not match listing', async () => {
-      await marketplace.makeOffer('999-001-0', invalidCurrencyOffer)
+      await marketplace.makeOffer('999-001-0', originTokenOffer)
       let errorThrown = false
       let errorMessage
       try {
@@ -188,6 +192,14 @@ describe('Marketplace Resource', function() {
       await marketplace.makeOffer('999-001-0', anotherOffer)
       const offer = await marketplace.getOffer('999-001-0-1')
       expect(offer.totalPrice.amount).to.equal('0.033')
+    })
+
+    it('should make an offer in ERC20', async () => {
+      await marketplace.createListing(originTokenListing)
+      await marketplace.makeOffer('999-001-1', originTokenOffer)
+      const offer = await marketplace.getOffer('999-001-1-0')
+      expect(offer.totalPrice.amount).to.equal('1')
+      expect(offer.totalPrice.currency).to.equal('OGN')
     })
   })
 
