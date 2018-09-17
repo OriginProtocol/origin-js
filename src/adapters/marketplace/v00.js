@@ -50,7 +50,6 @@ class V00_MarkeplaceAdapter {
     if (currency && !SUPPORTED_DEPOSIT_CURRENCIES.includes(currency)) {
       throw(`${currency} is not a supported deposit currency`)
     }
-    let result
     if (amount > 0) {
       deposit = this.contractService.web3.utils.toWei(
         amount.toString()
@@ -58,21 +57,33 @@ class V00_MarkeplaceAdapter {
 
       const {market_address, selector, call_params} = await this._getTokenCreateListingParams(ipfsBytes, deposit, arbitrator || from)
 
-      result = await this.contractService.call( 
+
+      const { transactionReceipt, timestamp } = await this.contractService.call( 
         this.tokenContractName, 'approveAndCallWithSender', 
         [market_address, deposit, selector, call_params],
-        { from, confirmationCallback } )
+        { from, confirmationCallback, gas:1000000} ) 
+      const events = await this.contract.getPastEvents('ListingCreated', {fromBlock:transactionReceipt.blockNumber, toBlock:transactionReceipt.blockNumber})
+
+      for (const e of events)
+      {
+        if (e.transactionHash == transactionReceipt.transactionHash)
+        {
+          const listingIndex =
+            e.returnValues.listingID
+          return Object.assign({ timestamp, listingIndex }, transactionReceipt)
+        }
+      }
     } else {
-      result = await this.call(
+      const { transactionReceipt, timestamp } = await this.call(
         'createListing',
         [ipfsBytes, deposit, arbitrator || from],
         { from, confirmationCallback }
       )
+      const listingIndex =
+        transactionReceipt.events['ListingCreated'].returnValues.listingID
+      return Object.assign({ timestamp, listingIndex }, transactionReceipt)
+
     }
-    const { transactionReceipt, timestamp } = result
-    const listingIndex =
-      transactionReceipt.events['ListingCreated'].returnValues.listingID
-    return Object.assign({ timestamp, listingIndex }, transactionReceipt)
   }
 
   async withdrawListing(listingId, ipfsBytes, confirmationCallback) {
