@@ -133,6 +133,41 @@ describe('Marketplace Resource', function() {
       expect(offer.status).to.equal('created')
       expect(offer.unitsPurchased).to.exist
     })
+
+    it('should throw an error if currency does not match listing', async () => {
+      const invalidCurrencyOffer = Object.assign({}, offerData, {
+        totalPrice: { currency: 'OGN', amount: '1' }
+      })
+      await marketplace.makeOffer('999-001-0', invalidCurrencyOffer)
+      let errorThrown = false
+      let errorMessage
+      try {
+        await marketplace.getOffer('999-001-0-1')
+      } catch(e) {
+        errorThrown = true
+        errorMessage = String(e)
+      }
+      expect(errorThrown).to.be.true
+      expect(errorMessage).to.equal('Error: Invalid offer: currency does not match listing')
+    })
+
+
+    it('should throw an error if price is not sufficient', async () => {
+      const invalidPriceOffer = Object.assign({}, offerData, {
+        totalPrice: { currency: 'ETH', amount: '0.032' }
+      })
+      await marketplace.makeOffer('999-001-0', invalidPriceOffer)
+      let errorThrown = false
+      let errorMessage
+      try {
+        await marketplace.getOffer('999-001-0-1')
+      } catch(e) {
+        errorThrown = true
+        errorMessage = String(e)
+      }
+      expect(errorThrown).to.be.true
+      expect(errorMessage).to.equal('Error: Invalid offer: insufficient offer amount for listing')
+    })
   })
 
   describe('makeOffer', () => {
