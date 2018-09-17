@@ -30,10 +30,18 @@ const NAMES = [
   '계룡/鷄龍',
   'Urist'
 ]
-const CATEGORIES = ['Housing', 'Collectibles', 'For Sale', 'Services']
+const CATEGORIES = {
+  'For Sale': ['Arts & Crafts', 'Farm & Garden', 'Heavy Equipment', 'Tickets'],
+  Housing: ['Apts/Housing for Rent', 'Real Estate', 'Vacation Rentals'],
+  Services: ['Dog Walking', 'Handyman', 'Software Developement']
+}
+
+function randomPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
 
 function randomWord() {
-  return WORDLIST[Math.floor(Math.random() * WORDLIST.length)]
+  return randomPick(WORDLIST)
 }
 
 function randomTitleWord() {
@@ -97,6 +105,8 @@ async function createSampleData() {
     const price = Math.floor(Math.pow(Math.random() * 10, 3.0)) / 100.0
     const commission = Math.floor(Math.random() * 1000)
     const description = `${randomTitleWord()} is ${randomWord()}, ${randomWord()} ${randomWord()}.`
+    const category = randomPick(Object.keys(CATEGORIES))
+    const subCategory = randomPick(CATEGORIES[category])
     console.log(
       chalk` ⬢  Creating listing {bold.hex('#d408f4') ${listingName}} from {bold.hex('#09f4a6') ${userFirst}}`
     )
@@ -104,8 +114,8 @@ async function createSampleData() {
     const newListing = await o.marketplace.createListing({
       listingType: 'unit',
       title: listingName,
-      category: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
-      subCategory: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
+      category: category,
+      subCategory: subCategory,
       language: 'en-US',
       description: description,
       price: { currency: 'ETH', amount: price.toString() },
@@ -122,7 +132,7 @@ async function createSampleData() {
     const user_i = Math.floor(Math.random() * users.length)
     const user = users[user_i]
     const userFirst = NAMES[user_i]
-    const listing = listings[Math.floor(Math.random() * listings.length)]
+    const listing = randomPick(listings)
     o.contractService.web3.eth.defaultAccount = user.address
     console.log(
       chalk`⬢  Creating offer from {bold.hex('#09f4a6') ${userFirst}} for {bold.hex('#d408f4') ${
