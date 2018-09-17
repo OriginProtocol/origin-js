@@ -203,6 +203,16 @@ describe('Marketplace Resource', function() {
     })
   })
 
+  describe('withdrawOffer', () => {
+    it('should delete an offer', async () => {
+      let offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('created')
+      await marketplace.withdrawOffer(offer.id)
+      offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('withdrawn')
+    })
+  })
+
   describe('acceptOffer', () => {
     it('should changed the status to accepted', async () => {
       let offer = await marketplace.getOffer('999-001-0-0')
@@ -277,6 +287,42 @@ describe('Marketplace Resource', function() {
       marketplace.setNotification(notifications[0])
       notifications = await marketplace.getNotifications()
       expect(notifications[0].status).to.equal('read')
+    })
+  })
+
+  describe('initiateDispute', () => {
+    it('should put an offer into "Disputed" state', async () => {
+      await marketplace.acceptOffer('999-001-0-0')
+      let offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('accepted')
+      await marketplace.initiateDispute('999-001-0-0')
+      offer = await marketplace.getOffer('999-001-0-0')
+      expect(offer.status).to.equal('disputed')
+    })
+  })
+
+  describe('resolveDispute', () => {
+    it('should resolve a disputed offer with a ruling', async () => {
+      const accounts = await web3.eth.getAccounts()
+      const anotherOffer = Object.assign({}, offerData, {
+        arbitrator: accounts[0]
+      })
+      await marketplace.makeOffer('999-001-0', anotherOffer)
+      let offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.equal('created')
+
+      await marketplace.acceptOffer('999-001-0-1')
+      offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.equal('accepted')
+
+      await marketplace.initiateDispute('999-001-0-1')
+      offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.equal('disputed')
+
+      const offerPrice = Web3.utils.toWei(offer.totalPrice.amount)
+      await marketplace.resolveDispute('999-001-0-1', {}, 1, offerPrice)
+      offer = await marketplace.getOffer('999-001-0-1')
+      expect(offer.status).to.be.equal('ruled')
     })
   })
 })

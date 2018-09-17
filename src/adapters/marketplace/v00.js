@@ -86,6 +86,7 @@ class V00_MarkeplaceAdapter {
       this.contractService.currencies[currency].address,
       arbitrator || emptyAddress
     ]
+
     const opts = { confirmationCallback }
     if (currency === 'ETH') {
       opts.value = price
@@ -99,6 +100,15 @@ class V00_MarkeplaceAdapter {
     const offerIndex =
       transactionReceipt.events['OfferCreated'].returnValues.offerID
     return Object.assign({ timestamp, offerIndex }, transactionReceipt)
+  }
+
+  async withdrawOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'withdrawOffer',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
   }
 
   async acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
@@ -119,6 +129,31 @@ class V00_MarkeplaceAdapter {
     const { transactionReceipt, timestamp } = await this.call(
       'finalize',
       [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  async initiateDispute(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'dispute',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  async resolveDispute(
+    listingIndex,
+    offerIndex,
+    ipfsBytes,
+    ruling,
+    refund,
+    confirmationCallback
+  ) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'executeRuling',
+      [listingIndex, offerIndex, ipfsBytes, ruling, refund],
       { confirmationCallback }
     )
     return Object.assign({ timestamp }, transactionReceipt)
@@ -154,6 +189,10 @@ class V00_MarkeplaceAdapter {
         offers[event.returnValues.offerID] = { status: 'created', event }
       } else if (event.event === 'OfferAccepted') {
         offers[event.returnValues.offerID] = { status: 'accepted', event }
+      } else if (event.event === 'OfferDisputed') {
+        offers[event.returnValues.offerID] = { status: 'disputed', event }
+      } else if (event.event === 'OfferRuling') {
+        offers[event.returnValues.offerID] = { status: 'resolved', event }
       } else if (event.event === 'OfferFinalized') {
         offers[event.returnValues.offerID] = { status: 'finalized', event }
       } else if (event.event === 'OfferData') {
@@ -253,6 +292,22 @@ class V00_MarkeplaceAdapter {
         rawOffer.status = 7
         break
       }
+
+      if (e.event === 'OfferAccepted') {
+        rawOffer.status = '2'
+      }
+      if (e.event === 'OfferDisputed') {
+        rawOffer.status = '3'
+      }
+      // Override status if offer was deleted from blockchain state
+      if (e.event === 'OfferFinalized') {
+        rawOffer.status = '4'
+      }
+      // TODO: Assumes OfferData event is a seller review
+      if (e.event === 'OfferData') {
+        rawOffer.status = '5'
+      }
+      e.timestamp = timestamp
     }
 
     // Translate status number to string
