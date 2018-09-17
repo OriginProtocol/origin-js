@@ -73,26 +73,48 @@ contract V01_Marketplace is Ownable {
   }
 
   // @dev Seller creates listing
-  function createListing(
+  function createListing(bytes32 _ipfsHash, uint _deposit, address _arbitrator)
+    public
+  {
+    _createListing(msg.sender, _ipfsHash, _deposit, _arbitrator);
+  }
+
+  // @dev Can only be called by token
+  function createListingWithSender(
+    address _seller,
+    bytes32 _ipfsHash,
+    uint _deposit,
+    address _arbitrator
+  )
+    public returns (bool)
+  {
+    require(msg.sender == address(tokenAddr));
+    _createListing(_seller, _ipfsHash, _deposit, _arbitrator);
+    return true;
+  }
+
+  // Private
+  function _createListing(
+    address _seller,
     bytes32 _ipfsHash,  // IPFS JSON with details, pricing, availability
     uint _deposit,      // Deposit in Origin Token
     address _arbitrator // Address of listing arbitrator
   )
-    public
+    private
   {
     /* require(_deposit > 0); // Listings must deposit some amount of Origin Token */
     require(_arbitrator != 0x0); // Must specify an arbitrator
 
     listings.push(Listing({
-      seller: msg.sender,
+      seller: _seller,
       deposit: _deposit,
       arbitrator: _arbitrator
     }));
 
     if (_deposit > 0) {
-      tokenAddr.transferFrom(msg.sender, this, _deposit); // Transfer Origin Token
+      tokenAddr.transferFrom(_seller, this, _deposit); // Transfer Origin Token
     }
-    emit ListingCreated(msg.sender, listings.length - 1, _ipfsHash);
+    emit ListingCreated(_seller, listings.length - 1, _ipfsHash);
   }
 
   // @dev Seller updates listing
@@ -281,7 +303,7 @@ contract V01_Marketplace is Ownable {
     delete offers[listingID][offerID];
   }
 
-  // @dev Update the refund amount
+  // @dev Sets the amount that a seller wants to refund to a buyer.
   function updateRefund(uint listingID, uint offerID, uint _refund, bytes32 _ipfsHash) public {
     Offer storage offer = offers[listingID][offerID];
     Listing storage listing = listings[listingID];
@@ -292,7 +314,7 @@ contract V01_Marketplace is Ownable {
     emit OfferData(msg.sender, listingID, offerID, _ipfsHash);
   }
 
-  // @dev Refunds buyer in ETH or ERC20
+  // @dev Refunds buyer in ETH or ERC20 - used by 1) executeRuling() and 2) to allow a seller to refund a purchase
   function refundBuyer(uint listingID, uint offerID) private {
     Offer storage offer = offers[listingID][offerID];
     if (address(offer.currency) == 0x0) {

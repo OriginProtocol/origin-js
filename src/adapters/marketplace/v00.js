@@ -8,6 +8,7 @@ const OFFER_STATUS = [
   'withdrawn',
   'ruled'
 ]
+const SUPPORTED_DEPOSIT_CURRENCIES = ['OGN']
 const emptyAddress = '0x0000000000000000000000000000000000000000'
 
 class V00_MarkeplaceAdapter {
@@ -15,6 +16,7 @@ class V00_MarkeplaceAdapter {
     this.web3 = contractService.web3
     this.contractService = contractService
     this.contractName = 'V00_Marketplace'
+    this.tokenContractName = 'OriginToken'
   }
 
   async getContract() {
@@ -41,19 +43,50 @@ class V00_MarkeplaceAdapter {
 
   async createListing(
     ipfsBytes,
-    { deposit = '0', arbitrator },
+    { deposit = '0', arbitrator, commission = {} },
     confirmationCallback
   ) {
     const from = await this.contractService.currentAccount()
+    const { amount, currency } = commission
 
-    const { transactionReceipt, timestamp } = await this.call(
-      'createListing',
-      [ipfsBytes, deposit, arbitrator || from],
-      { from, confirmationCallback }
-    )
-    const listingIndex =
-      transactionReceipt.events['ListingCreated'].returnValues.listingID
-    return Object.assign({ timestamp, listingIndex }, transactionReceipt)
+    if (currency && !SUPPORTED_DEPOSIT_CURRENCIES.includes(currency)) {
+      throw(`${currency} is not a supported deposit currency`)
+    }
+    if (amount > 0) {
+      deposit = this.contractService.web3.utils.toWei(
+        amount.toString()
+      )
+      const {market_address, selector, call_params} = await this._getTokenAndCallWithSenderParams('createListingWithSender', ipfsBytes, deposit, arbitrator || from)
+
+      // In order to estimate gas correctly, we need to add the call to a create listing since that's called by the token
+      const extra_estimated_gas = await this.contract.methods['createListing'](ipfsBytes, 0, arbitrator || from).estimateGas({from})
+
+      const { transactionReceipt, timestamp } = await this.contractService.call(
+        this.tokenContractName, 'approveAndCallWithSender',
+        [market_address, deposit, selector, call_params],
+        { from, confirmationCallback, additionalGas:extra_estimated_gas} )
+      const events = await this.contract.getPastEvents('ListingCreated', {fromBlock:transactionReceipt.blockNumber, toBlock:transactionReceipt.blockNumber})
+
+      for (const e of events)
+      {
+        if (e.transactionHash == transactionReceipt.transactionHash)
+        {
+          const listingIndex =
+            e.returnValues.listingID
+          return Object.assign({ timestamp, listingIndex }, transactionReceipt)
+        }
+      }
+    } else {
+      const { transactionReceipt, timestamp } = await this.call(
+        'createListing',
+        [ipfsBytes, deposit, arbitrator || from],
+        { from, confirmationCallback }
+      )
+      const listingIndex =
+        transactionReceipt.events['ListingCreated'].returnValues.listingID
+      return Object.assign({ timestamp, listingIndex }, transactionReceipt)
+
+    }
   }
 
   async withdrawListing(listingId, ipfsBytes, confirmationCallback) {
@@ -86,6 +119,7 @@ class V00_MarkeplaceAdapter {
       currencyAddr || emptyAddress,
       arbitrator || emptyAddress
     ]
+
     const opts = { confirmationCallback }
     if (!currencyAddr) {
       opts.value = priceWei
@@ -99,6 +133,15 @@ class V00_MarkeplaceAdapter {
     const offerIndex =
       transactionReceipt.events['OfferCreated'].returnValues.offerID
     return Object.assign({ timestamp, offerIndex }, transactionReceipt)
+  }
+
+  async withdrawOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'withdrawOffer',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
   }
 
   async acceptOffer(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
@@ -119,6 +162,31 @@ class V00_MarkeplaceAdapter {
     const { transactionReceipt, timestamp } = await this.call(
       'finalize',
       [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  async initiateDispute(listingIndex, offerIndex, ipfsBytes, confirmationCallback) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'dispute',
+      [listingIndex, offerIndex, ipfsBytes],
+      { confirmationCallback }
+    )
+    return Object.assign({ timestamp }, transactionReceipt)
+  }
+
+  async resolveDispute(
+    listingIndex,
+    offerIndex,
+    ipfsBytes,
+    ruling,
+    refund,
+    confirmationCallback
+  ) {
+    const { transactionReceipt, timestamp } = await this.call(
+      'executeRuling',
+      [listingIndex, offerIndex, ipfsBytes, ruling, refund],
       { confirmationCallback }
     )
     return Object.assign({ timestamp }, transactionReceipt)
@@ -154,6 +222,10 @@ class V00_MarkeplaceAdapter {
         offers[event.returnValues.offerID] = { status: 'created', event }
       } else if (event.event === 'OfferAccepted') {
         offers[event.returnValues.offerID] = { status: 'accepted', event }
+      } else if (event.event === 'OfferDisputed') {
+        offers[event.returnValues.offerID] = { status: 'disputed', event }
+      } else if (event.event === 'OfferRuling') {
+        offers[event.returnValues.offerID] = { status: 'resolved', event }
       } else if (event.event === 'OfferFinalized') {
         offers[event.returnValues.offerID] = { status: 'finalized', event }
       } else if (event.event === 'OfferData') {
@@ -253,6 +325,22 @@ class V00_MarkeplaceAdapter {
         rawOffer.status = 7
         break
       }
+
+      if (e.event === 'OfferAccepted') {
+        rawOffer.status = '2'
+      }
+      if (e.event === 'OfferDisputed') {
+        rawOffer.status = '3'
+      }
+      // Override status if offer was deleted from blockchain state
+      if (e.event === 'OfferFinalized') {
+        rawOffer.status = '4'
+      }
+      // TODO: Assumes OfferData event is a seller review
+      if (e.event === 'OfferData') {
+        rawOffer.status = '5'
+      }
+      e.timestamp = timestamp
     }
 
     // Translate status number to string
@@ -340,6 +428,24 @@ class V00_MarkeplaceAdapter {
 
   padTopic(id) {
     return this.web3.utils.padLeft(this.web3.utils.numberToHex(id), 64)
+  }
+
+  async _getTokenAndCallWithSenderParams(call_name, ...args) {
+    await this.getContract()
+    for (const call of this.contract.options.jsonInterface) {
+      if (call.name === call_name && call.type === 'function' && call.signature) {
+        const market_address = this.contract.options.address
+        // take out the first parameter which is hopefully the seller address
+        const input_types = call.inputs.slice(1).map(e => e.type)
+        if (input_types.length != args.length){
+          throw('The number of parameters passed does not match the contract parameters')
+        }
+        const call_params = this.web3.eth.abi.encodeParameters(input_types, args)
+        const selector = call.signature
+        return {market_address, selector, call_params}
+      }
+    }
+    throw('Invalid Marketplace contract for getting create parameters')
   }
 }
 
