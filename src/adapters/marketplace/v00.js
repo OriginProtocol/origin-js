@@ -62,7 +62,7 @@ class V00_MarkeplaceAdapter {
       const { transactionReceipt, timestamp } = await this.contractService.call( 
         this.tokenContractName, 'approveAndCallWithSender', 
         [market_address, deposit, selector, call_params],
-        { from, confirmationCallback, extra_gas:extra_estimated_gas} ) 
+        { from, confirmationCallback, additionalGas:extra_estimated_gas} ) 
       const events = await this.contract.getPastEvents('ListingCreated', {fromBlock:transactionReceipt.blockNumber, toBlock:transactionReceipt.blockNumber})
 
       for (const e of events)

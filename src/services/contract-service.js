@@ -188,7 +188,7 @@ class ContractService {
     contractName,
     functionName,
     args = [],
-    { contractAddress, from, gas, value, confirmationCallback, extra_gas = 0 } = {}
+    { contractAddress, from, gas, value, confirmationCallback, additionalGas = 0 } = {}
   ) {
     const contractDefinition = this.contracts[contractName]
     if (typeof contractDefinition === 'undefined') {
@@ -207,7 +207,7 @@ class ContractService {
       return await method.call(opts)
     }
     // set gas
-    opts.gas = (opts.gas || (await method.estimateGas(opts))) + extra_gas
+    opts.gas = (opts.gas || (await method.estimateGas(opts))) + additionalGas
     const transactionReceipt = await new Promise((resolve, reject) => {
       method
         .send(opts)
