@@ -75,9 +75,9 @@ class Marketplace {
       return offerIds
     } else {
       const allOffers = await Promise.all(
-        offerIds.map(offerId => {
+        offerIds.map(async offerId => {
           try {
-            return this.getOffer(offerId)
+            return await this.getOffer(offerId)
           } catch(e) {
             return null
           }
