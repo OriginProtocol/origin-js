@@ -102,6 +102,7 @@ async function run(config) {
       errorAndExit('--address=ADDRESS needs to be specified')
     }
     await token.setOwner(config.networkId, config.address)
+    console.log(`Contract owner set to ${config.address}`)
     break
   }
   case `owner`: {
