@@ -37,6 +37,9 @@ export default async function contractServiceHelper(web3) {
       V01_Marketplace: {
         999: { address: v01_marketplace.contractAddress }
       }
+    },
+    currencyAddresses: {
+      OGN: originToken.options.address
     }
   })
 }

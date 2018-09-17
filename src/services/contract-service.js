@@ -13,8 +13,8 @@ import bs58 from 'bs58'
 import Web3 from 'web3'
 
 class ContractService {
-  constructor(options = {}) {
-    const externalWeb3 = options.web3 || window.web3
+  constructor({ web3, contractAddresses, currencyAddresses = {} } = {}) {
+    const externalWeb3 = web3 || window.web3
     if (!externalWeb3) {
       throw new Error(
         'web3 is required for Origin.js. Please pass in web3 as a config option.'
@@ -48,12 +48,14 @@ class ContractService {
         this.contracts[name].networks = Object.assign(
           {},
           this.contracts[name].networks,
-          options.contractAddresses[name]
+          contractAddresses[name]
         )
       } catch (e) {
         /* Ignore */
       }
     }
+
+    this.currencyAddresses = currencyAddresses
   }
 
   // Returns an object that describes how many marketplace

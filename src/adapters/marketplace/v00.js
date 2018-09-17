@@ -71,9 +71,9 @@ class V00_MarkeplaceAdapter {
       finalizes,
       affiliate,
       commission,
-      priceWei,
+      price,
       arbitrator,
-      currencyAddr
+      currency
     } = data
 
     const args = [
@@ -82,13 +82,13 @@ class V00_MarkeplaceAdapter {
       finalizes || Math.round(+new Date() / 1000) + 60 * 60 * 24, // 24 hrs
       affiliate || emptyAddress,
       commission || '0',
-      priceWei,
-      currencyAddr || emptyAddress,
+      price,
+      this.contractService.currencyAddresses[currency] || emptyAddress,
       arbitrator || emptyAddress
     ]
     const opts = { confirmationCallback }
-    if (!currencyAddr) {
-      opts.value = priceWei
+    if (currency === 'ETH') {
+      opts.value = price
     }
 
     const { transactionReceipt, timestamp } = await this.call(

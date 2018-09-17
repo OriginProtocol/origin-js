@@ -199,10 +199,14 @@ class Marketplace {
       offerData.totalPrice.amount,
       'ether'
     )
+    const price = offerData.totalPrice.currency === 'ETH'
+      ? priceWei
+      : offerData.totalPrice.amount
     return await this.resolver.makeOffer(
       listingId,
       ipfsBytes,
-      priceWei,
+      price,
+      offerData.totalPrice.currency,
       confirmationCallback
     )
   }
