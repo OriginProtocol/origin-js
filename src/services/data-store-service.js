@@ -3,6 +3,7 @@ import { dataAdapterFactory } from './_data-store-adapter'
 export const LISTING_DATA_TYPE = 'listing'
 export const LISTING_WITHDRAW_DATA_TYPE = 'listing-withdraw'
 export const OFFER_DATA_TYPE = 'offer'
+export const OFFER_WITHDRAW_DATA_TYPE = 'offer-withdraw'
 export const OFFER_ACCEPT_DATA_TYPE = 'offer-accept'
 export const DISPUTE_DATA_TYPE = 'dispute'
 export const RESOLUTION_DATA_TYPE = 'resolution'
@@ -13,6 +14,7 @@ const DATA_TYPES = [
   LISTING_DATA_TYPE,
   LISTING_WITHDRAW_DATA_TYPE,
   OFFER_DATA_TYPE,
+  OFFER_WITHDRAW_DATA_TYPE,
   OFFER_ACCEPT_DATA_TYPE,
   DISPUTE_DATA_TYPE,
   RESOLUTION_DATA_TYPE,
