@@ -8,7 +8,7 @@ const testJavascript = () => {
       '--require',
       'babel-polyfill',
       '--timeout',
-      '10000'
+      '3000'
     ])
     mocha.stdout.pipe(process.stdout)
     mocha.stderr.pipe(process.stderr)
