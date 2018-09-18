@@ -258,9 +258,7 @@ contract V01_Marketplace is Ownable {
     }
     require(offer.status == 2); // Offer must be in state 'Accepted'
     paySeller(listingID, offerID); // Pay seller
-    if (msg.sender == offer.buyer) { // Only pay commission if buyer is finalizing
-      payCommission(listingID, offerID);
-    }
+    payCommission(listingID, offerID);
     emit OfferFinalized(msg.sender, listingID, offerID, _ipfsHash);
     delete offers[listingID][offerID];
   }
