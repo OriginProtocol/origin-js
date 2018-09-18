@@ -175,7 +175,6 @@ class Listing {
       }
     }
 
-    console.log("FROM & SIZE: ", itemsPerPage * (fromPage - 1), itemsPerPage)
     const searchRequest = client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
@@ -201,7 +200,6 @@ class Listing {
     })
 
     const [searchResponse, aggregationResponse] = await Promise.all([searchRequest, aggregationRequest])  
-    console.log("RETURNING LISTING NUMBER & TOTAL:", searchResponse.hits.hits.length, searchResponse.hits.total)
     const listings = []
     searchResponse.hits.hits.forEach((hit) => {
       const listing = {
