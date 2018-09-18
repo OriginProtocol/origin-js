@@ -1,7 +1,6 @@
 import assert from 'assert'
-import helper, { assertRevertWithMessage, contractPath } from '../contracts/test-alt/_helper'
+import helper, { contractPath } from '../contracts/test-alt/_helper'
 import Token from '../token/lib/token'
-import withRetries from '../src/utils/retries'
 
 // These tests are for the token library that the token CLI uses. We don't
 // validate the effects of various operations. That is left to the contract

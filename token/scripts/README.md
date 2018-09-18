@@ -123,6 +123,7 @@ Valid network IDs are:
 * 1 - mainnet
 * 3 - Ropsten
 * 4 - Rinkeby
+* 222 - Origin development network
 * 999 - local blockchain (default)
 
 ## Private keys and mnemonics
@@ -137,6 +138,7 @@ following environment variables:
 | development   | LOCAL_PRIVATE_KEY   | LOCAL_MNEMONIC         |
 | ropsten       | ROPSTEN_PRIVATE_KEY | ROPSTEN_MNEMONIC       |
 | rinkeby       | RINKEBY_PRIVATE_KEY | RINKEBY_MNEMONIC       |
+| origin        | ORIGIN_PRIVATE_KEY  | ORIGIN_MNEMONIC        |
 
 For example, to run against Rinkeby, we could run the following:
 

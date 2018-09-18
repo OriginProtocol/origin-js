@@ -6,7 +6,7 @@ const MAX_RETRY_WAIT_MS = 2 * 60 * 1000
  * @param {function} fn - Async function to retry.
  * @returns - Return value of 'fn' if it succeeded.
  */
-async function withRetries(maxRetries, fn, verbose = true) {
+async function withRetries(maxRetries, fn, verbose) {
   let tryCount = 0
   while (tryCount < maxRetries) {
     try {

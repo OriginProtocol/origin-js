@@ -144,7 +144,7 @@ class Token {
       ) {
         throw new Error('Token should be paused but is not')
       }
-    })
+    }, this.config.verbose)
   }
 
   /**
@@ -171,7 +171,7 @@ class Token {
       ) {
         throw new Error('Token should be unpaused but is not')
       }
-    })
+    }, this.config.verbose)
   }
 
     /**
@@ -207,7 +207,7 @@ class Token {
       ) {
         throw new Error(`New owner should be ${newOwner} but is ${ownerAfterTransaction}`)
       }
-    })
+    }, this.config.verbose)
   }
 
   /**
