@@ -36,7 +36,11 @@ class Discovery {
    * @param filters {object} object with properties: name, value, valueType, operator
    * @returns {Promise<HTTP_Response>}
    */
-  async search(searchQuery, filters = []) {
+  async search(searchQuery, itemsPerPage, fromPage, filters = []) {
+    // from page should be bigger than 0
+    fromPage = Math.max(fromPage, 1)
+    // clamp itemsPerPage between 1 and 12
+    itemsPerPage = Math.min(Math.max(itemsPerPage, 1), 12);
     const query = `
     {
       listings (
@@ -53,10 +57,15 @@ class Discovery {
     `
     })
     .join(',')}]
+    itemsPerPage: ${itemsPerPage}
+    fromPage: ${fromPage}
       ) {
         nodes {
           id
         }
+        pageNumber
+        itemsPerPage
+        totalNumberOfItems
         stats {
           maxPrice
           minPrice

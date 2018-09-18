@@ -19,11 +19,11 @@ const typeDefs = gql`
   ######################
 
   # When querying a set of items, the output is a page.
- # interface OutputPage {
- #   pageNumber: Int!
- #   itemsPerPage: Int!
- #   totalNumberOfPages: Int!
- # }
+  interface OutputPage {
+    pageNumber: Int!
+    itemsPerPage: Int!
+    totalNumberOfItems: Int!
+  }
 
   type Price {
     currency: String!
@@ -71,12 +71,12 @@ const typeDefs = gql`
   #   rating: Int!
   # }
 
-  # type ReviewPage implements OutputPage {
-  #   pageNumber: Int!
-  #   itemsPerPage: Int!
-  #   totalNumberOfPages: Int!
-  #   reviews: [Review]
-  # }
+  #type ReviewPage implements OutputPage {
+  #  pageNumber: Int!
+  #  itemsPerPage: Int!
+  #  totalNumberOfItems: Int!
+  # reviews: [Review]
+  #}
 
   # TODO: Add a status indicating if Listing is sold out.
   type Listing {
@@ -97,10 +97,10 @@ const typeDefs = gql`
     minPrice: Float
   }
 
-  type ListingPage { # implements OutputPage
-    # pageNumber: Int!
-    # itemsPerPage: Int!
-    # totalNumberOfPages: Int!
+  type ListingPage implements OutputPage {
+    pageNumber: Int!
+    itemsPerPage: Int!
+    totalNumberOfItems: Int!
     nodes: [Listing]
     stats: Stats
   }
@@ -201,7 +201,7 @@ const typeDefs = gql`
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    listings(searchQuery: String, filters: [ListingFilter!]): ListingPage,
+    listings(searchQuery: String, filters: [ListingFilter!], itemsPerPage: Int = 10, fromPage: Int = 1): ListingPage,
     listing(id: ID!): Listing,
 
     offers(buyerAddress: ID, listingId: ID): OfferConnection,
@@ -221,16 +221,17 @@ const resolvers = {
   Query: {
     async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
-      let response = await search.Listing.search(args.searchQuery, args.filters)
+      let {listings, max_price, min_price, listings_total} = await search.Listing
+        .search(args.searchQuery, args.filters, args.itemsPerPage, args.fromPage)
       return {
         pageNumber: 1,
-        itemsPerPage: response.listings.length,
-        totalNumberOfPages: 1,
+        itemsPerPage: listings.length,
+        totalNumberOfItems: listings_total,
         stats: {
-          maxPrice: response.max_price,
-          minPrice: response.min_price
+          maxPrice: max_price,
+          minPrice: min_price
         },
-        nodes: response.listings
+        nodes: listings
       }
     },
     async listing(root, args, context, info) {
@@ -280,7 +281,7 @@ const resolvers = {
     //   return {
     //     pageNumber: 1,
     //     itemsPerPage: 1,
-    //     totalNumberOfPages: 1,
+    //     totalNumberOfItems: 1,
     //     reviews: [{
     //       ipfsHash: 'IPFS_H', reviewer: {walletAddress: 'R_WADDR'},
     //       text: 'Great product. Great seller.', rating: 5,

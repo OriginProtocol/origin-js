@@ -78,10 +78,13 @@ class Listing {
   /**
    * Searches for listings.
    * @param {string} query - The search query.
+   * @param {array} filters - Array of filter objects
+   * @param {integer} itemsPerPage - number of items to display per page
+   * @param {integer} fromPage - what page to return results from
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query, filters) {
+  static async search(query, filters, itemsPerPage, fromPage) {
     const esQuery = {
       bool: {
         must: [],
@@ -172,10 +175,13 @@ class Listing {
       }
     }
 
+    console.log("FROM & SIZE: ", itemsPerPage * (fromPage - 1), itemsPerPage)
     const searchRequest = client.search({
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
       body: {
+        from: itemsPerPage * (fromPage - 1),
+        size: itemsPerPage,
         query: boostScoreQuery,
         _source: ['title', 'description', 'price']
       }
@@ -195,7 +201,7 @@ class Listing {
     })
 
     const [searchResponse, aggregationResponse] = await Promise.all([searchRequest, aggregationRequest])  
-
+    console.log("RETURNING LISTING NUMBER & TOTAL:", searchResponse.hits.hits.length, searchResponse.hits.total)
     const listings = []
     searchResponse.hits.hits.forEach((hit) => {
       const listing = {
@@ -212,9 +218,11 @@ class Listing {
 
     const maxPrice = aggregationResponse.aggregations.max_price.value
     const minPrice = aggregationResponse.aggregations.min_price.value
+    const listings_total = searchResponse.hits.total
 
     return {
       listings,
+      listings_total,
       max_price: maxPrice ? maxPrice : 0,
       min_price: minPrice ? minPrice : 0
     }
