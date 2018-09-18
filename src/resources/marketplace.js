@@ -217,6 +217,7 @@ class Marketplace {
       ipfsBytes,
       {
         price,
+        commission: offerData.commission,
         currency: offerData.totalPrice.currency,
         affiliate: offerData.affiliate,
         arbitrator: offerData.arbitrator
