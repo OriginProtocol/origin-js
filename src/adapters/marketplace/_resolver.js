@@ -105,12 +105,11 @@ class MarketplaceResolver {
     )
   }
 
-  async makeOffer(listingId, ipfsBytes, priceWei, confirmationCallback) {
+  async makeOffer(listingId, ipfsBytes, transactionData, confirmationCallback) {
     const { adapter, listingIndex, version, network } = this.parseListingId(
       listingId
     )
 
-    const transactionData = { priceWei } // TODO: add commission, affliliate.
     const transactionReceipt = await adapter.makeOffer(
       listingIndex,
       ipfsBytes,
@@ -158,6 +157,36 @@ class MarketplaceResolver {
       listingIndex,
       offerIndex,
       ipfsBytes,
+      confirmationCallback
+    )
+  }
+
+  async initiateDispute(offerId, ipfsBytes, confirmationCallback) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+
+    return await adapter.initiateDispute(
+      listingIndex,
+      offerIndex,
+      ipfsBytes,
+      confirmationCallback
+    )
+  }
+
+  async resolveDispute(
+    offerId,
+    ipfsBytes,
+    ruling,
+    refund,
+    confirmationCallback
+  ) {
+    const { adapter, listingIndex, offerIndex } = this.parseOfferId(offerId)
+
+    return await adapter.resolveDispute(
+      listingIndex,
+      offerIndex,
+      ipfsBytes,
+      ruling,
+      refund,
       confirmationCallback
     )
   }
