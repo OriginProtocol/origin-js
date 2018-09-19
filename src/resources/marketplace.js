@@ -1,7 +1,9 @@
 import { Listing } from '../models/listing'
 import { Offer } from '../models/offer'
 import { Review } from '../models/review'
+import { Notification } from '../models/notification'
 import { notificationStatuses, storeKeys } from '../models/notification'
+import { generateListingId, generateOfferId } from '../utils/id'
 import {
   LISTING_DATA_TYPE,
   LISTING_WITHDRAW_DATA_TYPE,
@@ -37,7 +39,7 @@ class Marketplace {
   }
 
   async getListings(opts = {}) {
-    const listingIds = await this.resolver.getListingIds()
+    const listingIds = await this.resolver.getListingIds(opts)
 
     if (opts.idsOnly) {
       return listingIds
@@ -111,14 +113,8 @@ class Marketplace {
       const listing = await this.getListing(listingId)
 
       const listingCurrency = listing.price && listing.price.currency
-      let listingPrice = listing.price && listing.price.amount
-      if (listingCurrency === 'ETH') {
-        listingPrice = this.contractService.web3.utils.toWei(
-          listingPrice,
-          'ether'
-        )
-      }
-      const listingCommision = listing.commission && listing.commission.amount
+      const listingPrice = this.contractService.moneyToUnits(listing.price)
+      const listingCommision = this.contractService.moneyToUnits(listing.commission)
       const currency = this.contractService.currencies[listingCurrency]
       const currencyAddress = currency && currency.address
 
@@ -185,42 +181,15 @@ class Marketplace {
    * @return {Promise<{listingId, offerId, ...transactionReceipt}>}
    */
   async makeOffer(listingId, offerData = {}, confirmationCallback) {
-    // For V1, we only support quantity of 1.
-    if (offerData.unitsPurchased != 1)
-      throw new Error(
-        `Attempted to purchase ${offerData.unitsPurchased} - only 1 allowed.`
-      )
-
-    // Save the offer data in IPFS.
+    // TODO: nest offerData.affiliate, offerData.arbitrator, offerData.finalizes under an "_untrustworthy" key
+    // Validate and save the data to IPFS.
     const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, offerData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
 
-    // Convert price to correct units for blockchain
-    let price
-    if (offerData.totalPrice.currency === 'ETH') {
-      price = this.contractService.web3.utils.toWei(
-        offerData.totalPrice.amount,
-        'ether'
-      )
-    } else {
-      // handle ERC20
-      const currency = this.contractService.currencies[offerData.totalPrice.currency]
-      // TODO consider using ERCStandardDetailed.decimals() (for tokens that support this) so that we don't have to track decimals ourselves
-      // https://github.com/OpenZeppelin/openzeppelin-solidity/blob/6c4c8989b399510a66d8b98ad75a0979482436d2/contracts/token/ERC20/ERC20Detailed.sol
-      const currencyDecimals = currency && currency.decimals
-      price = String(Number(offerData.totalPrice.amount) * 10**currencyDecimals)
-    }
-
-    // Record the offer on chain.
     return await this.resolver.makeOffer(
       listingId,
       ipfsBytes,
-      {
-        price,
-        currency: offerData.totalPrice.currency,
-        affiliate: offerData.affiliate,
-        arbitrator: offerData.arbitrator
-      },
+      offerData,
       confirmationCallback
     )
   }
@@ -375,7 +344,29 @@ class Marketplace {
 
   async getNotifications() {
     const party = await this.contractService.currentAccount()
-    return await this.resolver.getNotifications(party)
+    const notifications = await this.resolver.getNotifications(party)
+    return await Promise.all(notifications.map(async (notification) => {
+      if (notification.resources.listingId) {
+        notification.resources.listing = await this.getListing(
+          generateListingId({
+            version: notification.version,
+            network: notification.network,
+            listingIndex: notification.resources.listingId
+          })
+        )
+      }
+      if (notification.resources.offerId) {
+        notification.resources.purchase = await this.getOffer(
+          generateOfferId({
+            version: notification.version,
+            network: notification.network,
+            listingIndex: notification.resources.listingId,
+            offerIndex: notification.resources.offerId
+          })
+        )
+      }
+      return new Notification(notification)
+    }))
   }
 
   async setNotification({ id, status }) {

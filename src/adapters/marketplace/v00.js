@@ -53,9 +53,7 @@ class V00_MarkeplaceAdapter {
       throw(`${currency} is not a supported deposit currency`)
     }
     if (amount > 0) {
-      deposit = this.contractService.web3.utils.toWei(
-        amount.toString()
-      )
+      deposit = this.contractService.moneyToUnits(commission)
       const {market_address, selector, call_params} = await this._getTokenAndCallWithSenderParams('createListingWithSender', ipfsBytes, deposit, arbitrator || from)
 
       // In order to estimate gas correctly, we need to add the call to a create listing since that's called by the token
@@ -100,28 +98,30 @@ class V00_MarkeplaceAdapter {
   }
 
   async makeOffer(listingId, ipfsBytes, data, confirmationCallback) {
-    const {
-      finalizes,
-      affiliate,
-      commission,
-      price,
-      arbitrator,
-      currency
-    } = data
+    const { affiliate, arbitrator, commission, finalizes, totalPrice = {}, unitsPurchased } = data
+    // For V1, we only support quantity of 1.
+    if (unitsPurchased != 1)
+      throw new Error(
+        `Attempted to purchase ${unitsPurchased} - only 1 allowed.`
+      )
+
+    const price = this.contractService.moneyToUnits(totalPrice)
+    const commissionUnits = this.contractService.moneyToUnits(commission)
 
     const args = [
       listingId,
       ipfsBytes,
       finalizes || Math.round(+new Date() / 1000) + 60 * 60 * 24, // 24 hrs
       affiliate || emptyAddress,
-      commission || '0',
+      commissionUnits,
       price,
-      this.contractService.currencies[currency].address,
+      this.contractService.currencies[totalPrice.currency].address,
       arbitrator || emptyAddress
     ]
 
     const opts = { confirmationCallback }
-    if (currency === 'ETH') {
+
+    if (totalPrice.currency === 'ETH') {
       opts.value = price
     }
 
@@ -130,8 +130,8 @@ class V00_MarkeplaceAdapter {
       args,
       opts
     )
-    const offerIndex =
-      transactionReceipt.events['OfferCreated'].returnValues.offerID
+    const offerIndex = transactionReceipt.events['OfferCreated'].returnValues.offerID
+
     return Object.assign({ timestamp, offerIndex }, transactionReceipt)
   }
 
