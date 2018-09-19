@@ -7,7 +7,6 @@ import {
   generateNotificationId
 } from '../../utils/id'
 import {
-  Notification,
   readStatus,
   unreadStatus,
   storeKeys
@@ -223,8 +222,9 @@ class MarketplaceResolver {
     // Get all the OfferFinalized events for the listing.
     const listing = await adapter.getListing(listingIndex)
     const reviewEvents = listing.events.filter(
-      e => e.event === 'OfferFinalized'
+      e => e.event === 'OfferFinalized' || e.event === 'OfferData'
     )
+
     return Promise.all(
       reviewEvents.map(async event => {
         const offerIndex = event.returnValues.offerID
@@ -270,25 +270,11 @@ class MarketplaceResolver {
           isWatched && notificationStatuses[notification.id] !== readStatus
             ? unreadStatus
             : readStatus
-        if (notification.resources.listingId) {
-          notification.resources.listing = await this.getListing(
-            `${network}-${version}-${notification.resources.listingId}`
-          )
-        }
-        if (notification.resources.offerId) {
-          notification.resources.purchase = await this.getOffer(
-            `${network}-${version}-${notification.resources.listingId}-${
-              notification.resources.offerId
-            }`
-          )
-        }
+        notification.network = network
+        notification.version = version
       }
 
-      notifications = notifications.concat(
-        rawNotifications.map(rawNotification => {
-          return new Notification(rawNotification)
-        })
-      )
+      notifications = notifications.concat(rawNotifications)
     }
     return notifications
   }
