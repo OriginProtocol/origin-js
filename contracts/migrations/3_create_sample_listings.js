@@ -32,27 +32,27 @@ async function deployContracts(deployer) {
   const marketplace01 = await V01_Marketplace.deployed()
   await createListing(
     marketplace00,
-    '0xd3d6c53a86e51aa5c134642a138689c9d5e9c840320aa3c9f40974efed81ac85',
+    '0x7b27f2daab85a42b504c5136b931ff27aec42ef1c46d4c8b29d51cae7020207f',
     Seller
   )
   await createListing(
     marketplace00,
-    '0x3404c75a36ee9dddd04c551a7b5dba37b9686ef477d38efbd4026977bf45e665',
+    '0xad85d70501546cb0bf59d714708b237ba038344641834bfaa0ab68b3f8357fc6',
     Seller
   )
   await createListing(
     marketplace00,
-    '0x663162b2ef97e7930fa57c846ea800514a05c336385213f48df1dc98f164f188',
+    '0xf1ce5565b9bac277b3d64a7a5b2e2cb31de245e4be2d4707062860cfb7c2cb20',
     Seller
   )
   await createListing(
     marketplace01,
-    '0x0c95bc42292714b6e2b017ad7fa379272fdfa15c40c0845beff40a1e5e590d3d',
+    '0x082d972256b693df54a20b7734a7f97bfc560a05d73efcf18bc4c6af4a45ab25',
     Seller
   )
   await createListing(
     marketplace01,
-    '0xf3236837f5c7c940b2218cc36912784a36731a66608b2b0351e906ea175b2bea',
+    '0x8b81a7fd0c0f9f045fa0b973738a0c7a484d7b89fd78b33348ca70dadc15c0b1',
     Seller
   )
 }
