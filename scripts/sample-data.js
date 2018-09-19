@@ -13,7 +13,7 @@ const Origin = require('../dist/index.js')
 
 // Local Usage:
 // scripts/sampleData.js <number of listings> <number of offers>
-// docker exec -ti origin-js node scripts/sampleData.js 42 17
+// docker exec -ti origin-js node scripts/sample-data.js 42 17
 
 const NUMBER_OF_LISTINGS = parseInt(process.argv[2] || '30')
 const NUMBER_OF_OFFERS = parseInt(process.argv[3] || NUMBER_OF_LISTINGS / 2)
