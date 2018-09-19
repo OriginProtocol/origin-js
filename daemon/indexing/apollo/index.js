@@ -20,8 +20,8 @@ const typeDefs = gql`
 
   # When querying a set of items, the output is a page.
   interface OutputPage {
-    pageNumber: Int!
-    itemsPerPage: Int!
+    offset: Int!
+    numberOfItems: Int!
     totalNumberOfItems: Int!
   }
 
@@ -72,8 +72,8 @@ const typeDefs = gql`
   # }
 
   #type ReviewPage implements OutputPage {
-  #  pageNumber: Int!
-  #  itemsPerPage: Int!
+  #  offset: Int!
+  #  numberOfItems: Int!
   #  totalNumberOfItems: Int!
   # reviews: [Review]
   #}
@@ -98,8 +98,8 @@ const typeDefs = gql`
   }
 
   type ListingPage implements OutputPage {
-    pageNumber: Int!
-    itemsPerPage: Int!
+    offset: Int!
+    numberOfItems: Int!
     totalNumberOfItems: Int!
     nodes: [Listing]
     stats: Stats
@@ -119,8 +119,8 @@ const typeDefs = gql`
   }
 
   input Page {
-    pageNumber: Int!  # Page number.
-    itemsPerPage: Int! # Number of items per page.
+    offset: Int!  # Page number.
+    numberOfItems: Int! # Number of items per page.
   }
 
   input inPrice {
@@ -201,7 +201,7 @@ const typeDefs = gql`
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    listings(searchQuery: String, filters: [ListingFilter!], itemsPerPage: Int = 10, fromPage: Int = 1): ListingPage,
+    listings(searchQuery: String, filters: [ListingFilter!], numberOfItems: Int = 10, offset: Int = 0): ListingPage,
     listing(id: ID!): Listing,
 
     offers(buyerAddress: ID, listingId: ID): OfferConnection,
@@ -221,15 +221,15 @@ const resolvers = {
   Query: {
     async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
-      let {listings, max_price, min_price, listings_total} = await search.Listing
-        .search(args.searchQuery, args.filters, args.itemsPerPage, args.fromPage)
+      let {listings, maxPrice, minPrice, totalNumberOfListings} = await search.Listing
+        .search(args.searchQuery, args.filters, args.numberOfItems, args.offset)
       return {
-        pageNumber: 1,
-        itemsPerPage: listings.length,
-        totalNumberOfItems: listings_total,
+        offset: args.offset,
+        numberOfItems: listings.length,
+        totalNumberOfItems: totalNumberOfListings,
         stats: {
-          maxPrice: max_price,
-          minPrice: min_price
+          maxPrice,
+          minPrice
         },
         nodes: listings
       }
@@ -280,7 +280,7 @@ const resolvers = {
     //   // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
     //   return {
     //     pageNumber: 1,
-    //     itemsPerPage: 1,
+    //     numberOfItems: 1,
     //     totalNumberOfItems: 1,
     //     reviews: [{
     //       ipfsHash: 'IPFS_H', reviewer: {walletAddress: 'R_WADDR'},

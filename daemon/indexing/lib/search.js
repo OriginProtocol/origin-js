@@ -84,7 +84,7 @@ class Listing {
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query, filters, itemsPerPage, fromPage) {
+  static async search(query, filters, itemsPerPage, offset) {
     const esQuery = {
       bool: {
         must: [],
@@ -179,7 +179,7 @@ class Listing {
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
       body: {
-        from: itemsPerPage * (fromPage - 1),
+        from: offset,
         size: itemsPerPage,
         query: boostScoreQuery,
         _source: ['title', 'description', 'price']
@@ -216,13 +216,13 @@ class Listing {
 
     const maxPrice = aggregationResponse.aggregations.max_price.value
     const minPrice = aggregationResponse.aggregations.min_price.value
-    const listings_total = searchResponse.hits.total
+    const totalNumberOfListings = searchResponse.hits.total
 
     return {
       listings,
-      listings_total,
-      max_price: maxPrice ? maxPrice : 0,
-      min_price: minPrice ? minPrice : 0
+      totalNumberOfListings,
+      maxPrice: maxPrice ? maxPrice : 0,
+      minPrice: minPrice ? minPrice : 0
     }
   }
 }
