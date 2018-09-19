@@ -79,12 +79,12 @@ class Listing {
    * Searches for listings.
    * @param {string} query - The search query.
    * @param {array} filters - Array of filter objects
-   * @param {integer} itemsPerPage - number of items to display per page
+   * @param {integer} numberOfItems - number of items to display per page
    * @param {integer} fromPage - what page to return results from
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query, filters, itemsPerPage, offset) {
+  static async search(query, filters, numberOfItems, offset) {
     const esQuery = {
       bool: {
         must: [],
@@ -180,7 +180,7 @@ class Listing {
       type: LISTINGS_TYPE,
       body: {
         from: offset,
-        size: itemsPerPage,
+        size: numberOfItems,
         query: boostScoreQuery,
         _source: ['title', 'description', 'price']
       }
