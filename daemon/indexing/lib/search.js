@@ -48,7 +48,7 @@ class Listing {
   static async get(id) {
     const resp = await client.get({id: id, index: LISTINGS_INDEX, type: LISTINGS_TYPE})
     if(!resp.found){
-      throw Error("Listing not found")
+      throw Error('Listing not found')
     }
     const listing = resp._source
     listing.id = id
@@ -85,8 +85,8 @@ class Listing {
     const esQuery = {
       bool: {
         must: [{
-          "match": {
-            status: "active"
+          match: {
+            status: 'active'
           }
         }],
         should: [],
@@ -94,13 +94,13 @@ class Listing {
       }
     }
 
-    if (query !== undefined && query !== ""){
+    if (query !== undefined && query !== ''){
       // all_text is a field where all searchable fields get copied to
       esQuery.bool.must.push({
         match: {
           all_text: {
             query,
-            fuzziness: "AUTO"
+            fuzziness: 'AUTO'
           }
         }
       })
@@ -110,7 +110,7 @@ class Listing {
           title: {
             query: query,
             boost: 2,
-            fuzziness: "AUTO"
+            fuzziness: 'AUTO'
           }
         }
       })
@@ -251,7 +251,7 @@ class Offer {
   static async get(id) {
     const resp = await client.get({id: id, index: OFFER_INDEX, type: OFFER_TYPE})
     if(!resp.found){
-      throw Error("Offer not found")
+      throw Error('Offer not found')
     }
     return resp._source
   }
@@ -307,7 +307,7 @@ class User {
   static async get(walletAddress) {
     const resp = await client.get({id: walletAddress, index: USER_INDEX, type: USER_TYPE})
     if(!resp.found){
-      throw Error("User not found")
+      throw Error('User not found')
     }
     return resp._source
   }
