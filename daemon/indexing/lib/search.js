@@ -80,7 +80,7 @@ class Listing {
    * @param {string} query - The search query.
    * @param {array} filters - Array of filter objects
    * @param {integer} numberOfItems - number of items to display per page
-   * @param {integer} fromPage - what page to return results from
+   * @param {integer} offset - what page to return results from
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
