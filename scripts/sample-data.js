@@ -31,9 +31,9 @@ const NAMES = [
   'Urist'
 ]
 const CATEGORIES = {
-  forSale: ['artsCrafts', 'farmGarden', 'heavyEquipment', 'tickets'],
-  housing: ['aptsHousingForRent', 'realEstate', 'vacationRentals'],
-  services: ['dogWalking', 'handyman', 'softwareDevelopement']
+  forSale: ['schema.forSale.artsCrafts', 'schema.forSale.farmGarden', 'schema.forSale.heavyEquipment', 'schema.forSale.tickets'],
+  housing: ['schema.housing.aptsHousingForRent', 'schema.housing.realEstate', 'schema.housing.vacationRentals'],
+  services: ['schema.services.dogWalking', 'schema.services.handyman', 'schema.services.softwareDevelopement']
 }
 
 function randomPick(arr) {
