@@ -115,7 +115,7 @@ async function createSampleData() {
       })
       listings.push(await o.marketplace.getListing(newListing.listingId))
     } catch (e){
-      
+      console.log('Error creating a listing: ', e)
     }
   }
 
