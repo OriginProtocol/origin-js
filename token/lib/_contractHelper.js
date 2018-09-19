@@ -118,7 +118,7 @@ class ContractHelper {
             throw new Error('transaction failed')
           }
           if (this.config.multisig) {
-            this.vlog('multi-sig transaction submitted for further signatures')
+            this.vlog('multi-sig transaction submitted: it may require more signatures')
           } else {
             this.vlog('transaction successful')
           }

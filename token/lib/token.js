@@ -42,7 +42,10 @@ class Token extends ContractHelper {
    * @return {string} - Address contract was deployed to.
    */
   contractAddress(networkId) {
-    return this.config.contractAddress || TokenContract.networks[networkId].address
+    return (
+      this.config.contractAddress ||
+      (TokenContract.networks[networkId] && TokenContract.networks[networkId].address)
+    )
   }
 
   /*
@@ -56,6 +59,10 @@ class Token extends ContractHelper {
 
     // Create a token contract objects based on its ABI and address on the network.
     const contractAddress = this.contractAddress(networkId)
+    if (!contractAddress) {
+      console.error('ERROR: Could not get address of OriginToken contract!')
+      process.exit(1)
+    }
     return new web3.eth.Contract(TokenContract.abi, contractAddress)
   }
 
