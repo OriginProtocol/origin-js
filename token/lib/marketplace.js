@@ -1,8 +1,5 @@
-const Web3 = require('web3')
-
 const V00_Marketplace_Contract = require('../../contracts/build/contracts/V00_Marketplace.json')
 const TokenContract = require('../../contracts/build/contracts/OriginToken.json')
-const { withRetries } = require('../../src/utils/retries.js')
 
 const ContractHelper = require('./_contractHelper.js')
 
@@ -27,10 +24,15 @@ class Marketplace extends ContractHelper{
     const web3 = this.web3(networkId)
     const contractObjs = {}
     this.contractJsons.forEach((contract) => {
-      contractObjs[contract.contractName] = new web3.eth.Contract(
-        contract.abi,
-        contract.networks[networkId].address
-      )
+      // In CI, contracts are deployed *after* contract tests run. So, they
+      // won't have any addresses for the local blockchain used by CI. We check
+      // for that here, and the tests will deploy their own contracts.
+      if (contract.networks[networkId] && contract.networks[networkId].address) {
+        contractObjs[contract.contractName] = new web3.eth.Contract(
+          contract.abi,
+          contract.networks[networkId].address
+        )
+      }
     })
     return contractObjs
   }

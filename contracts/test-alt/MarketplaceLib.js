@@ -81,7 +81,6 @@ describe('Marketplace CLI Library', async function() {
 
   it('allows owner to be any address with an empty whitelist', async () => {
     const newOwner = accounts[1]
-    const contractName = 'TestMarketplace'
     setupMarketplaceLib([])
     await MarketplaceLib.setOwner(networkId, testContractName, newOwner)
     assert.equal(newOwner, await MarketplaceContract.methods.owner().call())
