@@ -225,7 +225,7 @@ class V00_MarkeplaceAdapter {
       } else if (event.event === 'OfferDisputed') {
         offers[event.returnValues.offerID] = { status: 'disputed', event }
       } else if (event.event === 'OfferRuling') {
-        offers[event.returnValues.offerID] = { status: 'resolved', event }
+        offers[event.returnValues.offerID] = { status: 'ruled', event }
       } else if (event.event === 'OfferFinalized') {
         offers[event.returnValues.offerID] = { status: 'finalized', event }
       } else if (event.event === 'OfferData') {
@@ -310,11 +310,18 @@ class V00_MarkeplaceAdapter {
         ipfsHash = e.returnValues.ipfsHash
         createdAt = timestamp
         break
+      case 'OfferAccepted':
+        rawOffer.status = 2
+        break
+      case 'OfferDisputed':
+        rawOffer.status = 3
+        break
       // In all cases below, the offer was deleted from the blochain
       // rawOffer fields are set to zero => populate rawOffer.status based on event history.
       case 'OfferFinalized':
         rawOffer.status = 4
         break
+      // TODO: Assumes OfferData event is a seller review
       case 'OfferData':
         rawOffer.status = 5
         break
@@ -326,20 +333,6 @@ class V00_MarkeplaceAdapter {
         break
       }
 
-      if (e.event === 'OfferAccepted') {
-        rawOffer.status = '2'
-      }
-      if (e.event === 'OfferDisputed') {
-        rawOffer.status = '3'
-      }
-      // Override status if offer was deleted from blockchain state
-      if (e.event === 'OfferFinalized') {
-        rawOffer.status = '4'
-      }
-      // TODO: Assumes OfferData event is a seller review
-      if (e.event === 'OfferData') {
-        rawOffer.status = '5'
-      }
       e.timestamp = timestamp
     }
 
