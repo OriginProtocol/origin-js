@@ -201,7 +201,7 @@ const typeDefs = gql`
 
   # The "Query" type is the root of all GraphQL queries.
   type Query {
-    listings(searchQuery: String, filters: [ListingFilter!], numberOfItems: Int = 10, offset: Int = 0): ListingPage,
+    listings(searchQuery: String, filters: [ListingFilter!], page: Page!): ListingPage,
     listing(id: ID!): Listing,
 
     offers(buyerAddress: ID, listingId: ID): OfferConnection,
@@ -222,9 +222,9 @@ const resolvers = {
     async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       let {listings, maxPrice, minPrice, totalNumberOfListings} = await search.Listing
-        .search(args.searchQuery, args.filters, args.numberOfItems, args.offset)
+        .search(args.searchQuery, args.filters, args.page.numberOfItems, args.page.offset)
       return {
-        offset: args.offset,
+        offset: args.page.offset,
         numberOfItems: listings.length,
         totalNumberOfItems: totalNumberOfListings,
         stats: {

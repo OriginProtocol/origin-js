@@ -57,8 +57,10 @@ class Discovery {
     `
     })
     .join(',')}]
-        offset: ${offset}
-        numberOfItems: ${numberOfItems}
+        page:{
+          offset: ${offset}
+          numberOfItems: ${numberOfItems}
+        }
       ) {
         nodes {
           id
