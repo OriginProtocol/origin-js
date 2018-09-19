@@ -103,15 +103,15 @@ async function createSampleData() {
 
     try{
       const newListing = await o.marketplace.createListing({
-      listingType: 'unit',
-      title: listingName,
-      category: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
-      subCategory: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
-      language: 'en-US',
-      description: description,
-      price: { currency: 'ETH', amount: price.toString() },
-      commission: { currency: 'OGN', amount: commission.toString() },
-      unitsTotal: 1
+        listingType: 'unit',
+        title: listingName,
+        category: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
+        subCategory: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
+        language: 'en-US',
+        description: description,
+        price: { currency: 'ETH', amount: price.toString() },
+        commission: { currency: 'OGN', amount: commission.toString() },
+        unitsTotal: 1
       })
       listings.push(await o.marketplace.getListing(newListing.listingId))
     } catch (e){

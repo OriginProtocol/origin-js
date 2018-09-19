@@ -40,7 +40,7 @@ class Discovery {
     // from page should be bigger than 0
     offset = Math.max(offset, 0)
     // clamp numberOfItems between 1 and 12
-    numberOfItems = Math.min(Math.max(numberOfItems, 1), 100);
+    numberOfItems = Math.min(Math.max(numberOfItems, 1), 100)
     const query = `
     {
       listings (
