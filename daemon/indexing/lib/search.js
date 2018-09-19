@@ -84,7 +84,11 @@ class Listing {
   static async search(query, filters) {
     const esQuery = {
       bool: {
-        must: [],
+        must: [{
+          "match": {
+            status: "active"
+          }
+        }],
         should: [],
         filter: []
       }
