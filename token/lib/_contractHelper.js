@@ -46,7 +46,7 @@ class ContractHelper {
 
     const transaction = contract.methods.transferOwnership(newOwner)
     await this.sendTransaction(networkId, transaction, { from: sender })
-    await withRetries(this.retries, async () => {
+    await withRetries({ verbose: this.config.verbose }, async () => {
       const ownerAfterTransaction =
         (await contract.methods.owner().call()).toLowerCase()
       if (
@@ -55,7 +55,7 @@ class ContractHelper {
       ) {
         throw new Error(`New owner should be ${newOwner} but is ${ownerAfterTransaction}`)
       }
-    }, this.config.verbose)
+    })
   }
 
   /**
@@ -110,7 +110,8 @@ class ContractHelper {
 
     // Blocks are mined every ~15 seconds, but it sometimes takes ~40-60 seconds
     // to get a transaction receipt from rinkeby.infura.io.
-    await withRetries(this.retries, async () => {
+    const retryOpts = { maxRetries: 10, verbose: this.config.verbose }
+    await withRetries(retryOpts, async () => {
       if (transactionHash) {
         const receipt = await web3.eth.getTransactionReceipt(transactionHash)
         if (receipt) {
@@ -130,7 +131,7 @@ class ContractHelper {
       } else {
         throw new Error('still waiting for transaction hash')
       }
-    }, this.config.verbose)
+    })
   }
 
   /**
