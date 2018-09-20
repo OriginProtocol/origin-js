@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 
+
 /**
  * @title Contract for enforcing allowed token sender and recipients
  * @dev Until the whitelist expiration expires, this contract only permits

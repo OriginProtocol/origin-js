@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+
 /**
  * @title Interface for interacting with Gnosis MultiSigWallet.
  * @dev Avoids creating an explicit dependency on Gnosis MultiSigWallet, which

@@ -6,6 +6,7 @@ import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/Detail
 
 import "./WhitelistedPausableToken.sol";
 
+
 /**
  * @title Origin token
  * @dev Token that allows minting, burning, and pausing by contract owner

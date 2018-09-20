@@ -4,6 +4,7 @@ import "../../../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.
 import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./OriginToken.sol";
 
+
 /**
  * @title Migrates balances from one token contract to another
  * @dev Migrates all balances from one token contract to another. Both contracts

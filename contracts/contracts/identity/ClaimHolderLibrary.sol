@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
-import './KeyHolderLibrary.sol';
+import "./KeyHolderLibrary.sol";
+
 
 library ClaimHolderLibrary {
   event ClaimAdded(bytes32 indexed claimId, uint256 indexed topic, uint256 scheme, address indexed issuer, bytes signature, bytes data, string uri);
@@ -118,7 +119,7 @@ library ClaimHolderLibrary {
 
   function getClaim(Claims storage _claims, bytes32 _claimId)
       public
-      constant
+      view
       returns(
           uint256 topic,
           uint256 scheme,

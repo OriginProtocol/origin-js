@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
-import './ClaimHolder.sol';
+import "./ClaimHolder.sol";
+
 
 contract ClaimVerifier {
 
@@ -28,7 +29,7 @@ contract ClaimVerifier {
 
   function claimIsValid(ClaimHolder _identity, uint256 topic)
     public
-    constant
+    view
     returns (bool claimValid)
   {
     uint256 foundTopic;

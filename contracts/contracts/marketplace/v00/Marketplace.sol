@@ -9,10 +9,12 @@ import "../../../../node_modules/openzeppelin-solidity/contracts/ownership/Ownab
  * Listings may be priced in Eth or ERC20.
  */
 
+
 contract ERC20 {
   function transfer(address _to, uint256 _value) external returns (bool);
   function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
 }
+
 
 contract V00_Marketplace is Ownable {
 
@@ -63,12 +65,12 @@ contract V00_Marketplace is Ownable {
   }
 
   // @dev Return the total number of listings
-  function totalListings() public constant returns (uint) {
+  function totalListings() public view returns (uint) {
     return listings.length;
   }
 
   // @dev Return the total number of offers
-  function totalOffers(uint listingID) public constant returns (uint) {
+  function totalOffers(uint listingID) public view returns (uint) {
     return offers[listingID].length;
   }
 
