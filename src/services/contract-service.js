@@ -252,11 +252,12 @@ class ContractService {
   }
 
   // Convert money object to correct units for blockchain
-  moneyToUnits(money) {
+  async moneyToUnits(money) {
     if (money.currency === 'ETH') {
       return Web3.utils.toWei(money.amount, 'ether')
     } else {
-      const currency = this.currencies[money.currency]
+      const currencies = await this.currencies()
+      const currency = currencies[money.currency]
       // handle ERC20
       // TODO consider using ERCStandardDetailed.decimals() (for tokens that support this) so that we don't have to track decimals ourselves
       // https://github.com/OpenZeppelin/openzeppelin-solidity/blob/6c4c8989b399510a66d8b98ad75a0979482436d2/contracts/token/ERC20/ERC20Detailed.sol
