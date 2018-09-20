@@ -27,7 +27,7 @@ contract V00_UserRegistry {
 
     /// @dev registerUser(): Add a user to the registry
     function registerUser()
-      public
+        public
     {
         users[tx.origin] = msg.sender;
         emit NewUser(tx.origin, msg.sender);
@@ -35,7 +35,7 @@ contract V00_UserRegistry {
 
     /// @dev clearUser(): Remove user from the registry
     function clearUser()
-      public
+        public
     {
         users[msg.sender] = 0;
     }
