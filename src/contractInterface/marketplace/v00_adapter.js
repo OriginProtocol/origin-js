@@ -310,12 +310,6 @@ class V00_MarkeplaceAdapter {
         ipfsHash = e.returnValues.ipfsHash
         createdAt = timestamp
         break
-      case 'OfferAccepted':
-        rawOffer.status = 2
-        break
-      case 'OfferDisputed':
-        rawOffer.status = 3
-        break
       // In all cases below, the offer was deleted from the blochain
       // rawOffer fields are set to zero => populate rawOffer.status based on event history.
       case 'OfferFinalized':
