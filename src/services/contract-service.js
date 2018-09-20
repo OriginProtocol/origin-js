@@ -1,12 +1,12 @@
-import ClaimHolderRegisteredContract from './../../contracts/build/contracts/ClaimHolderRegistered.json'
-import ClaimHolderPresignedContract from './../../contracts/build/contracts/ClaimHolderPresigned.json'
+import ClaimHolderRegistered from './../../contracts/build/contracts/ClaimHolderRegistered.json'
+import ClaimHolderPresigned from './../../contracts/build/contracts/ClaimHolderPresigned.json'
 import ClaimHolderLibrary from './../../contracts/build/contracts/ClaimHolderLibrary.json'
 import KeyHolderLibrary from './../../contracts/build/contracts/KeyHolderLibrary.json'
-import V00_UserRegistryContract from './../../contracts/build/contracts/V00_UserRegistry.json'
-import OriginIdentityContract from './../../contracts/build/contracts/OriginIdentity.json'
-import OriginTokenContract from './../../contracts/build/contracts/OriginToken.json'
+import V00_UserRegistry from './../../contracts/build/contracts/V00_UserRegistry.json'
+import OriginIdentity from './../../contracts/build/contracts/OriginIdentity.json'
+import OriginToken from './../../contracts/build/contracts/OriginToken.json'
 
-import V00_MarketplaceContract from './../../contracts/build/contracts/V00_Marketplace.json'
+import V00_Marketplace from './../../contracts/build/contracts/V00_Marketplace.json'
 
 import BigNumber from 'bignumber.js'
 import bs58 from 'bs58'
@@ -27,17 +27,15 @@ class ContractService {
     }
     this.web3 = new Web3(externalWeb3.currentProvider)
 
-    this.marketplaceContracts = {
-      V00_Marketplace: V00_MarketplaceContract
-    }
+    this.marketplaceContracts = { V00_Marketplace }
 
     const contracts = Object.assign(
       {
-        V00_UserRegistry: V00_UserRegistryContract,
-        ClaimHolderRegistered: ClaimHolderRegisteredContract,
-        ClaimHolderPresigned: ClaimHolderPresignedContract,
-        OriginIdentity: OriginIdentityContract,
-        OriginToken: OriginTokenContract
+        V00_UserRegistry,
+        ClaimHolderRegistered,
+        ClaimHolderPresigned,
+        OriginIdentity,
+        OriginToken
       },
       this.marketplaceContracts
     )
