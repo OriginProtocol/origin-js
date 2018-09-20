@@ -35,7 +35,7 @@ library ClaimHolderLibrary {
         returns (bytes32 claimRequestId)
     {
         if (msg.sender != address(this)) {
-            require(KeyHolderLibrary.keyHasPurpose( _keyHolderData, keccak256(abi.encodePacked(msg.sender)), 3), "Sender does not have claim signer key");
+            require(KeyHolderLibrary.keyHasPurpose(_keyHolderData, keccak256(abi.encodePacked(msg.sender)), 3), "Sender does not have claim signer key");
         }
 
         bytes32 claimId = keccak256(abi.encodePacked(_issuer, _topic));
@@ -146,7 +146,7 @@ library ClaimHolderLibrary {
     {
         bytes memory sig = new bytes(_length);
         uint256 j = 0;
-        for (uint256 k = _offset; k< _offset + _length; k++) {
+        for (uint256 k = _offset; k < _offset + _length; k++) {
             sig[j] = _str[k];
             j++;
         }

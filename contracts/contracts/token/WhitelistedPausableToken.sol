@@ -32,12 +32,7 @@ contract WhitelistedPausableToken is PausableToken {
     //
 
     modifier allowedTransfer(address _from, address _to) {
-        require(
-            !whitelistActive() ||
-            allowedSenders[_from] ||
-            allowedRecipients[_to],
-            "neither sender nor recipient are allowed"
-        );
+        require(!whitelistActive() || allowedSenders[_from] || allowedRecipients[_to], "neither sender nor recipient are allowed");
         _;
     }
 
