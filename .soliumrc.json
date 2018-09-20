@@ -6,6 +6,7 @@
   "rules": {
     "security/no-inline-assembly": "off",
     "security/no-tx-origin": "off",
+    "security/no-block-members": "off",
     "max-len": "off",
     "no-empty-blocks": "off",
     "quotes": [
