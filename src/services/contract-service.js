@@ -58,6 +58,7 @@ class ContractService {
 
     this.currencies = Object.assign(
       { ETH: { address: emptyAddress } },
+      { OGN: { decimals: '18' } },
       currencies
     )
   }
