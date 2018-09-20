@@ -4,6 +4,8 @@
     "security"
   ],
   "rules": {
+    "security/no-inline-assembly": "off",
+    "security/no-tx-origin": "off",
     "quotes": [
       "error",
       "double"
