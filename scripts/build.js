@@ -4,6 +4,7 @@ const startGanache = require('./helpers/start-ganache')
 const buildContracts = require('./helpers/build-contracts')
 const deployContracts = require('./helpers/deploy-contracts')
 const startIpfs = require('./helpers/start-ipfs')
+//const createSampleListings = require('./helpers/create-sample-listings')
 const startTestServer = require('./helpers/start-test-server')
 const watch = require('node-watch')
 const webpack = require('webpack')
@@ -58,6 +59,9 @@ const start = async () => {
     await deployContracts()
     console.log(chalk`\n{bold.hex('#6e3bea') ⬢  Starting Local IPFS }\n`)
     await startIpfs()
+
+    //console.log(chalk`\n{bold.hex('#6e3bea') ⬢  Creating Sample Listings }\n`)
+    //await createSampleListings()
 
     // watch contracts
     watch('./contracts/contracts', { recursive: true }, (evt, name) => {

@@ -51,34 +51,23 @@ class IpfsService {
   }
 
   /**
-   * Convert a data URI into a blob and submit it to IPFS.
+   * Convert a data URI into binary and submit it to IPFS.
    *
    * dataUri {string} - data uri to convert
    */
   async saveDataURIAsFile(dataURI) {
-    // Extract the mime type
-    const mimeString = dataURI
-      .split(',')[0]
-      .split(':')[1]
-      .split(';')[0]
-    // Decode b64 encoded component
-    const binary = new Buffer(dataURI.split(',')[1], 'base64').toString(
-      'binary'
-    )
-
-    const buffer = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) {
-      buffer[i] = binary.charCodeAt(i)
-    }
-
-    let file
+    let binary
     if (typeof Blob === 'undefined') {
-      file = Buffer.from([buffer])
+      binary = new Buffer(dataURI.split(',')[1], 'base64')
     } else {
-      file = new Blob([buffer], { type: mimeString })
+      const mimeString = dataURI
+        .split(',')[0]
+        .split(':')[1]
+        .split(';')[0]
+      const data = new Buffer(dataURI.split(',')[1], 'base64')
+      binary = new Blob([data], {type: mimeString})
     }
-
-    return await this.saveFile(file)
+    return await this.saveFile(binary)
   }
 
   async saveFile(file) {
