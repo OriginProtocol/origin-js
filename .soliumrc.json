@@ -6,11 +6,11 @@
   "rules": {
     "quotes": [
       "error",
-      "single"
+      "double"
     ],
     "indentation": [
       "error",
-      2
+      4
     ]
   }
 }
