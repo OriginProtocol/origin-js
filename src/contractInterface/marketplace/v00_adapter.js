@@ -286,7 +286,7 @@ class V00_MarkeplaceAdapter {
     await this.getContract()
 
     // Get the raw listing data from the contract
-    // Note: once an offer is finalized|ruling|withdrawn, it is deleted from the blockchain to save
+    // Note: once an offer is finalized|ruled|withdrawn, it is deleted from the blockchain to save
     // on gas. In those cases rawOffer is returned as an object with all its fields set to zero.
     const rawOffer = await this.call('offers', [listingIndex, offerIndex])
 
