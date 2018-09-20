@@ -13,9 +13,12 @@ import bs58 from 'bs58'
 import Web3 from 'web3'
 
 const emptyAddress = '0x0000000000000000000000000000000000000000'
+const SUPPORTED_ERC20 = [
+  { symbol: 'OGN', decimals: 18, contractName: 'OriginToken' }
+]
 
 class ContractService {
-  constructor({ web3, contractAddresses, currencies = {} } = {}) {
+  constructor({ web3, contractAddresses } = {}) {
     const externalWeb3 = web3 || window.web3
     if (!externalWeb3) {
       throw new Error(
@@ -55,12 +58,30 @@ class ContractService {
         /* Ignore */
       }
     }
+  }
 
-    this.currencies = Object.assign(
-      { ETH: { address: emptyAddress } },
-      { OGN: { decimals: '18' } },
-      currencies
-    )
+  async currencies() {
+    // use cached value if available
+    if (!this._currencies) {
+      const currenciesList = await Promise.all(SUPPORTED_ERC20.map(async (token) => {
+        const deployed = await this.deployed(this.contracts[token.contractName])
+        const address = deployed.options.address
+        const obj = {}
+        obj[token.symbol] = {
+          address,
+          decimals: token.decimals
+        }
+        return obj
+      }))
+      const currenciesObj = currenciesList.reduce((acc, cur) => {
+        return Object.assign(acc, cur)
+      }, {})
+      this._currencies = Object.assign(
+        { ETH: { address: emptyAddress } },
+        currenciesObj
+      )
+    }
+    return this._currencies
   }
 
   // Returns an object that describes how many marketplace
