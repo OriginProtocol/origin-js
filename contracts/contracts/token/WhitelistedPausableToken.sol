@@ -72,8 +72,10 @@ contract WhitelistedPausableToken is PausableToken {
             "an expired whitelist cannot be extended"
         );
         // prevent possible mistakes in calling this function
-        require(_expiration >= block.timestamp + 1 days,
-            "whitelist expiration not far enough into the future");
+        require(
+            _expiration >= block.timestamp + 1 days,
+            "whitelist expiration not far enough into the future"
+        );
         emit SetWhitelistExpiration(_expiration);
         whitelistExpiration = _expiration;
     }
