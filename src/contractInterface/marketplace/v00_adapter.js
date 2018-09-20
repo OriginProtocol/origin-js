@@ -356,7 +356,7 @@ class V00_MarkeplaceAdapter {
     const partyOfferIds = []
 
     const events = await this.contract.getPastEvents('allEvents', {
-      topics: [null, this.padTopic(party), null, null],
+      topics: [null, this.padTopic(party)],
       fromBlock: 0
     })
 
