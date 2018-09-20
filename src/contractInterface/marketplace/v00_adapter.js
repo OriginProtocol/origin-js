@@ -105,6 +105,15 @@ class V00_MarkeplaceAdapter {
         `Attempted to purchase ${unitsPurchased} - only 1 allowed.`
       )
 
+    // Prevent seller from purchasing own listing
+    const from = await this.contractService.currentAccount()
+    const listing = await this.getListing(listingId)
+    if (from === listing.seller) {
+      throw new Error(
+        'An offer cannot be created by the seller of the listing.'
+      )
+    }
+
     const price = this.contractService.moneyToUnits(totalPrice)
     const commissionUnits = this.contractService.moneyToUnits(commission)
 
