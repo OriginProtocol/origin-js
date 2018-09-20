@@ -19,7 +19,7 @@ async function withRetries(maxRetries, fn, verbose) {
       // Max out at two minutes
       waitTime = Math.min(waitTime, MAX_RETRY_WAIT_MS)
       if (verbose) {
-        console.log('retryable error:', e)
+        console.log('retryable error:', e.message)
         console.log(`will retry in ${waitTime / 1000} seconds`)
       }
       tryCount += 1

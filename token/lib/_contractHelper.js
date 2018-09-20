@@ -94,10 +94,11 @@ class ContractHelper {
     this.vlog('sending transaction')
     let transactionHash
     transaction.send(opts)
-      .on('transactionHash', (hash) => {
+      .once('transactionHash', (hash) => {
         transactionHash = hash
         this.vlog('transaction hash:', transactionHash)
       })
+    this.vlog('waiting for transaction receipt')
 
     // Poll for the transaction receipt, with an exponential backoff. This works
     // around some strange interactions between web3.js and some web3 providers.
@@ -124,12 +125,12 @@ class ContractHelper {
           }
             return receipt
         } else {
-          console.log('waiting for transaction receipt')
+          throw new Error('still waiting for transaction receipt')
         }
       } else {
         throw new Error('still waiting for transaction hash')
       }
-    })
+    }, this.config.verbose)
   }
 
   /**

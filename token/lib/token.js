@@ -134,7 +134,7 @@ class Token extends ContractHelper {
         !this.config.multisig &&
         await contract.methods.paused().call() !== true
       ) {
-        throw new Error('Token should be paused but is not')
+        throw new Error('Still waiting for token to be paused')
       }
     }, this.config.verbose)
   }
@@ -161,7 +161,7 @@ class Token extends ContractHelper {
         !this.config.multisig &&
         await contract.methods.paused().call() !== false
       ) {
-        throw new Error('Token should be unpaused but is not')
+        throw new Error('Still waiting for token to be unpaused')
       }
     }, this.config.verbose)
   }
