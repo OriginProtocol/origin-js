@@ -31,9 +31,22 @@ const NAMES = [
   'Urist'
 ]
 const CATEGORIES = {
-  forSale: ['schema.forSale.artsCrafts', 'schema.forSale.farmGarden', 'schema.forSale.heavyEquipment', 'schema.forSale.tickets'],
-  housing: ['schema.housing.aptsHousingForRent', 'schema.housing.realEstate', 'schema.housing.vacationRentals'],
-  services: ['schema.services.dogWalking', 'schema.services.handyman', 'schema.services.softwareDevelopement']
+  forSale: [
+    'schema.forSale.artsCrafts',
+    'schema.forSale.farmGarden',
+    'schema.forSale.heavyEquipment',
+    'schema.forSale.tickets'
+  ],
+  housing: [
+    'schema.housing.aptsHousingForRent',
+    'schema.housing.realEstate',
+    'schema.housing.vacationRentals'
+  ],
+  services: [
+    'schema.services.dogWalking',
+    'schema.services.handyman',
+    'schema.services.softwareDevelopement'
+  ]
 }
 
 function randomPick(arr) {
@@ -110,19 +123,22 @@ async function createSampleData() {
     console.log(
       chalk` ⬢  Creating listing {bold.hex('#d408f4') ${listingName}} from {bold.hex('#09f4a6') ${userFirst}}`
     )
-
-    const newListing = await o.marketplace.createListing({
-      listingType: 'unit',
-      title: listingName,
-      category: category,
-      subCategory: subCategory,
-      language: 'en-US',
-      description: description,
-      price: { currency: 'ETH', amount: price.toString() },
-      commission: { currency: 'OGN', amount: commission.toString() },
-      unitsTotal: 1
-    })
-    listings.push(await o.marketplace.getListing(newListing.listingId))
+    try {
+      const newListing = await o.marketplace.createListing({
+        listingType: 'unit',
+        title: listingName,
+        category: category,
+        subCategory: subCategory,
+        language: 'en-US',
+        description: description,
+        price: { currency: 'ETH', amount: price.toString() },
+        commission: { currency: 'OGN', amount: commission.toString() },
+        unitsTotal: 1
+      })
+      listings.push(await o.marketplace.getListing(newListing.listingId))
+    } catch (e) {
+      console.log('Error creating a listing: ', e)
+    }
   }
 
   /*
