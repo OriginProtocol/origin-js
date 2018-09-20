@@ -191,7 +191,9 @@ library KeyHolderLibrary {
         returns(bool result)
     {
         bool isThere;
-        if (_keyHolderData.keys[_key].key == 0) return false;
+        if (_keyHolderData.keys[_key].key == 0) {
+            return false;
+        }
 
         uint256[] storage purposes = _keyHolderData.keys[_key].purposes;
         for (uint i = 0; i < purposes.length; i++) {
