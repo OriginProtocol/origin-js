@@ -1,7 +1,7 @@
 const fs = require('fs')
 const http = require('http')
 const urllib = require('url')
-const Origin = require('../../../dist/index')
+const Origin = require('origin')
 const Web3 = require('web3')
 
 const search = require('../lib/search.js')
