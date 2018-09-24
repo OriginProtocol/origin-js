@@ -116,7 +116,7 @@ async function createSampleData() {
     const userFirst = NAMES[user_i]
     o.contractService.web3.eth.defaultAccount = user.address
     const price = Math.floor(Math.pow(Math.random() * 10, 3.0)) / 100.0
-    const commission = Math.floor(Math.random() * 1000)
+    const commission = Math.floor(Math.random() * 20)
     const description = `${randomTitleWord()} is ${randomWord()}, ${randomWord()} ${randomWord()}.`
     const category = randomPick(Object.keys(CATEGORIES))
     const subCategory = randomPick(CATEGORIES[category])
