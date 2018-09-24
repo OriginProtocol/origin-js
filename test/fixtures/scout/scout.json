@@ -1,7 +1,7 @@
 {
   "schemaId": "http://schema.originprotocol.com/listing_v1.0.0",
   "listingType": "unit",
-  "category": "forSale",
+  "category": "schema.forSale",
   "subCategory": "schema.forSale.carsTrucks",
   "language": "en-US",
   "title": "1977 INTERNATIONAL SCOUT II",
