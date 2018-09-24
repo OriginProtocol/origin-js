@@ -31,18 +31,18 @@ const NAMES = [
   'Urist'
 ]
 const CATEGORIES = {
-  forSale: [
+  'schema.forSale': [
     'schema.forSale.artsCrafts',
     'schema.forSale.farmGarden',
     'schema.forSale.heavyEquipment',
     'schema.forSale.tickets'
   ],
-  housing: [
+  'schema.housing': [
     'schema.housing.aptsHousingForRent',
     'schema.housing.realEstate',
     'schema.housing.vacationRentals'
   ],
-  services: [
+  'schema.services': [
     'schema.services.dogWalking',
     'schema.services.handyman',
     'schema.services.softwareDevelopement'
