@@ -158,7 +158,8 @@ async function createSampleData() {
     await o.marketplace.makeOffer(listing.id, {
       listingType: 'unit',
       unitsPurchased: 1,
-      totalPrice: listing.price
+      totalPrice: listing.price,
+      commission: listing.commission
     })
   }
 
