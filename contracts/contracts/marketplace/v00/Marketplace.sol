@@ -35,6 +35,8 @@ contract V00_Marketplace is Ownable {
     event OfferFinalized   (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
     event OfferData        (address indexed party, uint indexed listingID, uint indexed offerID, bytes32 ipfsHash);
     event MarketplaceData  (address indexed party, bytes32 ipfsHash);
+    event AffiliateAdded   (address indexed party, bytes32 ipfsHash);
+    event AffiliateRemoved (address indexed party, bytes32 ipfsHash);
 
     struct Listing {
         address seller;     // Seller wallet / identity contract / other contract
@@ -56,6 +58,7 @@ contract V00_Marketplace is Ownable {
 
     Listing[] public listings;
     mapping(uint => Offer[]) public offers; // listingID => Offers
+    mapping(address => bool) public allowedAffiliates;
 
     ERC20 public tokenAddr; // Origin Token address
 
@@ -182,6 +185,11 @@ contract V00_Marketplace is Ownable {
         public
         payable
     {
+        require(
+            _affiliate == 0x0 || allowedAffiliates[address(this)] || allowedAffiliates[_affiliate],
+            "Affiliate not allowed"
+        );
+
         offers[listingID].push(Offer({
             status: 1,
             buyer: msg.sender,
@@ -436,5 +444,17 @@ contract V00_Marketplace is Ownable {
     // @dev Set the address of the Origin token contract
     function setTokenAddr(address _tokenAddr) public onlyOwner {
         tokenAddr = ERC20(_tokenAddr);
+    }
+
+    // @dev Add affiliate to whitelist. Set to address(this) to disable.
+    function addAffiliate(address _affiliate, bytes32 ipfsHash) public onlyOwner {
+        allowedAffiliates[_affiliate] = true;
+        emit AffiliateAdded(_affiliate, ipfsHash);
+    }
+
+    // @dev Remove affiliate from whitelist.
+    function removeAffiliate(address _affiliate, bytes32 ipfsHash) public onlyOwner {
+        delete allowedAffiliates[_affiliate];
+        emit AffiliateRemoved(_affiliate, ipfsHash);
     }
 }

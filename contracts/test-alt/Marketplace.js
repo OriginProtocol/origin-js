@@ -103,6 +103,7 @@ describe('Marketplace.sol', async function() {
     //   path: `${contractPath}/identity`
     // })
 
+    await Marketplace.methods.addAffiliate(Buyer, IpfsHash).send()
     await OriginToken.methods.transfer(Seller, 400).send()
     await OriginToken.methods.transfer(Seller2, 400).send()
     await OriginToken.methods.transfer(SellerIdentity._address, 400).send()
@@ -194,7 +195,6 @@ describe('Marketplace.sol', async function() {
 
     it('should allow an offer to be made', async function() {
       const result = await helpers.makeOffer({ trackGas })
-
       assert(result.events.OfferCreated)
 
       const offer = await Marketplace.methods.offers(0, 0).call()
@@ -641,6 +641,62 @@ describe('Marketplace.sol', async function() {
       } catch (e) {
         assert(e.message.match(/revert/))
       }
+    })
+  })
+
+  describe('Affiliate whitelist', function() {
+    it('should allow affiliates to be added by owner', async function() {
+      const res1 = await Marketplace.methods
+        .addAffiliate(Seller, IpfsHash)
+        .send({ from: Owner })
+      assert(res1.events.AffiliateAdded)
+
+      const res2 = await new Promise((resolve, reject) => {
+        Marketplace.methods
+          .addAffiliate(Seller, IpfsHash)
+          .send({ from: Seller })
+          .catch(resolve)
+          .then(reject)
+      })
+      assert(res2.toString().indexOf('revert') > 0)
+    })
+
+    it('should allow affiliates to be removed by owner', async function() {
+      const res1 = await Marketplace.methods
+        .removeAffiliate(Seller, IpfsHash)
+        .send({ from: Owner })
+      assert(res1.events.AffiliateRemoved)
+
+      const res2 = await new Promise((resolve, reject) => {
+        Marketplace.methods
+          .removeAffiliate(Seller, IpfsHash)
+          .send({ from: Seller })
+          .catch(resolve)
+          .then(reject)
+      })
+      assert(res2.toString().indexOf('revert') > 0)
+    })
+
+    it('should only allow offers with whitelisted affiliates', async function() {
+      const result = await helpers.makeOffer({ trackGas })
+      assert(result.events.OfferCreated)
+
+      await new Promise((resolve, reject) => {
+        helpers
+          .makeOffer({ trackGas, affiliate: Seller })
+          .then(reject)
+          .catch(resolve)
+      })
+    })
+
+    it('should allow any affiliate when affiliate whitelist is disabled', async function() {
+      const res = await Marketplace.methods
+        .addAffiliate(Marketplace._address, IpfsHash)
+        .send({ from: Owner })
+      assert(res.events.AffiliateAdded)
+
+      const result = await helpers.makeOffer({ trackGas, affiliate: Seller })
+      assert(result.events.OfferCreated)
     })
   })
 })
