@@ -39,7 +39,7 @@ contract V00_Marketplace is Ownable {
     struct Listing {
         address seller;     // Seller wallet / identity contract / other contract
         uint deposit;       // Deposit in Origin Token
-        address arbitrator; // Address of arbitration contract
+        address depositManager; // Address that decides token distribution
     }
 
     struct Offer {
@@ -49,7 +49,7 @@ contract V00_Marketplace is Ownable {
         ERC20 currency;     // Currency of listing. Copied incase seller deleted listing
         address buyer;      // Buyer wallet / identity contract / other contract
         address affiliate;  // Address to send any commission
-        address arbitrator; // Address of arbitration contract
+        address arbitrator; // Address that settles disputes
         uint finalizes;     // Timestamp offer finalizes
         uint8 status;       // 0: Undefined, 1: Created, 2: Accepted, 3: Disputed
     }
@@ -75,10 +75,10 @@ contract V00_Marketplace is Ownable {
     }
 
     // @dev Seller creates listing
-    function createListing(bytes32 _ipfsHash, uint _deposit, address _arbitrator)
+    function createListing(bytes32 _ipfsHash, uint _deposit, address _depositManager)
         public
     {
-        _createListing(msg.sender, _ipfsHash, _deposit, _arbitrator);
+        _createListing(msg.sender, _ipfsHash, _deposit, _depositManager);
     }
 
     // @dev Can only be called by token
@@ -86,12 +86,12 @@ contract V00_Marketplace is Ownable {
         address _seller,
         bytes32 _ipfsHash,
         uint _deposit,
-        address _arbitrator
+        address _depositManager
     )
         public returns (bool)
     {
         require(msg.sender == address(tokenAddr), "Token must call");
-        _createListing(_seller, _ipfsHash, _deposit, _arbitrator);
+        _createListing(_seller, _ipfsHash, _deposit, _depositManager);
         return true;
     }
 
@@ -100,17 +100,17 @@ contract V00_Marketplace is Ownable {
         address _seller,
         bytes32 _ipfsHash,  // IPFS JSON with details, pricing, availability
         uint _deposit,      // Deposit in Origin Token
-        address _arbitrator // Address of listing arbitrator
+        address _depositManager // Address of listing depositManager
     )
         private
     {
         /* require(_deposit > 0); // Listings must deposit some amount of Origin Token */
-        require(_arbitrator != 0x0, "Must specify arbitrator");
+        require(_depositManager != 0x0, "Must specify depositManager");
 
         listings.push(Listing({
             seller: _seller,
             deposit: _deposit,
-            arbitrator: _arbitrator
+            depositManager: _depositManager
         }));
 
         if (_deposit > 0) {
@@ -158,10 +158,10 @@ contract V00_Marketplace is Ownable {
         emit ListingUpdated(listing.seller, listingID, _ipfsHash);
     }
 
-    // @dev Listing arbitrator withdraws listing. IPFS hash contains reason for withdrawl.
+    // @dev Listing depositManager withdraws listing. IPFS hash contains reason for withdrawl.
     function withdrawListing(uint listingID, address _target, bytes32 _ipfsHash) public {
         Listing storage listing = listings[listingID];
-        require(msg.sender == listing.arbitrator, "Arbitrator required");
+        require(msg.sender == listing.depositManager, "depositManager required");
         require(_target != 0x0, "No target");
         tokenAddr.transfer(_target, listing.deposit); // Send deposit to target
         delete listings[listingID]; // Remove data to get some gas back
@@ -423,10 +423,10 @@ contract V00_Marketplace is Ownable {
         emit OfferData(msg.sender, listingID, offerID, ipfsHash);
     }
 
-    // @dev Allow listing arbitrator to send deposit
+    // @dev Allow listing depositManager to send deposit
     function sendDeposit(uint listingID, address target, uint value, bytes32 ipfsHash) public {
         Listing storage listing = listings[listingID];
-        require(listing.arbitrator == msg.sender, "Arbitrator must call");
+        require(listing.depositManager == msg.sender, "depositManager must call");
         require(listing.deposit >= value, "Value too high");
         listing.deposit -= value;
         require(tokenAddr.transfer(target, value), "Transfer failed");
