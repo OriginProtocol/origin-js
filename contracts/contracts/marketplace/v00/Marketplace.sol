@@ -188,13 +188,13 @@ contract V00_Marketplace is Ownable {
     {
         bool affiliateWhitelistDisabled = allowedAffiliates[address(this)];
         require(
-             affiliateWhitelistDisabled || allowedAffiliates[_affiliate],
+            affiliateWhitelistDisabled || allowedAffiliates[_affiliate],
             "Affiliate not allowed"
         );
 
         if (_affiliate == 0x0) {
             // Avoid commission tokens being trapped in marketplace contract.
-            require(_commission == 0, 'commission requires affiliate');
+            require(_commission == 0, "commission requires affiliate");
         }
 
         offers[listingID].push(Offer({
