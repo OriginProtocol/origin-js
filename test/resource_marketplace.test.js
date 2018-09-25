@@ -1,5 +1,6 @@
 import Marketplace from '../src/resources/marketplace.js'
 import contractServiceHelper from './helpers/contract-service-helper'
+import asAccount from './helpers/as-account'
 import IpfsService from '../src/services/ipfs-service.js'
 import { expect } from 'chai'
 import Web3 from 'web3'
@@ -51,7 +52,8 @@ class StoreMock {
 describe('Marketplace Resource', function() {
   // TODO speed up the notifications test so that this timeout can be reduced
   this.timeout(15000) // default is 2000
-  let marketplace, web3, validArbitrator, validAffiliate, evilAddress, makeMaliciousOffer
+  let marketplace, web3, contractService, validArbitrator, validAffiliate,
+    evilAddress, makeMaliciousOffer
 
   beforeEach(async () => {
     const provider = new Web3.providers.HttpProvider('http://localhost:8545')
@@ -60,7 +62,7 @@ describe('Marketplace Resource', function() {
     validAffiliate = accounts[3]
     validArbitrator = accounts[4]
     evilAddress = accounts[5]
-    const contractService = await contractServiceHelper(web3)
+    contractService = await contractServiceHelper(web3)
     const ipfsService = new IpfsService({
       ipfsDomain: '127.0.0.1',
       ipfsApiPort: '5002',
@@ -396,11 +398,7 @@ describe('Marketplace Resource', function() {
 
   describe('resolveDispute', () => {
     it('should resolve a disputed offer with a ruling', async () => {
-      const accounts = await web3.eth.getAccounts()
-      const anotherOffer = Object.assign({}, offerData, {
-        arbitrator: accounts[0]
-      })
-      await marketplace.makeOffer('999-000-0', anotherOffer)
+      await marketplace.makeOffer('999-000-0', offerData)
       let offer = await marketplace.getOffer('999-000-0-1')
       expect(offer.status).to.equal('created')
 
@@ -413,7 +411,10 @@ describe('Marketplace Resource', function() {
       expect(offer.status).to.equal('disputed')
 
       const offerPrice = Web3.utils.toWei(offer.totalPrice.amount)
-      await marketplace.resolveDispute('999-000-0-1', {}, 1, offerPrice)
+
+      await asAccount(contractService.web3, validArbitrator, async () => {
+        await marketplace.resolveDispute('999-000-0-1', {}, 1, offerPrice)
+      })
       offer = await marketplace.getOffer('999-000-0-1')
       expect(offer.status).to.be.equal('ruling')
     })
