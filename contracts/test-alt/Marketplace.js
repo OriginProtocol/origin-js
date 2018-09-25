@@ -691,7 +691,7 @@ describe('Marketplace.sol', async function() {
 
     it('should allow any affiliate when affiliate whitelist is disabled', async function() {
       const res = await Marketplace.methods
-        .addAffiliate(Marketplace._address, IpfsHash)
+        .addAffiliate(ZERO_ADDRESS, IpfsHash)
         .send({ from: Owner })
       assert(res.events.AffiliateAdded)
 

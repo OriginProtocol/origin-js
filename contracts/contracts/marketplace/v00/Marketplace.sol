@@ -62,6 +62,8 @@ contract V00_Marketplace is Ownable {
 
     ERC20 public tokenAddr; // Origin Token address
 
+    address public constant ALLOW_ALL_AFFILIATES = 0x0;
+
     constructor(address _tokenAddr) public {
         owner = msg.sender;
         setTokenAddr(_tokenAddr); // Origin Token contract
@@ -186,7 +188,7 @@ contract V00_Marketplace is Ownable {
         payable
     {
         require(
-            _affiliate == 0x0 || allowedAffiliates[address(this)] || allowedAffiliates[_affiliate],
+            _affiliate == 0x0 || allowedAffiliates[ALLOW_ALL_AFFILIATES] || allowedAffiliates[_affiliate],
             "Affiliate not allowed"
         );
 
@@ -446,7 +448,7 @@ contract V00_Marketplace is Ownable {
         tokenAddr = ERC20(_tokenAddr);
     }
 
-    // @dev Add affiliate to whitelist. Set to address(this) to disable.
+    // @dev Add affiliate to whitelist. Set to ALLOW_ALL_AFFILIATES to disable.
     function addAffiliate(address _affiliate, bytes32 ipfsHash) public onlyOwner {
         allowedAffiliates[_affiliate] = true;
         emit AffiliateAdded(_affiliate, ipfsHash);
