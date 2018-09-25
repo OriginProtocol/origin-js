@@ -191,6 +191,10 @@ contract V00_Marketplace is Ownable {
             _affiliate == 0x0 || allowedAffiliates[ALLOW_ALL_AFFILIATES] || allowedAffiliates[_affiliate],
             "Affiliate not allowed"
         );
+        if (_affiliate == 0x0) {
+            // Avoid commission tokens being trapped in marketplace contract.
+            require(_commission == 0, "commission requires affiliate");
+        }
 
         offers[listingID].push(Offer({
             status: 1,
