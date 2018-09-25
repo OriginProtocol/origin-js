@@ -5,8 +5,8 @@ class Users {
     this.resolver = new UsersResolver({ contractService, ipfsService })
   }
 
-  async set({ profile, attestations = [] }) {
-    return this.resolver.set({ profile, attestations })
+  async set({ profile, attestations = [], options = {} }) {
+    return this.resolver.set({ profile, attestations, options })
   }
 
   async get(address) {

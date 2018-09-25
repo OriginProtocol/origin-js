@@ -214,7 +214,7 @@ class ContractService {
     contractName,
     functionName,
     args = [],
-    { contractAddress, from, gas, value, confirmationCallback, additionalGas = 0 } = {}
+    { contractAddress, from, gas, value, confirmationCallback, transactionHashCallback, additionalGas = 0 } = {}
   ) {
     const contractDefinition = this.contracts[contractName]
     if (typeof contractDefinition === 'undefined') {
@@ -239,6 +239,7 @@ class ContractService {
         .send(opts)
         .on('receipt', resolve)
         .on('confirmation', confirmationCallback)
+        .on('transactionHash', transactionHashCallback)
         .on('error', reject)
     })
     const block = await this.web3.eth.getBlock(transactionReceipt.blockNumber)
