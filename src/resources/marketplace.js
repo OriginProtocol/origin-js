@@ -132,6 +132,14 @@ class Marketplace {
       if (listingCommision > chainOffer.commission) {
         throw new Error('Invalid offer: insufficient commission amount for listing')
       }
+
+      if (chainOffer.arbitrator !== this.arbitrator) {
+        throw new Error('Invalid offer: arbitrator is invalid')
+      }
+
+      if (chainOffer.affiliate !== this.affiliate) {
+        throw new Error('Invalid offer: affiliate is invalid')
+      }
     }
 
     // Create an Offer from on-chain and off-chain data.
