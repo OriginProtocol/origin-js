@@ -20,13 +20,13 @@ class V00_UsersAdapter {
     this.contractName = 'V00_UserRegistry'
   }
 
-  async set({ profile, attestations = [], options = {} }) {
+  async set({ profile, transactionHashCallback, attestations = []}) {
     if (profile) {
       const selfAttestation = await this.profileAttestation(profile)
       attestations.push(selfAttestation)
     }
     const newAttestations = await this.newAttestations(attestations)
-    return await this.addAttestations(newAttestations, options)
+    return await this.addAttestations(newAttestations, transactionHashCallback)
   }
 
   async get(address) {
@@ -91,7 +91,7 @@ class V00_UsersAdapter {
     })
   }
 
-  async addAttestations(attestations, { transactionHashCallback } = {}) {
+  async addAttestations(attestations, transactionHashCallback) {
     const account = await this.contractService.currentAccount()
     const userRegistry = await this.contractService.deployed(
       this.contractService.contracts[this.contractName]
