@@ -1,6 +1,9 @@
 import assert from 'assert'
 import helper, { contractPath } from './_helper'
-import marketplaceHelpers, { IpfsHash } from './_marketplaceHelpers'
+import marketplaceHelpers, {
+  IpfsHash,
+  ZERO_ADDRESS
+} from './_marketplaceHelpers'
 import Table from 'cli-table'
 import GasPriceInDollars from './_gasPriceInDollars'
 
@@ -29,8 +32,6 @@ Withdraw Listing
 `.split('\n')
 
 describe('Marketplace.sol', async function() {
-  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
   let accounts, deploy, web3
   let Marketplace,
     OriginToken,
@@ -41,6 +42,7 @@ describe('Marketplace.sol', async function() {
     Seller,
     Seller2,
     SellerIdentity,
+    Affiliate,
     Arbitrator,
     MarketArbitrator,
     ArbitratorAddr,
@@ -56,6 +58,7 @@ describe('Marketplace.sol', async function() {
     Buyer = accounts[2]
     ArbitratorAddr = accounts[3]
     Seller2 = accounts[4]
+    Affiliate = accounts[5]
 
     const gasPrice = await web3.eth.getGasPrice()
     gasEstimate = web3.utils.toBN(gasPrice).mul(web3.utils.toBN('4000000'))
@@ -103,7 +106,7 @@ describe('Marketplace.sol', async function() {
     //   path: `${contractPath}/identity`
     // })
 
-    await Marketplace.methods.addAffiliate(Buyer, IpfsHash).send()
+    await Marketplace.methods.addAffiliate(Affiliate, IpfsHash).send()
     await OriginToken.methods.transfer(Seller, 400).send()
     await OriginToken.methods.transfer(Seller2, 400).send()
     await OriginToken.methods.transfer(SellerIdentity._address, 400).send()
@@ -121,6 +124,7 @@ describe('Marketplace.sol', async function() {
       MarketArbitrator,
       ArbitratorAddr,
       Arbitrator,
+      Affiliate,
       trackGas
     })
   })
@@ -645,7 +649,7 @@ describe('Marketplace.sol', async function() {
   })
 
   describe('Affiliate whitelist', function() {
-    it('should allow affiliates to be added by owner', async function() {
+    it('should only allow affiliates to be added by owner', async function() {
       const res1 = await Marketplace.methods
         .addAffiliate(Seller, IpfsHash)
         .send({ from: Owner })
@@ -661,7 +665,7 @@ describe('Marketplace.sol', async function() {
       assert(res2.toString().indexOf('revert') > 0)
     })
 
-    it('should allow affiliates to be removed by owner', async function() {
+    it('should only allow affiliates to be removed by owner', async function() {
       const res1 = await Marketplace.methods
         .removeAffiliate(Seller, IpfsHash)
         .send({ from: Owner })
@@ -684,6 +688,38 @@ describe('Marketplace.sol', async function() {
       await new Promise((resolve, reject) => {
         helpers
           .makeOffer({ trackGas, affiliate: Seller })
+          .then(reject)
+          .catch(resolve)
+      })
+    })
+
+    it('should disallow no affiliate if not on whitelist', async function() {
+      await Marketplace.methods
+        .removeAffiliate(ZERO_ADDRESS, IpfsHash)
+        .send({ from: Owner })
+      await new Promise((resolve, reject) => {
+        helpers
+          .makeOffer({
+            trackGas,
+            affiliate: ZERO_ADDRESS,
+            commission: 0
+          })
+          .then(reject)
+          .catch(resolve)
+      })
+      await Marketplace.methods
+        .addAffiliate(ZERO_ADDRESS, IpfsHash)
+        .send({ from: Owner })
+    })
+
+    it('should not allow commission when no affiliate is set', async function() {
+      await new Promise((resolve, reject) => {
+        helpers
+          .makeOffer({
+            trackGas,
+            affiliate: ZERO_ADDRESS,
+            commission: 2
+          })
           .then(reject)
           .catch(resolve)
       })
