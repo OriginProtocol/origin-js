@@ -161,7 +161,7 @@ contract V00_Marketplace is Ownable {
     // @dev Listing depositManager withdraws listing. IPFS hash contains reason for withdrawl.
     function withdrawListing(uint listingID, address _target, bytes32 _ipfsHash) public {
         Listing storage listing = listings[listingID];
-        require(msg.sender == listing.depositManager, "depositManager required");
+        require(msg.sender == listing.depositManager, "Must be depositManager");
         require(_target != 0x0, "No target");
         tokenAddr.transfer(_target, listing.deposit); // Send deposit to target
         delete listings[listingID]; // Remove data to get some gas back
