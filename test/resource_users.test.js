@@ -1,4 +1,5 @@
 import chai from 'chai'
+import chaiString from 'chai-string'
 import chaiAsPromised from 'chai-as-promised'
 import Web3 from 'web3'
 
@@ -9,6 +10,7 @@ import ContractService from '../src/services/contract-service'
 import IpfsService from '../src/services/ipfs-service'
 
 chai.use(chaiAsPromised)
+chai.use(chaiString)
 const expect = chai.expect
 
 const issuerPrivatekey =
@@ -219,6 +221,30 @@ describe('User Resource', function() {
     it('should fail setting an invalid profile', async () => {
       const badProfile = { profile: { bad: 'profile' } }
       return expect(users.set(badProfile)).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('should be able to receive transactionHash and onComplete callbacks', async () => {
+      let transactionHash, confCount, trReceipt
+
+      await users.set({
+        profile: {
+          firstName: 'Wonder',
+          lastName: 'Woman',
+        },
+        options: {
+          transactionHashCallback: (hash) => {
+            transactionHash = hash
+          },
+          confirmationCallback: (confirmationCount, transactionReceipt) => {
+            confCount = confirmationCount
+            trReceipt = transactionReceipt
+          }
+        }
+      })
+
+      expect(transactionHash).to.startsWith('0x')
+      expect(confCount).is.a('number')
+      expect(trReceipt).is.a('object')
     })
   })
 
