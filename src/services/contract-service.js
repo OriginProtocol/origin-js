@@ -221,6 +221,8 @@ class ContractService {
 
   /* confirmation callback does not get triggered in current version of web3 version:1.0.0-beta.34
    * so this function perpetually (until 5 confirmations) checks for presence of deployed contract.
+   *
+   * This could also be a problem in Ethereum node: https://github.com/ethereum/web3.js/issues/1255
    */
   async checkForDeploymentCompletion(hash, confirmationCallback) {
     const transactionInfo = await this.web3.eth.getTransaction(hash)
