@@ -20,7 +20,7 @@ class V00_UsersAdapter {
     this.contractName = 'V00_UserRegistry'
   }
 
-  async set({ profile, transactionHashCallback, attestations = [], options = {}}) {
+  async set({ profile, attestations = [], options = {}}) {
     if (profile) {
       const selfAttestation = await this.profileAttestation(profile)
       attestations.push(selfAttestation)
