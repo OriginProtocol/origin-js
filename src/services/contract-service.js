@@ -13,6 +13,7 @@ import bs58 from 'bs58'
 import Web3 from 'web3'
 
 const emptyAddress = '0x0000000000000000000000000000000000000000'
+const NUMBER_CONFIRMATIONS_TO_REPORT = 20
 const SUPPORTED_ERC20 = [
   { symbol: 'OGN', decimals: 18, contractName: 'OriginToken' }
 ]
@@ -220,7 +221,7 @@ class ContractService {
   }
 
   /* confirmation callback does not get triggered in current version of web3 version:1.0.0-beta.34
-   * so this function perpetually (until 5 confirmations) checks for presence of deployed contract.
+   * so this function perpetually (until 20 confirmations) checks for presence of deployed contract.
    *
    * This could also be a problem in Ethereum node: https://github.com/ethereum/web3.js/issues/1255
    */
@@ -238,8 +239,8 @@ class ContractService {
       confirmationCallback(confirmations, {
         transactionHash: transactionInfo.hash
       })
-      // do checks untill 5 block confirmations
-      if (confirmations < 5) {
+      // do checks until NUMBER_CONFIRMATIONS_TO_REPORT block confirmations
+      if (confirmations < NUMBER_CONFIRMATIONS_TO_REPORT) {
         setTimeout(() => {
           this.checkForDeploymentCompletion(hash, confirmationCallback)
         }, 1500)
