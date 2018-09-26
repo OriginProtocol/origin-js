@@ -192,7 +192,7 @@ class ContractService {
     return withLibraryAddresses
   }
 
-  async deploy(contract, args, options) {
+  async deploy(contract, args, options, { confirmationCallback, transactionHashCallback } = {} ) {
     const bytecode = await this.getBytecode(contract)
     const deployed = await this.deployed(contract)
     const txReceipt = await new Promise((resolve, reject) => {
@@ -205,9 +205,42 @@ class ContractService {
         .on('receipt', receipt => {
           resolve(receipt)
         })
+        //.on('confirmation', confirmationCallback)
+        //.on('transactionHash', transactionHashCallback)
+        // Workaround for "confirmationCallback" not being triggered with web3 version:1.0.0-beta.34
+        .on('transactionHash', (hash) => {
+          transactionHashCallback(hash)
+          this.checkForDeploymentCompletion(hash, confirmationCallback)
+        })
         .on('error', err => reject(err))
     })
     return txReceipt
+  }
+
+  /* confirmation callback does not get triggered in current version of web3 version:1.0.0-beta.34
+   * so this function perpetually (until 5 confirmations) checks for presence of deployed contract.
+   */
+  async checkForDeploymentCompletion(hash, confirmationCallback) {
+    const transactionInfo = await this.web3.eth.getTransaction(hash)
+
+    // transaction not mined
+    if (transactionInfo.blockNumber === null){
+      setTimeout(() => {
+        this.checkForDeploymentCompletion(hash, confirmationCallback)
+      }, 1500)
+    } else {
+      const currentBlockNumber = await this.web3.eth.getBlockNumber()
+      const confirmations = currentBlockNumber - transactionInfo.blockNumber
+      confirmationCallback(confirmations, {
+        transactionHash: transactionInfo.hash
+      })
+      // do checks untill 5 block confirmations
+      if (confirmations < 5) {
+        setTimeout(() => {
+          this.checkForDeploymentCompletion(hash, confirmationCallback)
+        }, 1500)
+      }
+    }
   }
 
   async call(
