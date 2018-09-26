@@ -209,8 +209,10 @@ class ContractService {
         //.on('transactionHash', transactionHashCallback)
         // Workaround for "confirmationCallback" not being triggered with web3 version:1.0.0-beta.34
         .on('transactionHash', (hash) => {
-          transactionHashCallback(hash)
-          this.checkForDeploymentCompletion(hash, confirmationCallback)
+          if (transactionHashCallback)
+            transactionHashCallback(hash)
+          if (confirmationCallback)
+            this.checkForDeploymentCompletion(hash, confirmationCallback)
         })
         .on('error', err => reject(err))
     })
