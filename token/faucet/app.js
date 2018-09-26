@@ -8,7 +8,7 @@ const Token = require('../lib/token.js')
 const DEFAULT_SERVER_PORT = 5000
 const DEFAULT_NETWORK_ID = '999' // Local blockchain.
 
-// Credit 100 token units per request.
+// Credit 100 tokens per request.
 const NUM_TOKENS = 100
 
 
@@ -17,10 +17,10 @@ function runApp(config) {
   const app = express()
   const token = new Token(config)
 
-  // Configure rate limiting. Allow at most 1 request per IP every 5 sec.
+  // Configure rate limiting. Allow at most 1 request per IP every 60 sec.
   const opts = {
     points: 1,   // Point budget.
-    duration: 5, // Reset points consumption every 5 sec.
+    duration: 60, // Reset points consumption every 60 sec.
   }
   const rateLimiter = new RateLimiterMemory(opts)
   const rateLimiterMiddleware = (req, res, next) => {
