@@ -9,6 +9,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "format": "npx prettier-eslint --write 'src/**/*.js' 'test/**/*test.js' 'contracts/test/**/*.js' 'scripts/**/*.js'",
+    "format:solidity": "solium -d contracts/contracts/ --fix",
     "install:dev": "npm install && npm link",
     "prepare": "npm run build",
     "start": "node scripts/build.js serve",
@@ -42,6 +43,7 @@
     "openzeppelin-solidity": "1.10.0",
     "rlp": "^2.0.0",
     "store": "^2.0.12",
+    "truffle-privatekey-provider": "^0.1.0",
     "url-parse": "^1.4.0",
     "web3": "^1.0.0-beta.34"
   },
@@ -76,6 +78,7 @@
     "sinon": "^5.1.1",
     "solc": "^0.4.24",
     "solidity-coverage": "^0.5.10",
+    "solium": "^1.1.7",
     "truffle": "^4.1.8",
     "truffle-contract": "^3.0.5",
     "truffle-hdwallet-provider": "0.0.5",

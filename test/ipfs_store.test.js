@@ -51,8 +51,8 @@ describe('Listing IpfsDataStore load', () => {
     const listing = await store.load(LISTING_DATA_TYPE, 'TestHash')
 
     expect(listing.type).to.equal('unit')
-    expect(listing.category).to.equal('ForSale')
-    expect(listing.subCategory).to.equal('Mushrooms')
+    expect(listing.category).to.equal('schema.forSale')
+    expect(listing.subCategory).to.equal('schema.forSale.mushrooms')
     expect(listing.language).to.equal('en-US')
     expect(listing.title).to.equal('my listing')
     expect(listing.description).to.equal('my description')
@@ -62,10 +62,6 @@ describe('Listing IpfsDataStore load', () => {
     expect(listing.unitsTotal).to.equal(1)
     expect(listing.price).to.deep.equal({ amount: '0.033', currency: 'ETH' })
     expect(listing.commission).to.deep.equal({ amount: '0', currency: 'OGN' })
-    expect(listing.securityDeposit).to.deep.equal({
-      amount: '100',
-      currency: 'ETH'
-    })
     expect(listing.ipfs.hash).to.equal('TestHash')
     expect(listing.ipfs.data).to.deep.equal(validListing)
   })

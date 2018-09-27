@@ -42,7 +42,10 @@ class Token extends ContractHelper {
    * @return {string} - Address contract was deployed to.
    */
   contractAddress(networkId) {
-    return this.config.contractAddress || TokenContract.networks[networkId].address
+    return (
+      this.config.contractAddress ||
+      (TokenContract.networks[networkId] && TokenContract.networks[networkId].address)
+    )
   }
 
   /*
@@ -56,23 +59,25 @@ class Token extends ContractHelper {
 
     // Create a token contract objects based on its ABI and address on the network.
     const contractAddress = this.contractAddress(networkId)
+    if (!contractAddress) {
+      throw new Error(`Could not get address of OriginToken contract for networkId ${networkId}`)
+    }
     return new web3.eth.Contract(TokenContract.abi, contractAddress)
   }
 
   /*
-   * Credits tokens to a address.
+   * Credits tokens to an address.
    * @params {string} networkId - Test network Id.
    * @params {string} address - Address for the recipient.
    * @params {int} value - Value to credit, in natural unit.
    * @throws Throws an error if the operation failed.
-   * @returns {BigNumber} - Token balance of the address, in natural unit.
+   * @returns {Object} - Transaction receipt
    */
   async credit(networkId, address, value) {
     const contract = this.contract(networkId)
 
     // At token contract deployment, the entire initial supply of tokens is assigned to
     // the first address generated using the mnemonic.
-    const provider = this.config.providers[networkId]
     const tokenSupplier = await this.defaultAccount(networkId)
 
     // Transfer numTokens from the supplier to the target address.
@@ -85,10 +90,7 @@ class Token extends ContractHelper {
       throw new Error('token transfers are paused')
     }
     const transaction = contract.methods.transfer(address, value)
-    await this.sendTransaction(networkId, transaction, { from: tokenSupplier })
-
-    // Return address's balance after credit.
-    return this.balance(networkId, address)
+    return await this.sendTransaction(networkId, transaction, { from: tokenSupplier })
   }
 
   /*
@@ -122,14 +124,14 @@ class Token extends ContractHelper {
     const transaction = contract.methods.pause()
     await this.sendTransaction(networkId, transaction, { from: sender })
 
-    await withRetries(this.retries, async () => {
+    await withRetries({ verbose: this.config.verbose }, async () => {
       if (
         !this.config.multisig &&
         await contract.methods.paused().call() !== true
       ) {
-        throw new Error('Token should be paused but is not')
+        throw new Error('Still waiting for token to be paused')
       }
-    }, this.config.verbose)
+    })
   }
 
   /**
@@ -149,14 +151,14 @@ class Token extends ContractHelper {
 
     const transaction = contract.methods.unpause()
     await this.sendTransaction(networkId, transaction, { from: sender })
-    await withRetries(this.retries, async () => {
+    await withRetries({ verbose: this.config.verbose }, async () => {
       if (
         !this.config.multisig &&
         await contract.methods.paused().call() !== false
       ) {
-        throw new Error('Token should be unpaused but is not')
+        throw new Error('Still waiting for token to be unpaused')
       }
-    }, this.config.verbose)
+    })
   }
 
   /**
@@ -193,6 +195,15 @@ class Token extends ContractHelper {
     const paused = await contract.methods.paused().call()
     const address = await this.contractAddress(networkId)
     const owner = await this.owner(networkId)
+    let whitelistStatus
+    if (await contract.methods.whitelistActive().call()) {
+      const expiration = await contract.methods.whitelistExpiration().call()
+      const expirationDate = new Date(expiration * 1000)
+      whitelistStatus = `active until ${expirationDate}`
+    } else {
+      whitelistStatus = 'not active'
+    }
+
     console.log(`Token status for network ${networkId}:`)
     console.log(`contract address:        ${address}`)
     console.log(`name:                    ${name}`)
@@ -202,6 +213,7 @@ class Token extends ContractHelper {
     console.log(`total supply (tokens):   ${totalSupplyTokens}`)
     console.log(`contract owner:          ${owner}`)
     console.log(`transfers paused:        ${paused ? 'YES' : 'no'}`)
+    console.log(`transactor whitelist:    ${whitelistStatus}`)
   }
 }
 

@@ -18,9 +18,11 @@ import {
 import MarketplaceResolver from '../contractInterface/marketplace/resolver'
 
 class Marketplace {
-  constructor({ contractService, ipfsService, store }) {
+  constructor({ contractService, ipfsService, store, affiliate, arbitrator }) {
     this.contractService = contractService
     this.ipfsService = ipfsService
+    this.affiliate = affiliate
+    this.arbitrator = arbitrator
     this.ipfsDataStore = new IpfsDataStore(this.ipfsService)
     this.resolver = new MarketplaceResolver(...arguments)
 
@@ -113,9 +115,10 @@ class Marketplace {
       const listing = await this.getListing(listingId)
 
       const listingCurrency = listing.price && listing.price.currency
-      const listingPrice = this.contractService.moneyToUnits(listing.price)
-      const listingCommision = this.contractService.moneyToUnits(listing.commission)
-      const currency = this.contractService.currencies[listingCurrency]
+      const listingPrice = await this.contractService.moneyToUnits(listing.price)
+      const listingCommision = await this.contractService.moneyToUnits(listing.commission)
+      const currencies = await this.contractService.currencies()
+      const currency = currencies[listingCurrency]
       const currencyAddress = currency && currency.address
 
       if (currencyAddress !== chainOffer.currency) {
@@ -128,6 +131,14 @@ class Marketplace {
 
       if (listingCommision > chainOffer.commission) {
         throw new Error('Invalid offer: insufficient commission amount for listing')
+      }
+
+      if (chainOffer.arbitrator.toLowerCase() !== this.arbitrator.toLowerCase()) {
+        throw new Error('Invalid offer: arbitrator is invalid')
+      }
+
+      if (chainOffer.affiliate.toLowerCase() !== this.affiliate.toLowerCase()) {
+        throw new Error('Invalid offer: affiliate is invalid')
       }
     }
 
@@ -185,11 +196,13 @@ class Marketplace {
     // Validate and save the data to IPFS.
     const ipfsHash = await this.ipfsDataStore.save(OFFER_DATA_TYPE, offerData)
     const ipfsBytes = this.contractService.getBytes32FromIpfsHash(ipfsHash)
+    const affiliate = this.affiliate
+    const arbitrator = this.arbitrator
 
     return await this.resolver.makeOffer(
       listingId,
       ipfsBytes,
-      offerData,
+      Object.assign({ affiliate, arbitrator }, offerData),
       confirmationCallback
     )
   }

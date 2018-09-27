@@ -34,6 +34,10 @@ class Marketplace extends ContractHelper{
         )
       }
     })
+    if (Object.keys(contractObjs).length === 0) {
+      console.error('ERROR: Could not find any deployed marketplace contracts!')
+      process.exit(1)
+    }
     return contractObjs
   }
 
@@ -46,10 +50,13 @@ class Marketplace extends ContractHelper{
     for (const [name, contract] of Object.entries(contractObjs)) {
       const owner = await contract.methods.owner().call()
       const listingCount = await contract.methods.totalListings().call()
+      const tokenAddress = await contract.methods.tokenAddr().call()
       console.log(`name:          ${name}`)
       console.log(`address:       ${contract._address}`)
       console.log(`owner:         ${owner}`)
-      console.log(`# of listings: ${listingCount}\n`)
+      console.log(`# of listings: ${listingCount}`)
+      console.log(`token address: ${tokenAddress}`)
+      console.log('')
     }
   }
 
