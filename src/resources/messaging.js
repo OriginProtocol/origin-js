@@ -4,7 +4,7 @@ import cryptoRandomString from 'crypto-random-string'
 import EventEmitter from 'events'
 import Ajv from 'ajv'
 
-const PROMPT_MESSAGE = 'I wish to start messaging on origin protocol.'
+const PROMPT_MESSAGE = 'I am ready to start messaging on Origin.'
 const PROMPT_PUB_KEY = 'My public messaging key is: '
 const MESSAGING_KEY = 'MK_'
 const PUB_MESSAGING_SIG = 'PMS_'
