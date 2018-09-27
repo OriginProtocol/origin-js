@@ -245,8 +245,8 @@ class Messaging {
           this.events.emit('pending_conv', message.payload.key)
           const remote_address = message.payload.key
           this.initRoom(remote_address)
-          // this is probably not needed
-          // this.getConvo(remote_address)
+          // may be overkill but may help prevent https://github.com/OriginProtocol/origin-js/issues/559
+          this.getConvo(remote_address)
         }
       }
     )
