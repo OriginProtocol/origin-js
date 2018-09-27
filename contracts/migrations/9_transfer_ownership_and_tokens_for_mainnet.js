@@ -1,6 +1,8 @@
 const OriginToken = artifacts.require('./token/OriginToken.sol')
 const V00_Marketplace = artifacts.require('./V00_Marketplace.sol')
 
+// TODO: extract these addresses into a common file that can be imported from
+// the various places that require these addresses
 const tokenMultiSig = '0xe011fa2a6df98c69383457d87a056ed0103aa352'
 const marketplaceMultiSig = '0x8a1a4f77f9f0eb35fb9930696038be6220986c1b'
 

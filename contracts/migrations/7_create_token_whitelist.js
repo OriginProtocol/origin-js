@@ -27,8 +27,8 @@ async function createTokenWhitelist(network) {
 
   if (network === 'mainnet' || process.env['SIMULATE_MAINNET']) {
     const addresses = [
-      '0x7aD0fa0E2380a5e0208B25AC69216Bd7Ff206bF8',
-      '0xe011fa2a6df98c69383457d87a056ed0103aa352'
+      '0x7aD0fa0E2380a5e0208B25AC69216Bd7Ff206bF8', // affiliate
+      '0xe011fa2a6df98c69383457d87a056ed0103aa352', // ERC20 multi-sig
     ]
     for (const address of addresses) {
       await token.addAllowedTransactor(address, { from: tokenOwner })
