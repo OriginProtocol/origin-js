@@ -223,10 +223,11 @@ describe('User Resource', function() {
       return expect(users.set(badProfile)).to.eventually.be.rejectedWith(Error)
     })
 
-    it('should be able to receive transactionHash and onComplete callbacks', async () => {
-      let transactionHash, confCount, trReceipt
+    it('should be able to receive transactionHash and onComplete callbacks', (done) => {
+      let transactionHash
+      let doneCalled = false
 
-      await users.set({
+      users.set({
         profile: {
           firstName: 'Wonder',
           lastName: 'Woman',
@@ -236,15 +237,19 @@ describe('User Resource', function() {
             transactionHash = hash
           },
           confirmationCallback: (confirmationCount, transactionReceipt) => {
-            confCount = confirmationCount
-            trReceipt = transactionReceipt
+            expect(confirmationCount).is.a('number')
+            expect(transactionReceipt).is.a('object')
+            // transactionHashCallback should always execute before confirmationCallback
+            expect(transactionHash).to.startsWith('0x')
+
+            // prevent done being called multiple times
+            if (!doneCalled){
+              doneCalled = true
+              done()
+            }
           }
         }
       })
-
-      expect(transactionHash).to.startsWith('0x')
-      expect(confCount).is.a('number')
-      expect(trReceipt).is.a('object')
     })
   })
 
