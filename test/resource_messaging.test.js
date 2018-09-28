@@ -14,7 +14,7 @@ describe('Messaging Resource', function() {
     ipfsCreator = new Object()
     OrbitDB = new Object()
     ecies = new Object()
-    messagingNamespace = "messaging_test"
+    messagingNamespace = 'messaging_test'
     contractService = await contractServiceHelper(web3)
     messaging = new Messaging({
       contractService,
