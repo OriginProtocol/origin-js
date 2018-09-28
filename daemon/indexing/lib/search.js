@@ -44,14 +44,13 @@ class Listing {
     return resp.count
   }
 
-  static async get(id) {
+  static async get(id, hiddenIds = [], featuredIds = []) {
     const resp = await client.get({id: id, index: LISTINGS_INDEX, type: LISTINGS_TYPE})
     if(!resp.found){
       throw Error('Listing not found')
     }
-    const listing = resp._source
-    listing.id = id
-    return resp._source
+
+    return this.extractListing(resp, hiddenIds, featuredIds)
   }
 
   /**
@@ -74,6 +73,31 @@ class Listing {
     return listingId
   }
 
+  static getListingDisplayType(listingId, hiddenIds, featuredIds) {
+    let displayType = "normal"
+    /* hidden listings are not returned right now, but at some point in the future
+     * we might have admin queries that also return hidden listings
+     */
+    if (hiddenIds.includes(listingId))
+      displayType = "hidden"
+    else if (featuredIds.includes(listingId))
+      displayType = "featured"
+
+    return displayType
+  }
+
+  static extractListing(elasticSearchHit, hiddenIds, featuredIds){
+    return {
+      id: elasticSearchHit._id,
+      title: elasticSearchHit._source.title,
+      category: elasticSearchHit._source.category,
+      subCategory: elasticSearchHit._source.subCategory,
+      description: elasticSearchHit._source.description,
+      priceAmount: (elasticSearchHit._source.price||{}).amount,
+      priceCurrency: (elasticSearchHit._source.price||{}).currency,
+      displayType: this.getListingDisplayType(elasticSearchHit._id, hiddenIds, featuredIds)
+    }
+  }
   /**
    * Searches for listings.
    * @param {string} query - The search query.
@@ -222,26 +246,7 @@ class Listing {
     const [searchResponse, aggregationResponse] = await Promise.all([searchRequest, aggregationRequest])
     const listings = []
     searchResponse.hits.hits.forEach((hit) => {
-      let displayType = "normal"
-
-      /* hidden listings are not returned right now, but at some point in the future
-       * we might have admin queries that also return hidden listings
-       */
-      if (hiddenIds.includes(hit._id))
-        displayType = "hidden"
-      else if (featuredIds.includes(hit._id))
-        displayType = "featured"
-
-      const listing = {
-        id: hit._id,
-        title: hit._source.title,
-        category: hit._source.category,
-        subCategory: hit._source.subCategory,
-        description: hit._source.description,
-        priceAmount: (hit._source.price||{}).amount,
-        priceCurrency: (hit._source.price||{}).currency,
-        displayType
-      }
+      const listing = this.extractListing(hit, hiddenIds, featuredIds)
       listings.push(listing)
     })
 

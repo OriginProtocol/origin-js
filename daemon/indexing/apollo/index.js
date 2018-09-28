@@ -253,7 +253,7 @@ const resolvers = {
       }
     },
     async listing(root, args, context, info) {
-      return search.Listing.get(args.id)
+      return search.Listing.get(args.id, hiddenListings, featuredListings)
     },
     async offers(root, args, context, info){
       const opts = {}
