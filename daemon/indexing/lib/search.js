@@ -73,20 +73,16 @@ class Listing {
     return listingId
   }
 
-  static getListingDisplayType(listingId, hiddenIds, featuredIds) {
+  static extractListing(elasticSearchHit, hiddenIds, featuredIds){
     let displayType = "normal"
     /* hidden listings are not returned right now, but at some point in the future
      * we might have admin queries that also return hidden listings
      */
-    if (hiddenIds.includes(listingId))
+    if (hiddenIds.includes(elasticSearchHit._id))
       displayType = "hidden"
-    else if (featuredIds.includes(listingId))
+    else if (featuredIds.includes(elasticSearchHit._id))
       displayType = "featured"
 
-    return displayType
-  }
-
-  static extractListing(elasticSearchHit, hiddenIds, featuredIds){
     return {
       id: elasticSearchHit._id,
       title: elasticSearchHit._source.title,
@@ -95,9 +91,10 @@ class Listing {
       description: elasticSearchHit._source.description,
       priceAmount: (elasticSearchHit._source.price||{}).amount,
       priceCurrency: (elasticSearchHit._source.price||{}).currency,
-      displayType: this.getListingDisplayType(elasticSearchHit._id, hiddenIds, featuredIds)
+      displayType: displayType
     }
   }
+
   /**
    * Searches for listings.
    * @param {string} query - The search query.
