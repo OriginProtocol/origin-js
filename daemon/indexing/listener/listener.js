@@ -374,7 +374,7 @@ async function postToWebhook(urlString, json) {
     }
   }
   return new Promise((resolve, reject) => {
-    const client = url.protocol == 'https:' ? https : http
+    const client = url.protocol === 'https:' ? https : http
     const req = client.request(postOptions, res => {
       if (res.statusCode === 200) {
         resolve()
