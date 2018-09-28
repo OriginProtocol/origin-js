@@ -1,8 +1,8 @@
 const { ApolloServer, gql } = require('apollo-server')
 
-var search = require('../lib/search.js')
-var db = require('../lib/db.js')
-
+const search = require('../lib/search.js')
+const db = require('../lib/db.js')
+const fetch = require('node-fetch')
 /*
  * Implementation of the Origin GraphQL server.
   * Uses the Apollo framework: https://www.apollographql.com/server
@@ -49,6 +49,12 @@ const typeDefs = gql`
     disputed
   }
 
+  enum DisplayType {
+    normal
+    featured
+    hidden
+  }
+
   type Offer {
     id: ID!
     ipfsHash: ID!
@@ -89,6 +95,7 @@ const typeDefs = gql`
     subCategory: String!
     price: Price!
     offers: OfferConnection
+    displayType: DisplayType!
     # reviews(page: Page, order: ReviewOrder, filter: ReviewFilter): ReviewPage
   }
 
@@ -215,6 +222,17 @@ const typeDefs = gql`
 // If caller requests more, page size will be trimmed to MaxResultsPerPage.
 const MaxResultsPerPage = 100
 
+/* Github gists have this problem that updating a gist will result in a different raw gist file url. For that reason we use
+ * rawgit service where the resulting file shall always be the latest of a linked gist.
+ * Important (!) Use production and not development rawGit urls
+ */
+const featuredListingsGist = 'https://rawgit.com/sparrowDom/23f8b219567811221cba660039c7e438/raw/5610030ef20ba79245dbdb10af18d9d10c8fb98d/gistfile1.txt'
+const hiddenListingsGist = 'https://rawgit.com/sparrowDom/7c9631b1891063e6d72d0b66098a58bd/raw/5e8ef7cb1596b4da2f4627b71497d74583380274/gistfile1.txt'
+// how frequently featured/hidden listings list updates
+const LISTINGS_STALE_TIME = 60 * 1000 //60 seconds
+let listingsUpdateTime
+let featuredListings = []
+let hiddenListings = []
 
 // Resolvers define the technique for fetching the types in the schema.
 const resolvers = {
@@ -222,7 +240,7 @@ const resolvers = {
     async listings(root, args, context, info) {
       // TODO: handle pagination (including enforcing MaxResultsPerPage), filters, order.
       let {listings, maxPrice, minPrice, totalNumberOfListings} = await search.Listing
-        .search(args.searchQuery, args.filters, args.page.numberOfItems, args.page.offset)
+        .search(args.searchQuery, args.filters, args.page.numberOfItems, args.page.offset, hiddenListings, featuredListings)
       return {
         offset: args.page.offset,
         numberOfItems: listings.length,
@@ -352,9 +370,36 @@ function relatedUserResolver(walletAddress, info){
   }
 }
 
+async function readListingsFromGist(gitstUrl){
+  let response = await fetch(gitstUrl)
+  return (await response.text())
+    .split(',')
+    .map(listing => listing.trim())
+}
+
+async function updateHiddenFeaturedListings(){
+  if (!listingsUpdateTime || new Date() - listingsUpdateTime > LISTINGS_STALE_TIME){
+    try{
+      listingsUpdateTime = new Date()
+      hiddenListings = await readListingsFromGist(hiddenListingsGist)
+      featuredListings = await readListingsFromGist(featuredListingsGist)
+    } catch(e) {
+      console.err("Could not update hidden/featured listings ", e)
+    }
+  }
+}
+
 // Start ApolloServer by passing type definitions (typeDefs) and the resolvers
 // responsible for fetching the data for those types.
-const server = new ApolloServer({ typeDefs, resolvers })
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: async ({req}) => {
+      await updateHiddenFeaturedListings()
+
+      return {}
+    }
+})
 
 // The `listen` method launches a web-server.
 server.listen().then(({ url }) => {

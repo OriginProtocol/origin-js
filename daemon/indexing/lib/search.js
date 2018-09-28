@@ -80,10 +80,12 @@ class Listing {
    * @param {array} filters - Array of filter objects
    * @param {integer} numberOfItems - number of items to display per page
    * @param {integer} offset - what page to return results from
+   * @param {array} hiddenIds - list of all hidden ids
+   * @param {array} featuredIds - list of all featured ids
    * @throws Throws an error if the search operation failed.
    * @returns A list of listings (can be empty).
    */
-  static async search(query, filters, numberOfItems, offset) {
+  static async search(query, filters, numberOfItems, offset, hiddenIds = [], featuredIds = []) {
     const esQuery = {
       bool: {
         must: [{
@@ -92,11 +94,16 @@ class Listing {
           }
         }],
         should: [],
-        filter: []
+        filter: [],
+        must_not:[{
+          ids: {
+            values: hiddenIds
+          }
+        }]
       }
     }
 
-    if (query !== undefined && query !== ''){
+    if (query !== undefined && query !== '') {
       // all_text is a field where all searchable fields get copied to
       esQuery.bool.must.push({
         match: {
@@ -123,7 +130,17 @@ class Listing {
     /* interestingly JSON.strigify performs pretty well:
      * https://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-deep-clone-an-object-in-javascript/5344074#5344074
      */
-    const esQueryWithoutFilters = JSON.parse(JSON.stringify(esQuery))
+    const esAggregationQuery = JSON.parse(JSON.stringify(esQuery))
+
+    /* Also query for featured listings and give them such boost that they shall always be presented on top.
+     * Filters and query string still applies to these listings, but if they match, they shall be on top.
+     */
+    esQuery.bool.should.push({
+      ids: {
+        values: featuredIds,
+        boost: 20
+      }
+    })
 
     filters
       .forEach(filter => {
@@ -193,7 +210,7 @@ class Listing {
       index: LISTINGS_INDEX,
       type: LISTINGS_TYPE,
       body: {
-        query: esQueryWithoutFilters,
+        query: esAggregationQuery,
         _source: ['_id'],
         aggs : {
           'max_price' : { 'max' : { 'field' : 'price.amount' } },
@@ -202,9 +219,19 @@ class Listing {
       }
     })
 
-    const [searchResponse, aggregationResponse] = await Promise.all([searchRequest, aggregationRequest])  
+    const [searchResponse, aggregationResponse] = await Promise.all([searchRequest, aggregationRequest])
     const listings = []
     searchResponse.hits.hits.forEach((hit) => {
+      let displayType = "normal"
+
+      /* hidden listings are not returned right now, but at some point in the future
+       * we might have admin queries that also return hidden listings
+       */
+      if (hiddenIds.includes(hit._id))
+        displayType = "hidden"
+      else if (featuredIds.includes(hit._id))
+        displayType = "featured"
+
       const listing = {
         id: hit._id,
         title: hit._source.title,
@@ -213,6 +240,7 @@ class Listing {
         description: hit._source.description,
         priceAmount: (hit._source.price||{}).amount,
         priceCurrency: (hit._source.price||{}).currency,
+        displayType
       }
       listings.push(listing)
     })

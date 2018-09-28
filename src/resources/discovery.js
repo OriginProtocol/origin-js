@@ -64,6 +64,7 @@ class Discovery {
       ) {
         nodes {
           id
+          displayType
         }
         offset
         numberOfItems
