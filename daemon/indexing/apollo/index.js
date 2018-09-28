@@ -384,7 +384,7 @@ async function updateHiddenFeaturedListings(){
       hiddenListings = await readListingsFromGist(hiddenListingsGist)
       featuredListings = await readListingsFromGist(featuredListingsGist)
     } catch(e) {
-      console.err("Could not update hidden/featured listings ", e)
+      console.error("Could not update hidden/featured listings ", e)
     }
   }
 }
@@ -395,10 +395,11 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({req}) => {
-      await updateHiddenFeaturedListings()
+    // update listingIds in a non blocking way
+    updateHiddenFeaturedListings()
 
-      return {}
-    }
+    return {}
+  }
 })
 
 // The `listen` method launches a web-server.
