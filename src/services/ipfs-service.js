@@ -6,6 +6,8 @@ const MapCache = require('map-cache')
 const fetch = require('cross-fetch')
 const FormData = require('form-data')
 
+const imageMaxSize = process.env.IMAGE_MAX_SIZE || 100 // for testing //(2 * 1024 * 1024) // 2 MiB
+
 const Ports = {
   http: '80',
   https: '443'
@@ -115,7 +117,7 @@ class IpfsService {
 
   async loadFile(ipfsHash) {
     try {
-      return await fetch(this.gatewayUrlForHash(ipfsHash))
+      return await fetch(this.gatewayUrlForHash(ipfsHash), {size: imageMaxSize})
     } catch (error) {
       throw new Error('Failure to get IPFS file', error)
     }
