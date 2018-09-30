@@ -897,7 +897,7 @@ class Messaging {
 
   // messages supplied by the 'msg' event have status included
   // this is a convenience method for tracking status on spoofed messages
-  getStatus({ created, hash }) {
+  getStatus({ hash }) {
     const messageStatuses = JSON.parse(
       localStorage.getItem(`${storeKeys.messageStatuses}:${this.account_key}`)
     )
