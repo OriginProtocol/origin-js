@@ -901,17 +901,10 @@ class Messaging {
     const messageStatuses = JSON.parse(
       localStorage.getItem(`${storeKeys.messageStatuses}:${this.account_key}`)
     )
-    // convert stored timestamp string to date
-    const subscriptionStart = new Date(
-      +localStorage.getItem(
-        `${storeKeys.messageSubscriptionStart}:${this.account_key}`
-      )
-    )
-    const isWatched = created > subscriptionStart
     const status =
-      isWatched && messageStatuses && messageStatuses[hash] !== READ_STATUS
-        ? UNREAD_STATUS
-        : READ_STATUS
+      messageStatuses && messageStatuses[hash] === READ_STATUS
+        ? READ_STATUS
+        : UNREAD_STATUS
     return status
   }
 
