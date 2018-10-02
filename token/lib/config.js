@@ -1,5 +1,6 @@
 const HDWalletProvider = require('truffle-hdwallet-provider')
 const PrivateKeyProvider = require('truffle-privatekey-provider')
+const LedgerProvider = require('./ledger')
 
 const MAINNET_NETWORK_ID = '1'
 const ROPSTEN_NETWORK_ID = '3'
@@ -88,7 +89,17 @@ function createProviders(networkIds) {
         throw `Unsupported network id ${networkId}`
     }
     // Private key takes precedence
-    if (privateKey) {
+    if (process.env['USE_LEDGER']) {
+      console.log(`Network=${networkId} URL=${providerUrl} Using Ledger wallet`)
+      const opts = {
+        networkId: networkId,
+        path: "44'/60'/0'/0", // Ledger default derivation path
+        askConfirm: false,
+        accountsLength: 1,
+        accountsOffset: 0, // Use first account on derivation path
+      };
+      providers[networkId] = new LedgerProvider(opts, providerUrl)
+    } else if (privateKey) {
       console.log(`Network=${networkId} URL=${providerUrl} Using private key`)
       providers[networkId] = new PrivateKeyProvider(privateKey, providerUrl)
     } else {

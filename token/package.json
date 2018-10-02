@@ -3,6 +3,8 @@
   "description": "Origin TestNet faucet.",
   "version": "0.1.0",
   "dependencies": {
+    "@ledgerhq/hw-transport-node-hid": "^4.22.0",
+    "@ledgerhq/web3-subprovider": "^4.21.0",
     "bignumber.js": "^7.2.1",
     "express": "^4.16.3",
     "rate-limiter-flexible": "^0.17.1",
