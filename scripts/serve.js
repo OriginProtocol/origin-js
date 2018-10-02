@@ -14,15 +14,7 @@ const noGanache = args.length && args[0] === 'no-ganache'
 
 const start = async () => {
   const compiler = webpack(webpackConfig)
-
-  // If the contract build directory does not exist or is empty,
-  // copy the compiled contract files from the latest release into it.
-  const dstDir = 'contracts/build/contracts'
-  if (fs.pathExistsSync(dstDir) && fs.readdirSync(dstDir).length > 0) {
-    console.log(chalk.blue('Contracts build directory already exists and not empty, skipping copy.'))
-  } else {
-    copyReleaseCompiledContracts(dstDir)
-  }
+  copyReleaseCompiledContracts()
   if (!noGanache) {
     console.log(
       chalk`\n{bold.hex('#1a82ff') ⬢  Starting Local Blockchain }\n`

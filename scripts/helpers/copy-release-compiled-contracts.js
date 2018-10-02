@@ -24,4 +24,15 @@ const copyReleaseCompiledContracts = (dstDir) => {
   console.log(chalk.green(`Copied compiled contracts from ${srcDir} to ${dstDir}`))
 }
 
-module.exports = copyReleaseCompiledContracts
+const copyIfNecessary = () => {
+  // If the contract build directory does not exist or is empty,
+  // copy the compiled contract files from the latest release into it.
+  const dstDir = 'contracts/build/contracts'
+  if (fs.pathExistsSync(dstDir) && fs.readdirSync(dstDir).length > 0) {
+    console.log('Contracts build directory already exists and not empty, skipping copy.')
+  } else {
+    copyReleaseCompiledContracts(dstDir)
+  }
+}
+
+module.exports = copyIfNecessary
