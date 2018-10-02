@@ -1,5 +1,4 @@
 const chalk = require('chalk')
-const fs = require('fs-extra')
 const startGanache = require('./helpers/start-ganache')
 const deployContracts = require('./helpers/deploy-contracts')
 const startIpfs = require('./helpers/start-ipfs')
