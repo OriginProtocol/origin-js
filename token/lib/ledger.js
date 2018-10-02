@@ -11,11 +11,11 @@ class LedgerProvider {
   constructor(options, url) {
     const getTransport = () => TransportU2F.create()
     const ledger = createLedgerSubprovider(getTransport, options)
-    Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send
 
     this.engine = new ProviderEngine()
     this.engine.addProvider(ledger)
     this.engine.addProvider(new FiltersSubprovider())
+    Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send
     this.engine.addProvider(new ProviderSubprovider(new Web3.providers.HttpProvider(url)))
     this.engine.start()
   }
