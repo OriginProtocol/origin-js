@@ -208,7 +208,7 @@ class ContractService {
         })
         //.on('confirmation', confirmationCallback)
         //.on('transactionHash', transactionHashCallback)
-        // Workaround for "confirmationCallback" not being triggered with web3 version:1.0.0-beta.34
+        // Workaround for "confirmationCallback" not being triggered in some versions of Metamask
         .on('transactionHash', (hash) => {
           if (transactionHashCallback)
             transactionHashCallback(hash)
@@ -235,7 +235,8 @@ class ContractService {
       }, 1500)
     } else {
       const currentBlockNumber = await this.web3.eth.getBlockNumber()
-      const confirmations = currentBlockNumber - transactionInfo.blockNumber
+      // Math.max to prevent the -1 confirmation on Rinkeby
+      const confirmations = Math.max(0, currentBlockNumber - transactionInfo.blockNumber)
       confirmationCallback(confirmations, {
         transactionHash: transactionInfo.hash
       })
@@ -277,7 +278,14 @@ class ContractService {
         .send(opts)
         .on('receipt', resolve)
         .on('confirmation', confirmationCallback)
-        .on('transactionHash', transactionHashCallback)
+        //.on('transactionHash', transactionHashCallback)
+        // Workaround for "confirmationCallback" not being triggered in some versions of Metamask
+        .on('transactionHash', (hash) => {
+          if (transactionHashCallback)
+            transactionHashCallback(hash)
+          if (confirmationCallback)
+            this.checkForDeploymentCompletion(hash, confirmationCallback)
+        })
         .on('error', reject)
     })
     const block = await this.web3.eth.getBlock(transactionReceipt.blockNumber)
