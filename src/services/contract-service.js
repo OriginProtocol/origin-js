@@ -277,7 +277,7 @@ class ContractService {
       method
         .send(opts)
         .on('receipt', resolve)
-        .on('confirmation', confirmationCallback)
+        //.on('confirmation', confirmationCallback)
         //.on('transactionHash', transactionHashCallback)
         // Workaround for "confirmationCallback" not being triggered in some versions of Metamask
         .on('transactionHash', (hash) => {
