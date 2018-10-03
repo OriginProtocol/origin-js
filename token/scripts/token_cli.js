@@ -192,10 +192,13 @@ const config = {
   // Override owner whitelist. NEVER use this unless you're on a local dev
   // blockchain.
   overrideOwnerWhitelist: args['--OVERRIDE_OWNER_WHITELIST_DO_NOT_USE'],
+
+  // Use Ledger hardware wallet
+  ledger: args['--ledger'],
 }
 
 try {
-  config.providers = Config.createProviders([config.networkId])
+  config.providers = Config.createProviders([config.networkId], config.ledger)
 } catch (err) {
   console.log('Config error:', err)
   process.exit(-1)

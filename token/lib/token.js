@@ -79,6 +79,7 @@ class Token extends ContractHelper {
     // At token contract deployment, the entire initial supply of tokens is assigned to
     // the first address generated using the mnemonic.
     const tokenSupplier = await this.defaultAccount(networkId)
+    console.log(`tokenSupplier: ${tokenSupplier}`)
 
     // Transfer numTokens from the supplier to the target address.
     const supplierBalance = await contract.methods.balanceOf(tokenSupplier).call()
@@ -89,6 +90,8 @@ class Token extends ContractHelper {
     if (paused) {
       throw new Error('token transfers are paused')
     }
+    console.log('before transaction')
+    console.log(`transferring ${value} to ${address}`)
     const transaction = contract.methods.transfer(address, value)
     return await this.sendTransaction(networkId, transaction, { from: tokenSupplier })
   }

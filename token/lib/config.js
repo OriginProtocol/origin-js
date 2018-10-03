@@ -29,7 +29,7 @@ function parseArgv() {
  * Helper function. Creates a config object based on command line arguments.
  * @returns {dict} - Config.
  */
-function createProviders(networkIds) {
+function createProviders(networkIds, useLedger) {
   const providers = {}
 
   // Create a provider for each of the network id.
@@ -42,7 +42,7 @@ function createProviders(networkIds) {
       case MAINNET_NETWORK_ID:
         privateKey = process.env.MAINNET_PRIVATE_KEY
         mnemonic = process.env.MAINNET_MNEMONIC
-        if (!privateKey && !mnemonic) {
+        if (!useLedger && !privateKey && !mnemonic) {
           throw 'Must have either MAINNET_PRIVATE_KEY or MAINNET_MNEMONIC env var'
         }
         if (!process.env.INFURA_ACCESS_TOKEN) {
@@ -53,7 +53,7 @@ function createProviders(networkIds) {
       case ROPSTEN_NETWORK_ID:
         privateKey = process.env.ROPSTEN_PRIVATE_KEY
         mnemonic = process.env.ROPSTEN_MNEMONIC
-        if (!privateKey && !mnemonic) {
+        if (!useLedger && !privateKey && !mnemonic) {
           throw 'Must have either ROPSTEN_PRIVATE_KEY or ROPSTEN_MNEMONIC env var'
         }
         if (!process.env.INFURA_ACCESS_TOKEN) {
@@ -64,7 +64,7 @@ function createProviders(networkIds) {
       case RINKEBY_NETWORK_ID:
         privateKey = process.env.RINKEBY_PRIVATE_KEY
         mnemonic = process.env.RINKEBY_MNEMONIC
-        if (!privateKey && !mnemonic) {
+        if (!useLedger && !privateKey && !mnemonic) {
           throw 'Must have either RINKEBY_PRIVATE_KEY or RINKEBY_MNEMONIC env var'
         }
         if (!process.env.INFURA_ACCESS_TOKEN) {
@@ -80,7 +80,7 @@ function createProviders(networkIds) {
       case ORIGIN_NETWORK_ID:
         privateKey = process.env.ORIGIN_PRIVATE_KEY
         mnemonic = process.env.ORIGIN_MNEMONIC
-        if (!privateKey && !mnemonic) {
+        if (!useLedger && !privateKey && !mnemonic) {
           throw 'Must have either ORIGIN_PRIVATE_KEY or ORIGIN_MNEMONIC env var'
         }
         providerUrl = 'https://eth.dev.originprotocol.com/rpc'
@@ -89,7 +89,7 @@ function createProviders(networkIds) {
         throw `Unsupported network id ${networkId}`
     }
     // Private key takes precedence
-    if (process.env['USE_LEDGER']) {
+    if (useLedger) {
       console.log(`Network=${networkId} URL=${providerUrl} Using Ledger wallet`)
       const opts = {
         networkId: networkId,
