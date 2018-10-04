@@ -11,9 +11,10 @@ import V00_Marketplace from './../../contracts/build/contracts/V00_Marketplace.j
 import BigNumber from 'bignumber.js'
 import bs58 from 'bs58'
 import Web3 from 'web3'
+import _ from 'lodash'
 
 const emptyAddress = '0x0000000000000000000000000000000000000000'
-//24 is the number web3 supplies
+// 24 is the number web3 supplies
 const NUMBER_CONFIRMATIONS_TO_REPORT = 24
 const SUPPORTED_ERC20 = [
   { symbol: 'OGN', decimals: 18, contractName: 'OriginToken' }
@@ -202,42 +203,81 @@ class ContractService {
    * not function (e.g. in Metamask 4.12.0 it is broken). But if we detect that the mentioned
    * function is not broken we cancel the safety net immediately.
    */
-  async checkForTransactionCompletion(hash, confirmationCallback, transactionStatus) {
+  async checkForTransactionCompletion(hash, contract, confirmationCallback, resolveCallback, promiseStatus) {
+
     // on.('confirmation') works cancel this fallback functionality
-    if (transactionStatus.onConfirmationTriggered)
+    if (promiseStatus.onConfirmationTriggered)
       return
 
-    const transactionInfo = await this.web3.eth.getTransaction(hash)
+    const transactionReceipt = await this.web3.eth.getTransactionReceipt(hash)
 
     // transaction not mined
-    if (transactionInfo === null || transactionInfo.blockNumber === null){
+    if (transactionReceipt === null || transactionReceipt.blockNumber === null){
       setTimeout(() => {
-        this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
+        this.checkForTransactionCompletion(hash, contract, confirmationCallback, resolveCallback, promiseStatus)
       }, 1500)
     } else {
+      promiseStatus.numberOfTimesTransactionFoundByFallbackFcnt += 1
+
+      /* If fallback function detects a valid transaction for the second time and the main function has
+       * not registered a transaction recite, positively resolve the promise with generated recite. This resolves
+       * problems created by Metamask 4.12.0.
+       */
+      if (!promiseStatus.receiptReceived && promiseStatus.numberOfTimesTransactionFoundByFallbackFcnt > 1){
+        // unfortunately transaction logs in transactionReceipt do not contain all needed event information
+        const getEventsEmittedByTransaction = async () => {
+          let events = await contract.getPastEvents(
+            'allEvents',
+            {
+              fromBlock: transactionReceipt.blockNumber
+            }
+          )
+
+          // only keep event emitted by this transaction
+          events = events
+            .filter(event => event.transactionHash === transactionReceipt.transactionHash)
+          /* Send method returns events grouped by name. (https://web3js.readthedocs.io/en/1.0/web3-eth-contract.html#methods-mymethod-send)
+           * If more than 1 event of the same name is returned it is an array, otherwise an object.
+           * Just conform to that format
+           */
+          return _.mapValues(_.groupBy(events, 'event'),
+            eventList => eventList.length == 1 ? eventList[0] : eventList)
+        }
+
+
+        promiseStatus.receiptReceived = true
+        transactionReceipt.events = await getEventsEmittedByTransaction()
+        resolveCallback(transactionReceipt)
+      }
+
       const currentBlockNumber = await this.web3.eth.getBlockNumber()
       // Math.max to prevent the -1 confirmation on Rinkeby. 
-      const confirmations = Math.max(0, currentBlockNumber - transactionInfo.blockNumber)
-      confirmationCallback(confirmations, {
-        transactionHash: transactionInfo.hash
-      })
+      const confirmations = Math.max(0, currentBlockNumber - transactionReceipt.blockNumber)
+      confirmationCallback(confirmations, transactionReceipt)
 
       if (confirmations < NUMBER_CONFIRMATIONS_TO_REPORT) {
         setTimeout(() => {
-          this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
+          this.checkForTransactionCompletion(hash, contract, confirmationCallback, resolveCallback, promiseStatus)
         }, 1500)
       }
     }
   }
 
   // Unify the way contract's transactions/deployments are handled
-  handleTransactionCallbacks(sendCallback, resolveCallback, rejectCallback, confirmationCallback, transactionHashCallback) {
+  handleTransactionCallbacks(contract, sendCallback, resolveCallback, rejectCallback, confirmationCallback, transactionHashCallback) {
     // needs to be an object because it is passed to functions by reference
-    const transactionStatus = { onConfirmationTriggered: false }
+    const promiseStatus = {
+      onConfirmationTriggered: false,
+      receiptReceived: false,
+      numberOfTimesTransactionFoundByFallbackFcnt: 0
+    }
     sendCallback
-      .on('receipt', resolveCallback)
+      .on('receipt', receipt => {
+        promiseStatus.receiptReceived = true
+        resolveCallback(receipt)
+      })
       .on('confirmation', (confirmationNumber, receipt) => {
-        transactionStatus.onConfirmationTriggered = true
+        promiseStatus.onConfirmationTriggered = true
         if (confirmationCallback)
           confirmationCallback(confirmationNumber, receipt)
       })
@@ -245,9 +285,16 @@ class ContractService {
         if (transactionHashCallback)
           transactionHashCallback(hash)
         if (confirmationCallback)
-          this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
+          this.checkForTransactionCompletion(hash, contract, confirmationCallback, resolveCallback, promiseStatus)
       })
-      .on('error', rejectCallback)
+
+      .on('error', error => {
+        // an error in Metamask 4.12.0 that we handle with fallback transaction checking function
+        if (error.includes('Failed to subscribe to new newBlockHeaders to confirm the transaction receipts'))
+          return
+
+        rejectCallback(error)
+      })
   }
 
   async deploy(contract, args, options, { confirmationCallback, transactionHashCallback } = {} ) {
@@ -262,6 +309,7 @@ class ContractService {
         .send(options)
 
       this.handleTransactionCallbacks(
+        contract,
         sendCallback,
         resolve,
         reject,
@@ -301,6 +349,7 @@ class ContractService {
         .send(opts)
 
       this.handleTransactionCallbacks(
+        contract,
         sendCallback,
         resolve,
         reject,
