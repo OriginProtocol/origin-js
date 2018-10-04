@@ -193,60 +193,81 @@ class ContractService {
     return withLibraryAddresses
   }
 
-  async deploy(contract, args, options, { confirmationCallback, transactionHashCallback } = {} ) {
-    const bytecode = await this.getBytecode(contract)
-    const deployed = await this.deployed(contract)
-    const txReceipt = await new Promise((resolve, reject) => {
-      deployed
-        .deploy({
-          data: bytecode,
-          arguments: args
-        })
-        .send(options)
-        .on('receipt', receipt => {
-          resolve(receipt)
-        })
-        //.on('confirmation', confirmationCallback)
-        //.on('transactionHash', transactionHashCallback)
-        // Workaround for "confirmationCallback" not being triggered in some versions of Metamask
-        .on('transactionHash', (hash) => {
-          if (transactionHashCallback)
-            transactionHashCallback(hash)
-          if (confirmationCallback)
-            this.checkForDeploymentCompletion(hash, confirmationCallback)
-        })
-        .on('error', err => reject(err))
-    })
-    return txReceipt
-  }
-
-  /* confirmation callback does not get triggered in current version of web3 version:1.0.0-beta.34
-   * so this function perpetually (until 20 confirmations) checks for presence of deployed contract.
+  /* Confirmation callback does not get triggered in some versions of Metamask so this
+   * function perpetually (until NUMBER_CONFIRMATIONS_TO_REPORT confirmations) checks
+   * for transaction confirmation.
    *
-   * This could also be a problem in Ethereum node: https://github.com/ethereum/web3.js/issues/1255
+   * This function is a safety net just in case send method's `on.('confirmation')` does
+   * not function (e.g. in Metamask 4.12.0 it is broken). But if we detect that the mentioned
+   * function is not broken we cancel the safety net immediately.
    */
-  async checkForDeploymentCompletion(hash, confirmationCallback) {
+  async checkForTransactionCompletion(hash, confirmationCallback, transactionStatus) {
+    // on.('confirmation') works cancel this fallback functionality
+    if (transactionStatus.onConfirmationTriggered)
+      return
+
     const transactionInfo = await this.web3.eth.getTransaction(hash)
 
     // transaction not mined
     if (transactionInfo === null || transactionInfo.blockNumber === null){
       setTimeout(() => {
-        this.checkForDeploymentCompletion(hash, confirmationCallback)
+        this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
       }, 1500)
     } else {
       const currentBlockNumber = await this.web3.eth.getBlockNumber()
-      // Math.max to prevent the -1 confirmation on Rinkeby
+      // Math.max to prevent the -1 confirmation on Rinkeby. 
       const confirmations = Math.max(0, currentBlockNumber - transactionInfo.blockNumber)
       confirmationCallback(confirmations, {
         transactionHash: transactionInfo.hash
       })
-      // do checks until NUMBER_CONFIRMATIONS_TO_REPORT block confirmations
+      
       if (confirmations < NUMBER_CONFIRMATIONS_TO_REPORT) {
         setTimeout(() => {
-          this.checkForDeploymentCompletion(hash, confirmationCallback)
+          this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
         }, 1500)
       }
     }
+  }
+
+  // Unify the way contract's send methods calls are handled
+  handleTransactionCallbacks(sendCallback, resolveCallback, rejectCallback, confirmationCallback, transactionHashCallback) {
+    const transactionStatus = { onConfirmationTriggered: false }
+    sendCallback
+      .on('receipt', resolveCallback)
+      .on('confirmation', (confirmationNumber, receipt) => {
+        transactionStatus.onConfirmationTriggered = true
+        if (confirmationCallback)
+          confirmationCallback(confirmationNumber, receipt)
+      })
+      .on('transactionHash', (hash) => {
+        if (transactionHashCallback)
+          transactionHashCallback(hash)
+        if (confirmationCallback)
+          this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
+      })
+      .on('error', rejectCallback)
+  }
+
+  async deploy(contract, args, options, { confirmationCallback, transactionHashCallback } = {} ) {
+    const bytecode = await this.getBytecode(contract)
+    const deployed = await this.deployed(contract)
+    const txReceipt = await new Promise((resolve, reject) => {
+      let sendCallback = deployed
+        .deploy({
+          data: bytecode,
+          arguments: args
+        })
+        .send(options)
+
+      this.handleTransactionCallbacks(
+        sendCallback,
+        resolve,
+        reject,
+        confirmationCallback,
+        transactionHashCallback
+      )
+    })
+    return txReceipt
   }
 
   async call(
@@ -274,19 +295,16 @@ class ContractService {
     // set gas
     opts.gas = (opts.gas || (await method.estimateGas(opts))) + additionalGas
     const transactionReceipt = await new Promise((resolve, reject) => {
-      method
+      let sendCallback = method
         .send(opts)
-        .on('receipt', resolve)
-        //.on('confirmation', confirmationCallback)
-        //.on('transactionHash', transactionHashCallback)
-        // Workaround for "confirmationCallback" not being triggered in some versions of Metamask
-        .on('transactionHash', (hash) => {
-          if (transactionHashCallback)
-            transactionHashCallback(hash)
-          if (confirmationCallback)
-            this.checkForDeploymentCompletion(hash, confirmationCallback)
-        })
-        .on('error', reject)
+
+      this.handleTransactionCallbacks(
+        sendCallback,
+        resolve,
+        reject,
+        confirmationCallback,
+        transactionHashCallback
+      )
     })
     const block = await this.web3.eth.getBlock(transactionReceipt.blockNumber)
     return {
