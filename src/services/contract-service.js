@@ -241,7 +241,7 @@ class ContractService {
            * Just conform to that format
            */
           return _.mapValues(_.groupBy(events, 'event'),
-            eventList => eventList.length == 1 ? eventList[0] : eventList)
+            eventList => eventList.length === 1 ? eventList[0] : eventList)
         }
 
 
