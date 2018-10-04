@@ -220,7 +220,7 @@ class ContractService {
       confirmationCallback(confirmations, {
         transactionHash: transactionInfo.hash
       })
-      
+
       if (confirmations < NUMBER_CONFIRMATIONS_TO_REPORT) {
         setTimeout(() => {
           this.checkForTransactionCompletion(hash, confirmationCallback, transactionStatus)
@@ -229,8 +229,9 @@ class ContractService {
     }
   }
 
-  // Unify the way contract's send methods calls are handled
+  // Unify the way contract's transactions/deployments are handled
   handleTransactionCallbacks(sendCallback, resolveCallback, rejectCallback, confirmationCallback, transactionHashCallback) {
+    // needs to be an object because it is passed to functions by reference
     const transactionStatus = { onConfirmationTriggered: false }
     sendCallback
       .on('receipt', resolveCallback)
