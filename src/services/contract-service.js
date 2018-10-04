@@ -220,7 +220,7 @@ class ContractService {
       promiseStatus.numberOfTimesTransactionFoundByFallbackFcnt += 1
 
       /* If fallback function detects a valid transaction for the second time and the main function has
-       * not registered a transaction recite, positively resolve the promise with generated recite. This resolves
+       * not registered a transaction receipt, positively resolve the promise with generated receipt. This resolves
        * problems created by Metamask 4.12.0.
        */
       if (!promiseStatus.receiptReceived && promiseStatus.numberOfTimesTransactionFoundByFallbackFcnt > 1){
