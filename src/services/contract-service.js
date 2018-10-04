@@ -253,7 +253,7 @@ class ContractService {
     const bytecode = await this.getBytecode(contract)
     const deployed = await this.deployed(contract)
     const txReceipt = await new Promise((resolve, reject) => {
-      let sendCallback = deployed
+      const sendCallback = deployed
         .deploy({
           data: bytecode,
           arguments: args
@@ -296,7 +296,7 @@ class ContractService {
     // set gas
     opts.gas = (opts.gas || (await method.estimateGas(opts))) + additionalGas
     const transactionReceipt = await new Promise((resolve, reject) => {
-      let sendCallback = method
+      const sendCallback = method
         .send(opts)
 
       this.handleTransactionCallbacks(
