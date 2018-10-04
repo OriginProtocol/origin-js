@@ -13,7 +13,8 @@ import bs58 from 'bs58'
 import Web3 from 'web3'
 
 const emptyAddress = '0x0000000000000000000000000000000000000000'
-const NUMBER_CONFIRMATIONS_TO_REPORT = 20
+//24 is the number web3 supplies
+const NUMBER_CONFIRMATIONS_TO_REPORT = 24
 const SUPPORTED_ERC20 = [
   { symbol: 'OGN', decimals: 18, contractName: 'OriginToken' }
 ]
