@@ -11,7 +11,7 @@ import V00_Marketplace from './../../contracts/build/contracts/V00_Marketplace.j
 import BigNumber from 'bignumber.js'
 import bs58 from 'bs58'
 import Web3 from 'web3'
-import _ from 'lodash'
+import { groupBy, mapValues } from './../utils/arrayFunctions'
 
 const emptyAddress = '0x0000000000000000000000000000000000000000'
 // 24 is the number web3 supplies
@@ -240,7 +240,7 @@ class ContractService {
            * If more than 1 event of the same name is returned it is an array, otherwise an object.
            * Just conform to that format
            */
-          return _.mapValues(_.groupBy(events, 'event'),
+          return mapValues(groupBy(events, (event) => event.event),
             eventList => eventList.length === 1 ? eventList[0] : eventList)
         }
 
