@@ -373,7 +373,7 @@ describe('Marketplace Resource', function() {
     it('should exclude notifications for invalid offers', async () => {
       await marketplace.makeOffer('999-000-0', invalidPriceOffer)
 
-      let notifications = await marketplace.getNotifications()
+      const notifications = await marketplace.getNotifications()
       expect(notifications.length).to.equal(1)
     })
   })
