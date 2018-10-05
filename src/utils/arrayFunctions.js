@@ -8,11 +8,11 @@
  */
 function groupBy(collection, iteratee){
   return collection.reduce(function (accumulator, element) {
-      let key = iteratee(element)
-      accumulator[key] = accumulator[key] || [];
-      accumulator[key].push(element);
-      return accumulator;
-  }, Object.create(null));
+    const key = iteratee(element)
+    accumulator[key] = accumulator[key] || []
+    accumulator[key].push(element)
+    return accumulator
+  }, Object.create(null))
 }
 
 /**
