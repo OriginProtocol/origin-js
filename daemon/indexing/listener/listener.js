@@ -263,10 +263,10 @@ async function handleLog(log, rule, contractVersion, context) {
   log.networkId = context.networkId
 
   console.log(
-    `Processing log
-    blockNumber=${log.blockNumber}
-    transactionIndex=${log.transactionIndex}
-    eventName=${log.eventName}
+    `Processing log \
+    blockNumber=${log.blockNumber} \
+    transactionIndex=${log.transactionIndex} \
+    eventName=${log.eventName} \
     contractName=${log.contractName}`
   )
 
